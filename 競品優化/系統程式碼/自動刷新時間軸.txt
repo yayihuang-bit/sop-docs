@@ -1,0 +1,2036 @@
+/*
+=== 競品自動化工具程式架構說明 ===
+作者：呱呱 2025/4/2
+優化版本：2025/1/5
+年度選擇功能：2025/1/6
+智能跨年掃描：2025/1/7
+修正快取清除時機：2025/1/7
+智能年度勾選：2025/1/7
+
+【主要更新】
+1. 跨年活動處理：發現跨年活動時記錄到「異常log」分頁，不自動更新
+2. 🆕 直接轉快取：從投影片直接提取資料到 JSON 快取
+3. 🆕 兩階段更新：先掃描所有年份累積資料，再統一處理跨年並寫入快取
+4. 🆕 年度選擇功能：可指定掃描特定年度（如 2024、2025），節省執行時間
+5. 🆕 智能跨年掃描：自動包含前後年度資料夾，確保跨年活動資料完整
+6. 🆕 修正快取清除：開始前一次性清除，避免後續年度刪除跨年資料
+7. 🆕 智能年度勾選：點選年度自動勾選前後年度，視覺化顯示核心/擴展年度
+*/
+
+// 設定主要參數
+const CONFIG = {
+  ROOT_FOLDER_ID: '1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn',      // 企劃簡報（新雲端）
+  SLOT_FOLDER_ID: '1YnmltpcksZXL5NsMa0gBY65zkN_M8s33',       // 行銷簡報（新雲端）
+  MATH_FOLDER_ID: '1hzm_M_LelaC2DpDZ98784vppfqIQyD73',       // 數學簡報（新雲端）
+  SHEET_ID: '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI',
+  TEMP_CACHE_SHEET_NAME: '投影片資料快取',  // 掃描後先寫入這裡
+  FINAL_CACHE_SHEET_NAME: '企劃資料快取'    // 手動複製到這裡後，Web讀取
+};
+
+// 在檔案開頭添加常數
+const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+const ERROR_SHEET_NAME = '異常LOG';
+
+// 定義活動類型顏色對應
+const categoryColors = {
+  '新遊戲': '#FFF2CC',
+  '抽獎活動': '#f0d9d9',
+  '主題活動': '#e1f7de',
+  '老虎機': '#FCE4D6',
+  '柏青': '#F8CBAD',
+  '魚機': '#D9E1F2',
+  '牌桌': '#E4D3ED',
+  '其他類型': '#F2F2F2'
+};
+
+// ============================================
+// 🆕 選單設定（雙來源版）
+// ============================================
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  
+  // 🔄 資料管理選單
+  ui.createMenu('🔄 資料管理')
+    .addItem('⚡ 指定年度更新快取（雙來源）', 'showYearPickerForCache')
+    .addSeparator()
+    .addSeparator()
+    .addItem('檢查進度', 'checkProgress')
+    .addItem('重置進度', 'resetProgress')
+    .addToUi();
+}
+
+// ============================================
+// 🆕 年度選擇對話框（智能勾選版）
+// ============================================
+function showYearPickerForCache() {
+  // 檢查是否在 UI 上下文中
+  let ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    console.error('此功能只能從選單手動執行，無法從觸發器調用');
+    throw new Error('此功能只能從選單手動執行。請先執行「重置進度」清除所有觸發器。');
+  }
+  
+  // 掃描所有可用年度
+  const availableYears = getAvailableYears();
+  
+  if (availableYears.length === 0) {
+    ui.alert('找不到任何年度資料夾');
+    return;
+  }
+  
+  // 生成年度選項的 HTML
+  let yearOptionsHtml = '';
+  for (let i = 0; i < availableYears.length; i++) {
+    yearOptionsHtml += '<div class="year-item" data-year="' + availableYears[i] + '">';
+    yearOptionsHtml += '<label>';
+    yearOptionsHtml += '<input type="checkbox" class="year-checkbox" value="' + availableYears[i] + '">';
+    yearOptionsHtml += '<span class="year-label">' + availableYears[i] + '</span>';
+    yearOptionsHtml += '<span class="year-badge" style="display:none;"></span>';
+    yearOptionsHtml += '</label>';
+    yearOptionsHtml += '</div>';
+  }
+  
+  // 生成完整的 HTML 對話框
+  const htmlContent = '<!DOCTYPE html>' +
+    '<html>' +
+    '<head>' +
+    '<base target="_top">' +
+    '<style>' +
+    'body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }' +
+    '.container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }' +
+    'h2 { color: #1a73e8; margin-top: 0; }' +
+    '.warning-box { background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 12px; margin: 15px 0; border-radius: 4px; }' +
+    '.warning-box p { margin: 8px 0; font-size: 13px; line-height: 1.6; }' +
+    '.warning-box strong { color: #d93025; }' +
+    '.example { color: #1a73e8; font-weight: bold; margin-top: 8px; }' +
+    '.year-list { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 15px 0; border-radius: 4px; }' +
+    '.year-item { padding: 8px; margin: 5px 0; cursor: pointer; border-radius: 4px; transition: all 0.2s; }' +
+    '.year-item:hover { background-color: #f0f0f0; }' +
+    '.year-item.select-all { background-color: #e8f0fe; font-weight: bold; border: 2px solid #1a73e8; }' +
+    '.year-item.core-year { background-color: #e8f5e9; border-left: 3px solid #4caf50; }' +
+    '.year-item.extended-year { background-color: #fff9e6; border-left: 3px solid #ff9800; }' +
+    'input[type="checkbox"] { margin-right: 10px; cursor: pointer; }' +
+    '.year-badge { margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }' +
+    '.badge-core { background-color: #4caf50; color: white; }' +
+    '.badge-extended { background-color: #ff9800; color: white; }' +
+    '.buttons { text-align: right; margin-top: 20px; }' +
+    'button { padding: 10px 20px; margin-left: 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }' +
+    '.btn-confirm { background-color: #1a73e8; color: white; }' +
+    '.btn-confirm:hover { background-color: #1557b0; }' +
+    '.btn-cancel { background-color: #f1f3f4; color: #5f6368; }' +
+    '.btn-cancel:hover { background-color: #e8eaed; }' +
+    '.selected-count { color: #1a73e8; font-weight: bold; margin-top: 10px; }' +
+    '.legend { display: flex; gap: 20px; margin-top: 10px; font-size: 12px; }' +
+    '.legend-item { display: flex; align-items: center; }' +
+    '.legend-box { width: 16px; height: 16px; border-radius: 3px; margin-right: 5px; }' +
+    '.legend-core { background-color: #e8f5e9; border-left: 3px solid #4caf50; }' +
+    '.legend-extended { background-color: #fff9e6; border-left: 3px solid #ff9800; }' +
+    '.dept-section { margin: 15px 0; border: 1px solid #ddd; border-radius: 4px; padding: 12px; }' +
+    '.dept-section h3 { margin: 0 0 10px 0; font-size: 14px; color: #5f6368; }' +
+    '.dept-list { display: flex; gap: 12px; flex-wrap: wrap; }' +
+    '.dept-item { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 14px; border-radius: 4px; border: 1px solid #ddd; user-select: none; }' +
+    '.dept-item:hover { background-color: #f0f0f0; }' +
+    '.dept-item.checked { background-color: #e8f0fe; border-color: #1a73e8; }' +
+    '.dept-planning { color: #2e7d32; font-weight: bold; }' +
+    '.dept-marketing { color: #c62828; font-weight: bold; }' +
+    '.dept-math { color: #1565c0; font-weight: bold; }' +
+    '</style>' +
+    '</head>' +
+    '<body>' +
+    '<div class="container">' +
+    '<h2>📅 選擇要更新的年度</h2>' +
+    '<div class="warning-box">' +
+    '<p><strong>⚠️ 智能掃描說明：</strong></p>' +
+    '<p>點選任一年度時，系統會自動勾選<strong>前後年度</strong>，確保跨年活動資料完整。</p>' +
+    '<div class="example">' +
+    '範例：點選 2025 → 自動勾選 2024、2025、2026' +
+    '</div>' +
+    '</div>' +
+    '<p>請勾選要更新快取的目標年度：</p>' +
+    '<div class="year-list">' +
+    '<div class="year-item select-all">' +
+    '<label>' +
+    '<input type="checkbox" id="selectAll">' +
+    '<span class="year-label">✨ 全部年度</span>' +
+    '</label>' +
+    '</div>' +
+    yearOptionsHtml +
+    '</div>' +
+    '<div class="legend">' +
+    '<div class="legend-item">' +
+    '<div class="legend-box legend-core"></div>' +
+    '<span>核心年度（目標）</span>' +
+    '</div>' +
+    '<div class="legend-item">' +
+    '<div class="legend-box legend-extended"></div>' +
+    '<span>擴展年度（跨年掃描）</span>' +
+    '</div>' +
+    '</div>' +
+    '<div class="selected-count">' +
+    '核心年度：<span id="coreCount">0</span> 個 | 總掃描：<span id="totalCount">0</span> 個' +
+    '</div>' +
+    '<div class="dept-section">' +
+    '<h3>📂 選擇要更新的部門（預設全選）</h3>' +
+    '<div class="dept-list">' +
+    '<label class="dept-item checked" id="dept-planning-label">' +
+    '<input type="checkbox" id="dept-planning" checked>' +
+    '<span class="dept-planning">企劃</span>' +
+    '</label>' +
+    '<label class="dept-item checked" id="dept-marketing-label">' +
+    '<input type="checkbox" id="dept-marketing" checked>' +
+    '<span class="dept-marketing">行銷</span>' +
+    '</label>' +
+    '<label class="dept-item checked" id="dept-math-label">' +
+    '<input type="checkbox" id="dept-math" checked>' +
+    '<span class="dept-math">數學</span>' +
+    '</label>' +
+    '</div>' +
+    '</div>' +
+    '<div class="buttons">' +
+    '<button class="btn-cancel" id="btnCancel">取消</button>' +
+    '<button class="btn-confirm" id="btnConfirm">確認並開始更新</button>' +
+    '</div>' +
+    '</div>' +
+    '<script>' +
+    'var coreYears = new Set();' +
+    'var extendedYears = new Set();' +
+    '' +
+    'function updateVisuals() {' +
+    '  var allCheckboxes = document.querySelectorAll(".year-checkbox");' +
+    '  var allYears = Array.from(allCheckboxes).map(cb => cb.value);' +
+    '  ' +
+    '  allCheckboxes.forEach(function(checkbox) {' +
+    '    var year = checkbox.value;' +
+    '    var yearItem = checkbox.closest(".year-item");' +
+    '    var badge = yearItem.querySelector(".year-badge");' +
+    '    ' +
+    '    yearItem.classList.remove("core-year", "extended-year");' +
+    '    badge.style.display = "none";' +
+    '    badge.className = "year-badge";' +
+    '    ' +
+    '    if (coreYears.has(year)) {' +
+    '      yearItem.classList.add("core-year");' +
+    '      badge.textContent = "核心";' +
+    '      badge.classList.add("badge-core");' +
+    '      badge.style.display = "inline-block";' +
+    '    } else if (extendedYears.has(year)) {' +
+    '      yearItem.classList.add("extended-year");' +
+    '      badge.textContent = "擴展";' +
+    '      badge.classList.add("badge-extended");' +
+    '      badge.style.display = "inline-block";' +
+    '    }' +
+    '  });' +
+    '  ' +
+    '  document.getElementById("coreCount").textContent = coreYears.size;' +
+    '  var totalYears = new Set([...coreYears, ...extendedYears]);' +
+    '  document.getElementById("totalCount").textContent = totalYears.size;' +
+    '  ' +
+    '  var selectAll = document.getElementById("selectAll");' +
+    '  var total = allCheckboxes.length;' +
+    '  var checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;' +
+    '  selectAll.checked = (checkedCount === total && total > 0);' +
+    '}' +
+    '' +
+    'function handleYearClick(checkbox) {' +
+    '  var year = parseInt(checkbox.value);' +
+    '  var allCheckboxes = document.querySelectorAll(".year-checkbox");' +
+    '  var allYears = Array.from(allCheckboxes).map(cb => parseInt(cb.value));' +
+    '  ' +
+    '  if (checkbox.checked) {' +
+    '    coreYears.add(checkbox.value);' +
+    '    ' +
+    '    var prevYear = (year - 1).toString();' +
+    '    var nextYear = (year + 1).toString();' +
+    '    ' +
+    '    if (allYears.includes(year - 1)) {' +
+    '      var prevCheckbox = Array.from(allCheckboxes).find(cb => cb.value === prevYear);' +
+    '      if (prevCheckbox && !prevCheckbox.checked) {' +
+    '        prevCheckbox.checked = true;' +
+    '        if (!coreYears.has(prevYear)) {' +
+    '          extendedYears.add(prevYear);' +
+    '        }' +
+    '      }' +
+    '    }' +
+    '    ' +
+    '    if (allYears.includes(year + 1)) {' +
+    '      var nextCheckbox = Array.from(allCheckboxes).find(cb => cb.value === nextYear);' +
+    '      if (nextCheckbox && !nextCheckbox.checked) {' +
+    '        nextCheckbox.checked = true;' +
+    '        if (!coreYears.has(nextYear)) {' +
+    '          extendedYears.add(nextYear);' +
+    '        }' +
+    '      }' +
+    '    }' +
+    '  } else {' +
+    '    coreYears.delete(checkbox.value);' +
+    '    extendedYears.delete(checkbox.value);' +
+    '    ' +
+    '    var year = parseInt(checkbox.value);' +
+    '    var prevYear = (year - 1).toString();' +
+    '    var nextYear = (year + 1).toString();' +
+    '    ' +
+    '    if (extendedYears.has(prevYear) && !coreYears.has(prevYear)) {' +
+    '      var shouldKeepPrev = false;' +
+    '      coreYears.forEach(function(coreYear) {' +
+    '        if (parseInt(coreYear) - 1 === year - 1) shouldKeepPrev = true;' +
+    '      });' +
+    '      if (!shouldKeepPrev) {' +
+    '        extendedYears.delete(prevYear);' +
+    '        var prevCheckbox = Array.from(allCheckboxes).find(cb => cb.value === prevYear);' +
+    '        if (prevCheckbox) prevCheckbox.checked = false;' +
+    '      }' +
+    '    }' +
+    '    ' +
+    '    if (extendedYears.has(nextYear) && !coreYears.has(nextYear)) {' +
+    '      var shouldKeepNext = false;' +
+    '      coreYears.forEach(function(coreYear) {' +
+    '        if (parseInt(coreYear) + 1 === year + 1) shouldKeepNext = true;' +
+    '      });' +
+    '      if (!shouldKeepNext) {' +
+    '        extendedYears.delete(nextYear);' +
+    '        var nextCheckbox = Array.from(allCheckboxes).find(cb => cb.value === nextYear);' +
+    '        if (nextCheckbox) nextCheckbox.checked = false;' +
+    '      }' +
+    '    }' +
+    '  }' +
+    '  ' +
+    '  updateVisuals();' +
+    '}' +
+    '' +
+    'function toggleAll(checkbox) {' +
+    '  var checkboxes = document.querySelectorAll(".year-checkbox");' +
+    '  coreYears.clear();' +
+    '  extendedYears.clear();' +
+    '  ' +
+    '  checkboxes.forEach(function(cb) {' +
+    '    cb.checked = checkbox.checked;' +
+    '    if (checkbox.checked) {' +
+    '      coreYears.add(cb.value);' +
+    '    }' +
+    '  });' +
+    '  ' +
+    '  updateVisuals();' +
+    '}' +
+    '' +
+    'function confirmSelection() {' +
+    '  var selectAll = document.getElementById("selectAll");' +
+    '  var selectedYears;' +
+    '  if (selectAll.checked) { selectedYears = []; } else { selectedYears = Array.from(coreYears); }' +
+    '  if (!selectAll.checked && selectedYears.length === 0) { alert("請至少選擇一個年度"); return; }' +
+    '  var depts = [];' +
+    '  if (document.getElementById("dept-planning").checked) depts.push("企劃");' +
+    '  if (document.getElementById("dept-marketing").checked) depts.push("行銷");' +
+    '  if (document.getElementById("dept-math").checked) depts.push("數學");' +
+    '  if (depts.length === 0) { alert("請至少選擇一個部門"); return; }' +
+    '  var yearInfo = selectAll.checked ? "全部年度" : selectedYears.join(", ");' +
+    '  var totalYears = new Set([...coreYears, ...extendedYears]);' +
+    '  var scanInfo = selectAll.checked ? "全部年度" : Array.from(totalYears).sort().join(", ");' +
+    '  document.querySelector(".container").innerHTML = "<div style=\'text-align:center;padding:40px\'><p style=\'font-size:18px;color:#1a73e8;font-weight:bold\'>⚡ 開始運行中...</p><p style=\'color:#5f6368;font-size:13px\'>視窗即將自動關閉</p></div>";' +
+    '  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(error){ alert("啟動失敗：" + error); }).startCacheUpdateWithYears(selectedYears, depts);' +
+    '  setTimeout(function(){ google.script.host.close(); }, 1500);' +
+    '}' +
+    '' +
+    'window.addEventListener("DOMContentLoaded", function() {' +
+    '  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).ping();' +
+    '  var selectAllCheckbox = document.getElementById("selectAll");' +
+    '  if (selectAllCheckbox) {' +
+    '    selectAllCheckbox.addEventListener("change", function() { toggleAll(this); });' +
+    '  }' +
+    '  ' +
+    '  var yearCheckboxes = document.querySelectorAll(".year-checkbox");' +
+    '  yearCheckboxes.forEach(function(checkbox) {' +
+    '    checkbox.addEventListener("change", function() { handleYearClick(this); });' +
+    '  });' +
+    '  ' +
+    '  var btnCancel = document.getElementById("btnCancel");' +
+    '  if (btnCancel) {' +
+    '    btnCancel.addEventListener("click", function() { google.script.host.close(); });' +
+    '  }' +
+    '  ' +
+    '  var btnConfirm = document.getElementById("btnConfirm");' +
+    '  if (btnConfirm) {' +
+    '    btnConfirm.addEventListener("click", confirmSelection);' +
+    '  }' +
+    '  ["dept-planning", "dept-marketing", "dept-math"].forEach(function(id) {' +
+    '    var cb = document.getElementById(id);' +
+    '    if (cb) {' +
+    '      cb.addEventListener("change", function() {' +
+    '        var label = document.getElementById(id + "-label");' +
+    '        if (this.checked) { label.classList.add("checked"); } else { label.classList.remove("checked"); }' +
+    '      });' +
+    '    }' +
+    '  });' +
+    '  updateVisuals();' +
+    '});' +
+    '</script>' +
+    '</body>' +
+    '</html>';
+  
+  const htmlOutput = HtmlService.createHtmlOutput(htmlContent)
+    .setWidth(600)
+    .setHeight(580);
+  
+  ui.showModalDialog(htmlOutput, '選擇年度');
+}
+
+// ============================================
+// 🆕 取得所有可用年度
+// ============================================
+function getAvailableYears() {
+  const years = new Set();
+  
+  try {
+    // 掃描企劃簡報（舊雲端）
+    const rootFolder = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID);
+    const folders = rootFolder.getFolders();
+    
+    while (folders.hasNext()) {
+      const folder = folders.next();
+      const folderName = folder.getName();
+      
+      // 根目錄的年度資料夾
+      if (/^\d{4}$/.test(folderName)) {
+        years.add(folderName);
+      }
+      
+      // 歷屆資料中的年度資料夾
+      if (folderName === '歷屆資料') {
+        const historyFolders = folder.getFolders();
+        while (historyFolders.hasNext()) {
+          const subFolder = historyFolders.next();
+          if (/^\d{4}$/.test(subFolder.getName())) {
+            years.add(subFolder.getName());
+          }
+        }
+      }
+    }
+    
+    // 掃描行銷簡報（新雲端）
+    try {
+      const slotFolder = DriveApp.getFolderById(CONFIG.SLOT_FOLDER_ID);
+      const slotFolders = slotFolder.getFolders();
+      while (slotFolders.hasNext()) {
+        const folder = slotFolders.next();
+        const folderName = folder.getName();
+        if (/^\d{4}$/.test(folderName)) { years.add(folderName); }
+        if (folderName === '歷屆資料') {
+          const historyFolders = folder.getFolders();
+          while (historyFolders.hasNext()) {
+            const subFolder = historyFolders.next();
+            if (/^\d{4}$/.test(subFolder.getName())) { years.add(subFolder.getName()); }
+          }
+        }
+      }
+    } catch (slotError) {
+      console.log('掃描行銷簡報資料夾時發生錯誤（可能無權限）：', slotError);
+    }
+
+    // 掃描數學簡報（新雲端）
+    try {
+      const mathFolder = DriveApp.getFolderById(CONFIG.MATH_FOLDER_ID);
+      const mathFolders = mathFolder.getFolders();
+      while (mathFolders.hasNext()) {
+        const folder = mathFolders.next();
+        const folderName = folder.getName();
+        if (/^\d{4}$/.test(folderName)) { years.add(folderName); }
+        if (folderName === '歷屆資料') {
+          const historyFolders = folder.getFolders();
+          while (historyFolders.hasNext()) {
+            const subFolder = historyFolders.next();
+            if (/^\d{4}$/.test(subFolder.getName())) { years.add(subFolder.getName()); }
+          }
+        }
+      }
+    } catch (mathError) {
+      console.log('掃描數學簡報資料夾時發生錯誤（可能無權限）：', mathError);
+    }
+    
+  } catch (error) {
+    console.error('掃描年度資料夾時發生錯誤：', error);
+  }
+  
+  // 轉成陣列並排序（由新到舊）
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+// ============================================
+// 🆕 啟動年度篩選的快取更新
+// ============================================
+function startCacheUpdateWithYears(selectedYears, selectedDepts) {
+  if (selectedYears.length === 0) {
+    SCRIPT_PROPERTIES.setProperty('SELECTED_YEARS', 'ALL');
+  } else {
+    SCRIPT_PROPERTIES.setProperty('SELECTED_YEARS', JSON.stringify(selectedYears));
+  }
+  if (!selectedDepts || selectedDepts.length === 0) {
+    SCRIPT_PROPERTIES.setProperty('SELECTED_DEPTS', 'ALL');
+  } else {
+    SCRIPT_PROPERTIES.setProperty('SELECTED_DEPTS', JSON.stringify(selectedDepts));
+  }
+  directExtractToCache();
+}
+
+// ============================================
+// 🆕 清除快取中特定年度的資料
+// ============================================
+function clearCacheByYear(cacheSheet, year) {
+  if (!cacheSheet || cacheSheet.getLastRow() <= 1) {
+    console.log(`快取工作表為空，無需清除 ${year} 年資料`);
+    return;
+  }
+  
+  const lastRow = cacheSheet.getLastRow();
+  
+  // 清除企劃欄（A~E，B欄是季度）
+  const planningRange = cacheSheet.getRange(2, 1, lastRow - 1, 5);
+  const planningValues = planningRange.getValues();
+  const rowsToDelete = new Set();
+  
+  for (let i = planningValues.length - 1; i >= 0; i--) {
+    const quarter = planningValues[i][1]; // B欄
+    if (quarter && quarter.toString().startsWith(year.toString())) {
+      rowsToDelete.add(i + 2);
+    }
+  }
+  
+  // 清除行銷欄（K~O，L欄是季度，即第12欄，相對K欄偏移1）
+  const marketingRange = cacheSheet.getRange(2, 11, lastRow - 1, 5);
+  const marketingValues = marketingRange.getValues();
+  
+  for (let i = marketingValues.length - 1; i >= 0; i--) {
+    const quarter = marketingValues[i][1]; // L欄（相對第2個）
+    if (quarter && quarter.toString().startsWith(year.toString())) {
+      rowsToDelete.add(i + 2);
+    }
+  }
+  
+  // 從後往前刪除
+  const sortedRows = Array.from(rowsToDelete).sort((a, b) => b - a);
+  if (sortedRows.length > 0) {
+    console.log(`刪除 ${year} 年的舊快取資料：共 ${sortedRows.length} 筆`);
+    for (let rowIndex of sortedRows) {
+      cacheSheet.deleteRow(rowIndex);
+    }
+  } else {
+    console.log(`快取中沒有 ${year} 年的舊資料`);
+  }
+}
+
+// ============================================
+// 🆕 智能跨年掃描版：直接提取到快取（修正版）
+// ============================================
+function directExtractToCache() {
+  const startTime = new Date().getTime();
+  const MAX_EXECUTION_TIME = 4 * 60 * 1000; // 4分鐘
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  
+  // ============================================
+  // 🆕 智能年度擴展：自動包含前後年度
+  // ============================================
+  // 原因：活動可能跨年（例如 2025/12/20~2026/01/10）
+  // - 2025年活動可能存放在 2024/ 資料夾（跨年開始）
+  // - 2025年活動可能延續到 2026/ 資料夾（跨年結束）
+  // 因此必須掃描「前一年+目標年+後一年」的資料夾，才能確保資料完整
+  // ============================================
+  
+  const selectedYearsStr = SCRIPT_PROPERTIES.getProperty('SELECTED_YEARS');
+  const selectedDeptsStr = SCRIPT_PROPERTIES.getProperty('SELECTED_DEPTS');
+  let selectedYears = null;
+  let scanYears = null;
+  let scanDepts = ['企劃', '行銷', '數學'];
+  
+  if (selectedYearsStr && selectedYearsStr !== 'ALL') {
+    selectedYears = JSON.parse(selectedYearsStr);
+    
+    // 🔑 智能擴展：自動加入前後年度
+    const expandedYears = new Set();
+    selectedYears.forEach(year => {
+      const yearNum = parseInt(year);
+      expandedYears.add((yearNum - 1).toString());  // 前一年
+      expandedYears.add(year);                       // 當年
+      expandedYears.add((yearNum + 1).toString());  // 後一年
+    });
+    
+    scanYears = Array.from(expandedYears).sort();
+    
+    console.log(`📅 目標年度：${selectedYears.join(', ')}`);
+    console.log(`📂 實際掃描：${scanYears.join(', ')}（含前後年度）`);
+    console.log(`💡 原因：確保跨年活動資料完整`);
+  } else {
+    console.log('📅 掃描全部年度');
+  }
+  
+  if (selectedDeptsStr && selectedDeptsStr !== 'ALL') {
+    scanDepts = JSON.parse(selectedDeptsStr);
+  }
+  console.log(`🏢 掃描部門：${scanDepts.join(', ')}`);
+  
+  // 取得或建立快取工作表
+  let cacheSheet = ss.getSheetByName('投影片資料快取');
+  if (!cacheSheet) {
+    cacheSheet = ss.insertSheet('投影片資料快取');
+    cacheSheet.getRange('A1:E1').setValues([
+      ['競品名稱', '季度', '類型', 'JSON資料', '更新時間']
+    ]);
+    cacheSheet.setFrozenRows(1);
+  }
+  
+  console.log('🚀 開始從投影片直接提取資料到快取...');
+  
+  // 讀取進度
+  let tempSheet = ss.getSheetByName('資料暫存_快取');
+  if (!tempSheet) {
+    tempSheet = ss.insertSheet('資料暫存_快取');
+    tempSheet.getRange('A1:D1').setValues([["年度索引", "產品索引", "產品名稱", "最後執行時間"]]);
+    tempSheet.getRange('A2:D2').setValues([[0, 0, '', '']]);
+  }
+  
+  let yearIndex = 0;
+  let productIndex = 0;
+  let productName = '';
+  const tempData = tempSheet.getRange('A2:D2').getValues()[0];
+  
+  if (tempData[0] !== '' && tempData[0] !== 0) {
+    yearIndex = parseInt(tempData[0]);
+  }
+  if (tempData[1] !== '' && tempData[1] !== 0) {
+    productIndex = parseInt(tempData[1]);
+  }
+  if (tempData[2] !== '') {
+    productName = tempData[2];
+  }
+  
+  // 收集所有年度資料夾（雙來源）
+  let folderArray = [];
+  let historyFoldersArr = [];
+  let rootYearFoldersArr = [];
+  
+  // === 掃描企劃簡報（舊雲端）===
+  console.log('📂 掃描企劃簡報資料夾...');
+  if (scanDepts.includes('企劃')) {
+  const rootFolders = DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID).getFolders();
+  while (rootFolders.hasNext()) {
+    const folder = rootFolders.next();
+    if (folder.getName() === '歷屆資料') {
+      const historyFolders = folder.getFolders();
+      while (historyFolders.hasNext()) {
+        const subFolder = historyFolders.next();
+        const yearName = subFolder.getName();
+        if (/^\d{4}$/.test(yearName)) {
+          if (!scanYears || scanYears.includes(yearName)) {
+            historyFoldersArr.push({folder: subFolder, source: '企劃簡報'});
+          } else {
+            console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+          }
+        }
+      }
+    } else if (/^\d{4}$/.test(folder.getName())) {
+      const yearName = folder.getName();
+      if (!scanYears || scanYears.includes(yearName)) {
+        rootYearFoldersArr.push({folder: folder, source: '企劃簡報'});
+      } else {
+        console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+      }
+    }
+  }
+  } else {
+    console.log('⏭️ 跳過企劃簡報（未選取）');
+  }
+  
+  // === 掃描行銷簡報（新雲端）===
+  console.log('📂 掃描行銷簡報資料夾...');
+  if (scanDepts.includes('行銷')) {
+    try {
+      const slotFolders = DriveApp.getFolderById(CONFIG.SLOT_FOLDER_ID).getFolders();
+      while (slotFolders.hasNext()) {
+        const folder = slotFolders.next();
+        if (folder.getName() === '歷屆資料') {
+          const historyFolders = folder.getFolders();
+          while (historyFolders.hasNext()) {
+            const subFolder = historyFolders.next();
+            const yearName = subFolder.getName();
+            if (/^\d{4}$/.test(yearName)) {
+              if (!scanYears || scanYears.includes(yearName)) {
+                historyFoldersArr.push({folder: subFolder, source: '行銷簡報'});
+              } else {
+                console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+              }
+            }
+          }
+        } else if (/^\d{4}$/.test(folder.getName())) {
+          const yearName = folder.getName();
+          if (!scanYears || scanYears.includes(yearName)) {
+            rootYearFoldersArr.push({folder: folder, source: '行銷簡報'});
+          } else {
+            console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+          }
+        }
+      }
+    } catch (slotError) {
+      console.log('⚠️ 掃描行銷簡報資料夾時發生錯誤（可能無權限）：', slotError);
+    }
+  } else {
+    console.log('⏭️ 跳過行銷簡報（未選取）');
+  }
+
+  // === 掃描數學簡報（新雲端）===
+  console.log('📂 掃描數學簡報資料夾...');
+  if (scanDepts.includes('數學')) {
+    try {
+      const mathFolders = DriveApp.getFolderById(CONFIG.MATH_FOLDER_ID).getFolders();
+      while (mathFolders.hasNext()) {
+        const folder = mathFolders.next();
+        if (folder.getName() === '歷屆資料') {
+          const historyFolders = folder.getFolders();
+          while (historyFolders.hasNext()) {
+            const subFolder = historyFolders.next();
+            const yearName = subFolder.getName();
+            if (/^\d{4}$/.test(yearName)) {
+              if (!scanYears || scanYears.includes(yearName)) {
+                historyFoldersArr.push({folder: subFolder, source: '數學簡報'});
+              } else {
+                console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+              }
+            }
+          }
+        } else if (/^\d{4}$/.test(folder.getName())) {
+          const yearName = folder.getName();
+          if (!scanYears || scanYears.includes(yearName)) {
+            rootYearFoldersArr.push({folder: folder, source: '數學簡報'});
+          } else {
+            console.log(`⏭️ 跳過年度：${yearName}（不在掃描範圍）`);
+          }
+        }
+      }
+    } catch (mathError) {
+      console.log('⚠️ 掃描數學簡報資料夾時發生錯誤（可能無權限）：', mathError);
+    }
+  } else {
+    console.log('⏭️ 跳過數學簡報（未選取）');
+  }
+  
+  historyFoldersArr.sort((a, b) => a.folder.getName() - b.folder.getName());
+  rootYearFoldersArr.sort((a, b) => a.folder.getName() - b.folder.getName());
+  folderArray = historyFoldersArr.concat(rootYearFoldersArr);
+  
+  console.log(`找到 ${folderArray.length} 個年度資料夾（已篩選，含雙來源）`);
+  
+  // ==========================================
+  // 🆕 開始掃描前：一次性清除所有目標年度的快取
+  // 原因：避免處理後續年度時刪除前面年度寫入的跨年資料
+  // ==========================================
+if (yearIndex === 0 && productIndex === 0) {
+  console.log('🧹 清除投影片資料快取所有資料...');
+  const lastRow = cacheSheet.getLastRow();
+  if (lastRow > 1) {
+    cacheSheet.getRange(2, 1, lastRow - 1, cacheSheet.getLastColumn()).clearContent();
+  }
+  console.log('  ✓ 已清除完畢');
+}
+  
+  // ==========================================
+  // 主要邏輯：逐年處理
+  // ==========================================
+  for (let i = yearIndex; i < folderArray.length; i++) {
+    const yearFolderInfo = folderArray[i];
+    const yearFolder = yearFolderInfo.folder;
+    const source = yearFolderInfo.source;
+    const year = yearFolder.getName();
+    
+    console.log(`📖 處理年度資料夾：${year}（來源：${source}）`);
+    
+    // 🔑 一次性提取該年度所有產品活動
+    let productActivities = new Map();
+    let productMathData = new Map();  // 存放各產品的數學資料
+    processFolder(yearFolder, productActivities, productMathData, year, source);
+    const productNames = Array.from(productActivities.keys());
+    
+    console.log(`找到 ${productNames.length} 個產品`);
+    
+    // 逐個產品處理
+    for (let j = productIndex; j < productNames.length; j++) {
+      // 檢查執行時間
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - startTime;
+      if (elapsedTime > MAX_EXECUTION_TIME) {
+        // 💾 儲存進度
+        tempSheet.getRange('A2:D2').setValues([[i, j, productNames[j], new Date().toISOString()]]);
+        SpreadsheetApp.flush();
+        
+        // 設定觸發器繼續執行
+        const triggers = ScriptApp.getProjectTriggers();
+        triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+        ScriptApp.newTrigger('directExtractToCache')
+          .timeBased()
+          .after(30 * 1000)
+          .create();
+        
+        console.log(`⏱️ 執行時間超過限制，已儲存進度，30秒後繼續...`);
+        return;
+      }
+      
+      const currentProductName = productNames[j];
+      let activities = productActivities.get(currentProductName);
+      
+      // 移除「時間軸」後綴
+      const cleanProductName = currentProductName.replace('時間軸', '').replace('行銷', '').trim();
+      
+      console.log(`處理產品：${cleanProductName}（${activities.length} 個活動）[來源：${source}]`);
+      
+      // 過濾重複
+      const filteredActivities = filterDuplicateActivities(activities);
+      console.log(`  去重後：${filteredActivities.length} 個活動`);
+      
+      // 🔑 按年度分組（處理跨年拆分）
+      const activitiesByYear = new Map();
+      
+      filteredActivities.forEach(act => {
+        const startYear = new Date(act.startDate).getFullYear();
+        const endYear = new Date(act.endDate).getFullYear();
+        
+        if (startYear === endYear) {
+          if (!activitiesByYear.has(startYear)) {
+            activitiesByYear.set(startYear, []);
+          }
+          activitiesByYear.get(startYear).push(act);
+          
+        } else {
+          console.log(`  ⚠️ 跨年活動：${act.name}`);
+          
+          const firstYearActivity = {
+            type: act.type,
+            name: act.name,
+            startDate: act.startDate,
+            endDate: new Date(startYear, 11, 31, 23, 59, 59),
+            url: act.url,
+            year: startYear
+          };
+          
+          const secondYearActivity = {
+            type: act.type,
+            name: act.name,
+            startDate: new Date(endYear, 0, 1, 0, 0, 0),
+            endDate: act.endDate,
+            url: act.url,
+            year: endYear
+          };
+          
+          if (!activitiesByYear.has(startYear)) {
+            activitiesByYear.set(startYear, []);
+          }
+          activitiesByYear.get(startYear).push(firstYearActivity);
+          
+          if (!activitiesByYear.has(endYear)) {
+            activitiesByYear.set(endYear, []);
+          }
+          activitiesByYear.get(endYear).push(secondYearActivity);
+          
+          console.log(`    ├─ ${startYear}年部分：${Utilities.formatDate(firstYearActivity.startDate, 'GMT+8', 'MM/dd')}~12/31`);
+          console.log(`    └─ ${endYear}年部分：01/01~${Utilities.formatDate(secondYearActivity.endDate, 'GMT+8', 'MM/dd')}`);
+        }
+      });
+      
+      // 🔑 依來源決定寫入欄位：企劃→A欄(1)，行銷→K欄(11)
+      for (let [actYear, yearActivities] of activitiesByYear) {
+        if (source === '行銷簡報') {
+          writeToCacheDirectly(cacheSheet, cleanProductName, actYear, yearActivities, 11);
+          console.log(`  ✓ ${actYear}年 寫入 ${yearActivities.length} 個活動到快取（K欄，行銷）`);
+        } else {
+          writeToCacheDirectly(cacheSheet, cleanProductName, actYear, yearActivities, 1);
+          console.log(`  ✓ ${actYear}年 寫入 ${yearActivities.length} 個活動到快取（A欄，企劃）`);
+        }
+      }
+      
+      // 寫入數學資料到 G~I 欄
+      if (productMathData.has(cleanProductName)) {
+        const mathDataArray = productMathData.get(cleanProductName);
+        const mathCount = writeToMathCache(cacheSheet, mathDataArray);
+        if (mathCount > 0) {
+          console.log(`  ✓ 寫入 ${mathCount} 筆數學資料到 G~I 欄`);
+        }
+      }
+      
+      // 更新進度
+      tempSheet.getRange('A2:D2').setValues([[i, j + 1, '', new Date().toISOString()]]);
+      SpreadsheetApp.flush();
+    }
+    
+    // 該年度完成，重置產品索引
+    productIndex = 0;
+  }
+  
+  // 🎉 全部完成，清除暫存
+  tempSheet.getRange('A2:D2').setValues([[0, 0, '', '']]);
+  SCRIPT_PROPERTIES.deleteProperty('SELECTED_YEARS');
+  SCRIPT_PROPERTIES.deleteProperty('SELECTED_DEPTS');
+  
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  
+  console.log('✅ 所有資料已直接寫入快取！');
+  
+  try {
+    let alertMsg = '✅ 快取更新完成！\n\n';
+    
+    if (selectedYears) {
+      alertMsg += `目標年度：${selectedYears.join(', ')}\n`;
+      alertMsg += `實際掃描：${scanYears.join(', ')}（含前後年度）\n\n`;
+      alertMsg += '💡 因跨年活動需求，已自動擴展掃描範圍\n';
+    } else {
+      alertMsg += '掃描年度：全部年度\n';
+    }
+    
+    alertMsg += '\n資料已從投影片直接寫入快取';
+    
+    SpreadsheetApp.getUi().alert(alertMsg);
+  } catch (e) {
+    console.log('快取更新完成（無法顯示對話框）');
+  }
+}
+
+// ============================================
+// 🆕 直接寫入快取
+// 注意：在調用此函數前，應該已經用 clearCacheByYear 清除該年度的舊資料
+// ============================================
+function writeToCacheDirectly(cacheSheet, productName, year, activities, startCol) {
+  if (!startCol) startCol = 1;  // 預設從 A 欄（企劃）
+  const timestamp = new Date();
+  
+  // 🔑 按季度分組並寫入新資料
+  const quarterGroups = {};
+  
+  activities.forEach(activity => {
+    const actMonth = new Date(activity.startDate).getMonth() + 1;
+    const quarter = 'Q' + Math.ceil(actMonth / 3);
+    const quarterKey = `${year}-${quarter}`;
+    
+    if (!quarterGroups[quarterKey]) {
+      quarterGroups[quarterKey] = { stats: [], activities: [] };
+    }
+    
+    // 轉換為 Web App 需要的格式
+    quarterGroups[quarterKey].activities.push({
+      month: `${year}-${String(actMonth).padStart(2, '0')}`,
+      name: activity.name,
+      type: activity.type,
+      startDate: `${new Date(activity.startDate).getMonth() + 1}/${new Date(activity.startDate).getDate()}`,
+      endDate: `${new Date(activity.endDate).getMonth() + 1}/${new Date(activity.endDate).getDate()}`,
+      url: activity.url,
+      originalContent: activity.name
+    });
+  });
+  
+  // 生成統計資料（按月分開統計，避免同一季度不同月份的資料被合併到同一月份）
+  for (let [quarterKey, quarterData] of Object.entries(quarterGroups)) {
+    const monthTypeCount = {};
+    quarterData.activities.forEach(act => {
+      const key = `${act.month}|${act.type}`;
+      monthTypeCount[key] = (monthTypeCount[key] || 0) + 1;
+    });
+    
+    quarterData.stats = Object.entries(monthTypeCount).map(([key, count]) => {
+      const [month, type] = key.split('|');
+      return { month, type, count };
+    });
+  }
+  
+  // 寫入新資料（因為已先清除舊資料，所以直接追加不會重複）
+  const dataToWrite = [];
+  for (let [quarterKey, quarterData] of Object.entries(quarterGroups)) {
+    dataToWrite.push([
+      productName,
+      quarterKey,
+      'all',
+      JSON.stringify(quarterData),
+      timestamp
+    ]);
+  }
+  
+  if (dataToWrite.length > 0) {
+    const colValues = cacheSheet.getRange(2, startCol, Math.max(cacheSheet.getLastRow(), 2), 1).getValues();
+    let lastFilledRow = 1;
+    for (let i = colValues.length - 1; i >= 0; i--) {
+      if (colValues[i][0] !== '') { lastFilledRow = i + 2; break; }
+    }
+    const startRow = lastFilledRow + 1;
+    cacheSheet.getRange(startRow, startCol, dataToWrite.length, 5).setValues(dataToWrite);
+  }
+}
+
+// ============================================
+// 🆕 記錄跨年活動異常到 log 分頁
+// ============================================
+function logCrossYearActivity(productName, scanYear, actYear, activities) {
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    let logSheet = ss.getSheetByName(ERROR_SHEET_NAME);
+    
+    if (!logSheet) {
+      logSheet = ss.insertSheet(ERROR_SHEET_NAME);
+      const headers = ['時間戳記', '產品名稱', '掃描年度', '跨年年度', '活動數量', '活動清單', '狀態'];
+      logSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      logSheet.getRange(1, 1, 1, headers.length)
+        .setBackground('#4A86E8')
+        .setFontColor('#FFFFFF')
+        .setFontWeight('bold')
+        .setHorizontalAlignment('center');
+      logSheet.setFrozenRows(1);
+      logSheet.setColumnWidth(1, 180);
+      logSheet.setColumnWidth(2, 150);
+      logSheet.setColumnWidth(3, 100);
+      logSheet.setColumnWidth(4, 100);
+      logSheet.setColumnWidth(5, 100);
+      logSheet.setColumnWidth(6, 500);
+      logSheet.setColumnWidth(7, 100);
+    }
+    
+    const activityList = activities.map(act => {
+      const startDate = Utilities.formatDate(act.startDate, 'GMT+8', 'yyyy/MM/dd');
+      const endDate = Utilities.formatDate(act.endDate, 'GMT+8', 'yyyy/MM/dd');
+      return `${act.type} - ${act.name} (${startDate}~${endDate})`;
+    }).join('\n');
+    
+    const timestamp = new Date();
+    const newRow = [
+      Utilities.formatDate(timestamp, 'GMT+8', 'yyyy-MM-dd HH:mm:ss'),
+      productName,
+      scanYear,
+      actYear,
+      activities.length,
+      activityList,
+      '待處理'
+    ];
+    
+    logSheet.insertRowAfter(1);
+    logSheet.getRange(2, 1, 1, newRow.length).setValues([newRow]);
+    
+    const newRowRange = logSheet.getRange(2, 1, 1, newRow.length);
+    newRowRange.setBackground('#FFF3CD');
+    newRowRange.setBorder(true, true, true, true, true, true);
+    logSheet.getRange(2, 7).setBackground('#FFC107').setFontWeight('bold');
+    logSheet.getRange(2, 6).setWrap(true);
+    
+    console.log(`✅ 已記錄跨年活動異常：${productName} 的 ${actYear}年活動（共 ${activities.length} 個）`);
+    
+  } catch (error) {
+    console.error('記錄跨年活動異常時發生錯誤：', error);
+  }
+}
+
+function filterDuplicateActivities(activities) {
+  console.log('開始過濾重複活動');
+  
+  if (!activities || !Array.isArray(activities)) {
+    console.log('沒有活動資料或資料格式不正確');
+    return [];
+  }
+  
+  const uniqueActivities = new Map();
+  
+  activities.forEach(activity => {
+    if (!activity) {
+      console.log('跳過無效的活動資料');
+      return;
+    }
+    
+    try {
+      const normalizedName = activity.name
+        .replace(/\s+/g, ' ')
+        .replace(/[～-]/g, '~')
+        .trim();
+      
+      const key = `${activity.type}_${normalizedName}_${activity.startDate.getTime()}_${activity.endDate.getTime()}`;
+      
+      const existingActivity = uniqueActivities.get(key);
+      if (!existingActivity) {
+        uniqueActivities.set(key, activity);
+      } else {
+        if (activity.url > existingActivity.url) {
+          uniqueActivities.set(key, activity);
+        }
+      }
+    } catch (error) {
+      console.error('處理活動時發生錯誤：', error);
+      console.error('問題活動：', activity);
+    }
+  });
+  
+  const result = Array.from(uniqueActivities.values());
+  console.log(`過濾完成：原始活動數量 ${activities.length}，過濾後活動數量 ${result.length}`);
+  return result;
+}
+
+function checkProgress() {
+  console.log('=== 進度檢查 ===');
+  
+  const progress = SCRIPT_PROPERTIES.getProperty('PROGRESS');
+  const savedActivities = SCRIPT_PROPERTIES.getProperty('SAVED_ACTIVITIES');
+  const errorLog = SCRIPT_PROPERTIES.getProperty('ERROR_LOG');
+  const globalActivities = SCRIPT_PROPERTIES.getProperty('GLOBAL_ACTIVITIES');
+  const selectedYears = SCRIPT_PROPERTIES.getProperty('SELECTED_YEARS');
+  const triggers = ScriptApp.getProjectTriggers();
+  
+  console.log('--- Script Properties ---');
+  
+  if (progress) {
+    const progressData = JSON.parse(progress);
+    console.log('目前進度：', progressData);
+    console.log('最後儲存時間：', new Date(progressData.lastSaveTime).toLocaleString());
+  } else {
+    console.log('目前進度：無進度記錄');
+  }
+  
+  if (selectedYears) {
+    if (selectedYears === 'ALL') {
+      console.log('選擇年度：全部年度');
+    } else {
+      console.log('選擇年度：', JSON.parse(selectedYears));
+    }
+  } else {
+    console.log('選擇年度：未設定');
+  }
+  
+  if (globalActivities) {
+    try {
+      const parsed = JSON.parse(globalActivities);
+      console.log('全域累積活動數：', Object.keys(parsed).length);
+    } catch (e) {
+      console.log('讀取全域活動時發生錯誤：', e);
+    }
+  } else {
+    console.log('全域累積活動數：0');
+  }
+  
+  if (savedActivities) {
+    try {
+      const activities = deserializeMap(savedActivities);
+      console.log('已儲存活動數：', activities.size);
+      console.log('活動類型：', Array.from(activities.keys()));
+    } catch (e) {
+      console.log('讀取已儲存活動時發生錯誤：', e);
+    }
+  } else {
+    console.log('已儲存活動數：0');
+  }
+  
+  console.log('錯誤記錄：', errorLog ? JSON.parse(errorLog) : '無錯誤記錄');
+  
+  console.log('');
+  console.log('--- 工作表暫存進度 ---');
+  
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  
+  // 檢查時間軸更新進度
+  const tempSheet = ss.getSheetByName('資料暫存');
+  if (tempSheet) {
+    const tempData = tempSheet.getRange('A2:D2').getValues()[0];
+    console.log('時間軸更新進度：', {
+      年度索引: tempData[0],
+      子資料夾索引: tempData[1],
+      最後執行時間: tempData[2]
+    });
+  } else {
+    console.log('時間軸更新進度：無暫存表格');
+  }
+  
+  // 檢查快取更新進度
+  const cacheSheet = ss.getSheetByName('資料暫存_快取');
+  if (cacheSheet) {
+    const cacheData = cacheSheet.getRange('A2:D2').getValues()[0];
+    console.log('快取更新進度：', {
+      年度索引: cacheData[0],
+      產品索引: cacheData[1],
+      產品名稱: cacheData[2],
+      最後執行時間: cacheData[3]
+    });
+  } else {
+    console.log('快取更新進度：無暫存表格');
+  }
+  
+  console.log('');
+  console.log('--- 觸發器 ---');
+  console.log('現有觸發器數量：', triggers.length);
+  if (triggers.length > 0) {
+    triggers.forEach((trigger, index) => {
+      console.log(`觸發器 ${index + 1}：`, 
+        '函數名稱:', trigger.getHandlerFunction(),
+        '類型:', trigger.getEventType(),
+        '創建時間:', trigger.getUniqueId());
+    });
+  }
+}
+
+function resetProgress() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  
+  SCRIPT_PROPERTIES.deleteProperty('PROGRESS');
+  SCRIPT_PROPERTIES.deleteProperty('SAVED_ACTIVITIES');
+  SCRIPT_PROPERTIES.deleteProperty('ERROR_LOG');
+  SCRIPT_PROPERTIES.deleteProperty('GLOBAL_ACTIVITIES');
+  SCRIPT_PROPERTIES.deleteProperty('SELECTED_YEARS');
+  
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  
+  // 清除時間軸更新的暫存
+  const tempSheet = ss.getSheetByName('資料暫存');
+  if (tempSheet) {
+    tempSheet.getRange('A2:D2').clearContent();
+  }
+  
+  // 清除快取更新的暫存
+  const cacheSheet = ss.getSheetByName('資料暫存_快取');
+  if (cacheSheet) {
+    cacheSheet.getRange('A2:D2').clearContent();
+  }
+
+  console.log('已重置所有進度記錄和清除觸發器');
+}
+
+function processRootFolder(rootFolder, productActivities, productMathData) {
+  const folders = rootFolder.getFolders();
+  
+  while (folders.hasNext()) {
+    const folder = folders.next();
+    const folderName = folder.getName();
+    
+    if (/^\d{4}$/.test(folderName)) {
+      console.log(`開始處理根資料夾中的 ${folderName} 資料夾`);
+      processFolder(folder, productActivities, productMathData, folderName);
+    }
+  }
+}
+
+function processHistoryFolder(historyFolder, productActivities, productMathData) {
+  const folders = historyFolder.getFolders();
+  
+  while (folders.hasNext()) {
+    const folder = folders.next();
+    const folderName = folder.getName();
+    
+    if (/^\d{4}$/.test(folderName)) {
+      console.log(`開始處理歷屆資料中的 ${folderName} 資料夾`);
+      processFolder(folder, productActivities, productMathData, folderName);
+    }
+  }
+}
+
+function processFolder(folder, productActivities, productMathData, folderYear, source) {
+  console.log('開始處理資料夾：' + folder.getName());
+  
+  const subFolders = folder.getFolders();
+  while (subFolders.hasNext()) {
+    const subFolder = subFolders.next();
+    console.log('處理子資料夾：' + subFolder.getName());
+    
+    const files = subFolder.getFilesByType(MimeType.GOOGLE_SLIDES);
+  
+    while (files.hasNext()) {
+      const file = files.next();
+      console.log('處理簡報：' + file.getName());
+      
+      if (file.getName().includes('營運簡報')) {
+        try {
+          const presentation = SlidesApp.openById(file.getId());
+          console.log('成功開啟簡報');
+          
+          const presentationUrl = `https://docs.google.com/presentation/d/${file.getId()}/edit`;
+    
+          const slides = presentation.getSlides();
+          console.log(`簡報共有 ${slides.length} 頁`);
+          
+          // 🆕 提取數學時間軸資料
+          const mathDataFromThisPresentation = extractMathTimeline(presentation, presentationUrl);
+          
+          for (let i = 0; i < slides.length; i++) {
+            const slide = slides[i];
+            const shapes = slide.getShapes();
+            const tables = slide.getTables();
+            const slideUrl = `https://docs.google.com/presentation/d/${file.getId()}/edit#slide=id.${slide.getObjectId()}`;
+            
+            for (let shape of shapes) {
+              try {
+                const text = shape.getText().asString();
+                if (text.includes('時間軸') && !text.includes('數學時間軸')) {
+                  const productName = text.trim();
+                  console.log(`找到時間軸！產品：${productName}`);
+                  
+                  if (tables.length > 0) {
+                    console.log('開始提取表格資訊');
+                    if (!productActivities.has(productName)) {
+                      productActivities.set(productName, []);
+                    }
+                    extractActivities(tables[0], slideUrl, productActivities.get(productName), folderYear, source, productName);
+                  }
+                }
+              } catch (shapeError) {
+                console.error('讀取 shape 時發生錯誤：', shapeError);
+                const ssForLog = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+                logError(ssForLog, 'Shape讀取失敗', `第 ${i+1} 頁`, slideUrl, shapeError.toString());
+              }
+            }
+            
+            if (tables.length > 0) {
+              for (let table of tables) {
+                try {
+                  const headerCell = table.getCell(0, 0);
+                  const headerText = headerCell.getText().asString().trim();
+                  if (headerText.includes('時間軸') && !headerText.includes('數學時間軸')) {
+                    console.log(`在表格中找到時間軸！${headerText}`);
+                    if (!productActivities.has(headerText)) {
+                      productActivities.set(headerText, []);
+                    }
+                    extractActivities(table, slideUrl, productActivities.get(headerText), folderYear, source, headerText);
+                  }
+                } catch (tableError) {
+                  console.error('讀取表格 header 時發生錯誤：', tableError);
+                  const ssForLog = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+                  logError(ssForLog, '表格讀取失敗', `第 ${i+1} 頁`, slideUrl, tableError.toString());
+                }
+              }
+            }
+          }
+          
+          // 🆕 投影片處理完成後，收集數學資料（只收集一次）
+          if (mathDataFromThisPresentation.length > 0) {
+            mathDataFromThisPresentation.forEach(mathItem => {
+              const productName = mathItem.product;
+              if (!productMathData.has(productName)) {
+                productMathData.set(productName, []);
+              }
+              productMathData.get(productName).push(mathItem);
+              console.log(`✅ 收集數學資料：${productName} - ${mathItem.gameName}`);
+            });
+          }
+          
+        } catch (error) {
+          console.error('處理簡報時發生錯誤：', error);
+          console.error('錯誤發生在檔案：' + file.getName());
+          const ssForLog = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+          const fileUrl = `https://docs.google.com/presentation/d/${file.getId()}/edit`;
+          logError(ssForLog, '簡報讀取失敗', file.getName(), fileUrl, error.toString());
+        }
+      }
+    }
+  }
+}
+
+function calculateSimilarity(str1, str2) {
+  const cleanStr1 = str1.replace(/^[^-]+-/, '').replace(/[\s\[\]()（）]/g, '').toLowerCase();
+  const cleanStr2 = str2.replace(/^[^-]+-/, '').replace(/[\s\[\]()（）]/g, '').toLowerCase();
+  
+  console.log(`清理後的字串比對：`);
+  console.log(`- 原始1：${str1} => 清理後：${cleanStr1}`);
+  console.log(`- 原始2：${str2} => 清理後：${cleanStr2}`);
+  
+  if (cleanStr1 === cleanStr2) {
+    return 1;
+  }
+  
+  const matrix = [];
+  for (let i = 0; i <= cleanStr1.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= cleanStr2.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= cleanStr1.length; i++) {
+    for (let j = 1; j <= cleanStr2.length; j++) {
+      if (cleanStr1[i-1] === cleanStr2[j-1]) {
+        matrix[i][j] = matrix[i-1][j-1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i-1][j-1] + 1,
+          matrix[i][j-1] + 1,
+          matrix[i-1][j] + 1
+        );
+      }
+    }
+  }
+  
+  const maxLength = Math.max(cleanStr1.length, cleanStr2.length);
+  const similarity = 1 - (matrix[cleanStr1.length][cleanStr2.length] / maxLength);
+  console.log(`相似度計算結果：${similarity.toFixed(2)}`);
+  return similarity;
+}
+
+function getFishGameSubcategory(activityName, originalType) {
+  if (!originalType.includes('魚機')) {
+    return originalType;
+  }
+
+  const prefixMatch = activityName.match(/\[(.*?)\]|^([^(]+)/);
+  if (!prefixMatch) {
+    return "魚機-活動";  // 
+  }
+  
+  const prefix = (prefixMatch[1] || prefixMatch[2]).trim();
+  
+  if (prefix.startsWith('新海皇') || prefix.startsWith('新魚種')) {
+    return "魚機-新海皇/魚種";
+  }
+  if (prefix.includes('活動海皇')) {
+    return "魚機-活動海皇";
+  }
+  if (prefix.startsWith('主特色改版') || prefix.startsWith('主特色')) {
+    return "魚機-主特色改版";
+  }
+  if (prefix.includes('優化')) {
+    return "魚機-優化";
+  }
+  
+  const activityKeywords = ['排行榜', '返水', '外贈'];
+  if (activityKeywords.some(keyword => prefix.includes(keyword))) {
+    return "魚機-活動";
+  }
+
+  return "魚機-活動";  // 🔧 已修改
+}
+
+function getOtherTypeSubcategory(activityName, originalType) {
+  if (!originalType.includes('其他類型')) {
+    return originalType;
+  }
+
+  const prefixMatch = activityName.match(/\[(.*?)\]/);
+  if (!prefixMatch) {
+    return "其他";
+  }
+  
+  const prefix = prefixMatch[1];
+  
+  const categories = {
+    "新系統功能": ["新系統功能", "新系統", "系統功能", "新功能"],
+    "儲值": ["儲值", "充值", "儲金"],
+    "每登": ["每登", "登入"],
+    "CCU": ["CCU", "人數", "在線"],
+    "其他-優化": ["優化", "改版", "修正"],
+    "其他": []
+  };
+  
+  for (const [category, keywords] of Object.entries(categories)) {
+    for (const keyword of keywords) {
+      if (calculateSimilarity(prefix, keyword) >= 0.5) {
+        console.log(`其他類型活動 "${activityName}" 的前贅詞 "${prefix}" 與關鍵字 "${keyword}" 相似度符合，歸類到 "${category}"`);
+        return category;
+      }
+    }
+  }
+  
+  console.log(`其他類型活動 "${activityName}" 無法匹配到特定分類，歸類到其他`);
+  return "其他";
+}
+
+function logError(spreadsheet, errorType, content, source, errorDetail, timelineName) {
+  try {
+    // 嘗試大寫 LOG，找不到再試小寫 log
+    let errorSheet = spreadsheet.getSheetByName(ERROR_SHEET_NAME);
+    if (!errorSheet) {
+      errorSheet = spreadsheet.getSheetByName('異常log');
+    }
+    if (!errorSheet) {
+      errorSheet = spreadsheet.insertSheet(ERROR_SHEET_NAME);
+      errorSheet.getRange(1, 1, 1, 6).setValues([['時間', '錯誤類型', '內容', '來源', '錯誤詳情', '時間軸']]);
+      errorSheet.setFrozenRows(1);
+    }
+    
+    const newRow = [
+      new Date().toLocaleString(),
+      errorType,
+      content,
+      source,
+      errorDetail,
+      timelineName || ''
+    ];
+    
+    errorSheet.appendRow(newRow);
+    console.log(`✅ 異常LOG已記錄：[${errorType}] ${content}`);
+  } catch (logErr) {
+    console.error(`❌ 寫入異常LOG失敗：${logErr.toString()}`);
+    console.error(`  原始錯誤類型：${errorType}`);
+    console.error(`  原始內容：${content}`);
+    console.error(`  原始來源：${source}`);
+  }
+}
+
+function extractActivities(table, presentationUrl, activities, folderYear, source, timelineName) {
+  console.log('開始提取活動資訊');
+  const numRows = table.getNumRows();
+  const numCols = table.getNumColumns();
+  console.log(`表格有 ${numRows} 列，${numCols} 欄`);
+  
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  
+  // 🔑 檢查是否為範例表格：第一欄任何一列包含「範例」就跳過
+  for (let i = 1; i < numRows; i++) {
+    try {
+      const firstCell = table.getCell(i, 0).getText().asString().trim();
+      if (firstCell.includes('範例')) {
+        console.log(`⏭️ 跳過範例表格（第 ${i} 列第一欄包含「範例」）`);
+        return;
+      }
+    } catch (e) { /* 忽略無法讀取的儲存格 */ }
+  }
+  
+  let currentType = '';
+  
+  for (let i = 1; i < numRows; i++) {
+    try {
+      let typeText = '';
+      try {
+        const typeCell = table.getCell(i, 1);
+        const text = typeCell.getText();
+        if (text) {
+          const tempText = text.asString().trim();
+          if (tempText !== '') {
+            typeText = tempText;
+          } else {
+            typeText = currentType;
+          }
+        } else {
+          typeText = currentType;
+        }
+      } catch (e) {
+        console.log('讀取活動分類時發生錯誤：', e);
+        logError(ss, '分類讀取錯誤', `第 ${i} 列`, presentationUrl, e.toString(), timelineName);
+        typeText = currentType;
+      }
+      
+      let contentText = '';
+      try {
+        const contentCell = table.getCell(i, 2);
+        const text = contentCell.getText();
+        if (text) {
+          contentText = text.asString().trim();
+        }
+      } catch (e) {
+        console.log('讀取活動內容時發生錯誤：', e);
+        logError(ss, '內容讀取錯誤', `第 ${i} 列`, presentationUrl, e.toString(), timelineName);
+        continue;
+      }
+      
+      console.log(`第 ${i} 列：分類="${typeText}", 活動="${contentText}"`);
+      
+      if (typeText !== '') {
+        currentType = typeText;
+      }
+      
+      if (currentType && currentType !== '-' && contentText && contentText !== '-') {
+        const activityLines = contentText.split('\n');
+        
+        for (let line of activityLines) {
+          line = line.trim();
+          if (!line) continue;
+          if (line.includes('時間軸寫法參考')) continue;
+          
+          const pattern = /^(\[.*?\])?\s*(.+?)\s*\((\d{4}\/)?(\d{1,2}\/\d{1,2})(?:~|-|～)?(?:(\d{4}\/)?(\d{1,2}\/\d{1,2}))?\)/;
+          const matches = line.match(pattern);
+          
+          if (matches) {
+            console.log('找到活動日期匹配：', matches);
+            const prefix = matches[1] ? matches[1] + ' ' : '';
+            const name = matches[2].trim();
+            
+            const startYear = matches[3] ? matches[3].replace('/', '') : folderYear;
+            const startDateStr = matches[4];
+            let endYear = matches[5] ? matches[5].replace('/', '') : startYear;
+            const endDateStr = matches[6] || startDateStr;
+            
+            try {
+              const startDate = new Date(`${startYear}/${startDateStr}`);
+              
+              if (!matches[5]) {
+                const startMonth = parseInt(startDateStr.split('/')[0]);
+                const endMonth = parseInt(endDateStr.split('/')[0]);
+                
+                if (endMonth < startMonth) {
+                  endYear = (parseInt(startYear) + 1).toString();
+                  console.log(`檢測到跨年活動，結束年份調整為：${endYear}`);
+                }
+              }
+              
+              const endDate = new Date(`${endYear}/${endDateStr}`);
+              
+              console.log(`解析日期：開始=${startDate}, 結束=${endDate}`);
+              
+              let dateStr;
+              if (startYear === endYear) {
+                if (startDateStr === endDateStr) {
+                  dateStr = `${startDate.getMonth() + 1}/${startDate.getDate()}`;
+                } else {
+                  dateStr = `${startDate.getMonth() + 1}/${startDate.getDate()}~${endDate.getMonth() + 1}/${endDate.getDate()}`;
+                }
+              } else {
+                if (startDateStr === endDateStr) {
+                  dateStr = `${startYear}/${startDate.getMonth() + 1}/${startDate.getDate()}`;
+                } else {
+                  dateStr = `${startYear}/${startDate.getMonth() + 1}/${startDate.getDate()}~${endYear}/${endDate.getMonth() + 1}/${endDate.getDate()}`;
+                }
+              }
+              
+              const fullName = `${prefix}${name}(${dateStr})`;
+              
+              let finalType = currentType;
+              if (currentType.includes('魚機')) {
+                finalType = getFishGameSubcategory(fullName, currentType);
+              } else if (currentType.includes('其他類型') && source !== '行銷簡報') {
+                finalType = getOtherTypeSubcategory(fullName, currentType);
+              }
+              
+              const activity = {
+                type: finalType,
+                name: fullName,
+                startDate: startDate,
+                endDate: endDate,
+                url: presentationUrl,
+                year: parseInt(startYear)
+              };
+              
+              console.log('新增活動：', activity);
+              activities.push(activity);
+            } catch (dateError) {
+              console.error(`日期解析錯誤：${line}`, dateError);
+              logError(ss, '日期解析錯誤', line, presentationUrl,
+                `日期格式無法解析：${dateError.message}`, timelineName);
+            }
+          } else {
+            // 嘗試寬鬆匹配：有括號內容但日期格式非標準（如「售完為止」、「不定期」等）
+            const loosePattern = /^(\[.*?\])?\s*(.+?)\s*\(([^)]+)\)\s*$/;
+            const looseMatch = line.match(loosePattern);
+            
+            if (looseMatch) {
+              const bracketContent = looseMatch[3];
+              const hasDate = /\d/.test(bracketContent);
+              const errorDetail = hasDate
+                ? `日期格式異常，無法解析括號內容「${bracketContent}」（如含「售完為止」、非標準分隔符等），請手動確認`
+                : `括號內容非日期格式「${bracketContent}」，請確認是否需要補上日期`;
+              console.log(`⚠️ 有內容但無法解析日期：${line}`);
+              logError(ss, '日期格式異常', line, presentationUrl, errorDetail, timelineName);
+            } else {
+              console.log(`無法解析活動日期：${line}`);
+              logError(ss, '日期格式錯誤', line, presentationUrl, 
+                `無法解析的日期格式。應為：活動名稱(MM/DD) 或 活動名稱(MM/DD~MM/DD) 或 活動名稱(YYYY/MM/DD~YYYY/MM/DD)`, timelineName);
+            }
+          }
+        }
+      } else if (contentText && contentText !== '-') {
+        logError(ss, '缺少分類', contentText, presentationUrl, '內容沒有對應的分類', timelineName);
+      }
+    } catch (error) {
+      console.error(`處理第 ${i} 列時發生錯誤：`, error);
+      logError(ss, '處理錯誤', `第 ${i} 列`, presentationUrl, error.toString(), timelineName);
+      continue;
+    }
+  }
+  
+  console.log(`共提取到 ${activities.length} 個活動`);
+}
+
+function isManualRun() {
+  try {
+    SpreadsheetApp.getUi();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+// ========== 1. 讀取快取函數 ==========
+/**
+ * 從快取工作表讀取資料
+ * @param {Sheet} cacheSheet - 快取工作表
+ * @returns {Object} 競品資料物件
+ */
+function readFromCache(cacheSheet) {
+  try {
+    if (!cacheSheet || cacheSheet.getLastRow() <= 1) {
+      console.log('快取工作表為空');
+      return {};
+    }
+    
+    var lastRow = cacheSheet.getLastRow();
+    var data = cacheSheet.getRange(2, 1, lastRow - 1, 5).getValues();
+    
+    console.log('從快取讀取 ' + data.length + ' 筆資料');
+    
+    var result = {};
+    
+    data.forEach(function(row) {
+      var productName = row[0];      // A欄：競品名稱
+      var quarter = row[1];           // B欄：季度（例如 2024-Q1）
+      var type = row[2];              // C欄：類型（通常是 'all'）
+      var jsonData = row[3];          // D欄：JSON資料
+      var updateTime = row[4];        // E欄：更新時間
+      
+      // 跳過空白列
+      if (!productName || !jsonData) {
+        return;
+      }
+      
+      // 初始化該競品的資料結構
+      if (!result[productName]) {
+        result[productName] = {
+          stats: [],
+          activities: []
+        };
+      }
+      
+      try {
+        // 解析 JSON 資料
+        var quarterData = JSON.parse(jsonData);
+        
+        // 合併統計資料
+        if (quarterData.stats && Array.isArray(quarterData.stats)) {
+          result[productName].stats = result[productName].stats.concat(quarterData.stats);
+        }
+        
+        // 合併活動資料
+        if (quarterData.activities && Array.isArray(quarterData.activities)) {
+          result[productName].activities = result[productName].activities.concat(quarterData.activities);
+        }
+        
+      } catch (parseError) {
+        console.error('解析 JSON 失敗：' + productName + ' - ' + quarter, parseError);
+      }
+    });
+    
+    console.log('快取讀取完成，競品數：' + Object.keys(result).length);
+    return result;
+    
+  } catch (error) {
+    console.error('讀取快取時發生錯誤：', error);
+    return {};
+  }
+}
+// ============================================
+// 🆕 複製投影片資料快取 → 企劃資料快取
+// ============================================
+function initMathColumns() {
+  const ss = SpreadsheetApp.openById('1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI');
+  const cacheSheet = ss.getSheetByName('投影片資料快取');
+  
+  if (!cacheSheet) {
+    console.log('❌ 找不到「投影片資料快取」工作表');
+    return;
+  }
+  
+  console.log('🔧 初始化數學資料欄位（G-I欄）...');
+  
+  // 設定數學資料表頭（G-I欄，共3欄）
+  const mathHeaders = [[
+    '競品名稱', '遊戲資料（JSON）', '更新時間'
+  ]];
+  
+  cacheSheet.getRange(1, 7, 1, 3).setValues(mathHeaders);  // G-I欄
+  
+  // 設定表頭格式
+  const mathHeaderRange = cacheSheet.getRange(1, 7, 1, 3);
+  mathHeaderRange.setBackground('#E67C73');  // 紅色系（與藍色區分）
+  mathHeaderRange.setFontColor('#FFFFFF');
+  mathHeaderRange.setFontWeight('bold');
+  mathHeaderRange.setHorizontalAlignment('center');
+  
+  // 調整欄寬
+  cacheSheet.setColumnWidth(7, 120);   // G: 競品名稱
+  cacheSheet.setColumnWidth(8, 600);   // H: 遊戲資料（JSON）
+  cacheSheet.setColumnWidth(9, 150);   // I: 更新時間
+  
+  console.log('✅ 數學資料欄位已設定（G-I欄）');
+  
+  SpreadsheetApp.getUi().alert(
+    '✅ 初始化完成！\n\n' +
+    '「投影片資料快取」欄位配置：\n' +
+    '- A-E欄：彙整活動資料（藍色表頭）\n' +
+    '- F欄：留空（分隔）\n' +
+    '- G-I欄：數學遊戲資料（紅色表頭）\n\n' +
+    '格式：一個競品的所有遊戲合併成 JSON\n' +
+    '超過儲存格上限會自動換列'
+  );
+}
+
+// ============================================
+// 🆕 提取數學時間軸資料
+// ============================================
+function extractMathTimeline(presentation, presentationUrl) {
+  try {
+    const slides = presentation.getSlides();
+    const mathData = [];
+    
+    for (let slideIndex = 0; slideIndex < slides.length; slideIndex++) {
+      const slide = slides[slideIndex];
+      const shapes = slide.getShapes();
+      
+      // 尋找包含「數學時間軸」的標題
+      let isMathTimelineSlide = false;
+      let productName = '';
+      
+      for (let shape of shapes) {
+        try {
+          const text = shape.getText().asString();
+          if (text.includes('數學時間軸')) {
+            isMathTimelineSlide = true;
+            // 提取競品名稱：移除「數學時間軸」後的部分
+            productName = text.replace('數學時間軸', '').trim();
+            console.log(`找到數學時間軸！競品：${productName}`);
+            break;
+          }
+        } catch (e) {
+          // 忽略無法讀取文字的 shape
+        }
+      }
+      
+      if (!isMathTimelineSlide) {
+        continue;
+      }
+      
+      // 找到數學時間軸表格
+      const tables = slide.getTables();
+      if (tables.length === 0) {
+        console.log('⚠️ 數學時間軸頁面沒有表格');
+        continue;
+      }
+      
+      console.log(`找到 ${tables.length} 個表格`);
+      
+      // 🔑 跳過「範例說明」表格，只掃描實際資料表格
+      let mathTable = null;
+      
+      for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
+        const table = tables[tableIndex];
+        try {
+          // 檢查第一個儲存格（左上角）
+          const firstCell = table.getCell(0, 0).getText().asString().trim();
+          
+          // 如果包含「範例說明」，跳過這個表格
+          if (firstCell.includes('範例說明')) {
+            console.log(`跳過第 ${tableIndex + 1} 個表格（範例說明）`);
+            continue;
+          }
+          
+          // 如果第一個儲存格是「名稱」，這就是我們要的表格
+          if (firstCell === '名稱' || firstCell.includes('名稱')) {
+            mathTable = table;
+            console.log(`使用第 ${tableIndex + 1} 個表格作為數學時間軸表格`);
+            break;
+          }
+          
+        } catch (e) {
+          console.log(`無法讀取第 ${tableIndex + 1} 個表格的第一個儲存格：`, e);
+        }
+      }
+      
+      if (!mathTable) {
+        console.log('⚠️ 找不到數學時間軸資料表格');
+        continue;
+      }
+      
+      // 提取數學時間軸資料
+      const slideUrl = presentationUrl + '#slide=id.' + slide.getObjectId();
+      const mathInfo = extractMathTableData(mathTable, productName, slideUrl);
+      if (mathInfo) {
+        mathData.push(mathInfo);
+      }
+    }
+    
+    return mathData;
+    
+  } catch (e) {
+    console.log('提取數學時間軸時發生錯誤：', e);
+    return [];
+  }
+}
+
+// ============================================
+// 🆕 提取數學時間軸表格資料
+// ============================================
+// 🆕 提取數學時間軸表格資料（新欄位結構）
+// ============================================
+function extractMathTableData(table, productName, slideUrl) {
+  try {
+    if (table.getNumColumns() < 2 || table.getNumRows() < 1) {
+      console.log('⚠️ 數學時間軸表格為空，跳過');
+      return null;
+    }
+    const numRows = table.getNumRows();
+    const mathInfo = {
+      product: productName,
+      gameName: '',
+      releaseDate: '',
+      gameplayTypes: '',          // 玩法分類（例如 [Way Game][百搭]）
+      gameplayDescription: '',    // 🔄 玩法簡述（原「詳細玩法」改名）
+      artDescription: '',         // 🆕 美術簡述
+      gridSize: '',
+      referenceGames: '',
+      featureBuy: '',
+      extraBet: '',
+      slideUrl: slideUrl
+    };
+
+    // 逐列讀取
+    for (let i = 0; i < numRows; i++) {
+      try {
+        const labelCell = table.getCell(i, 0);
+        const valueCell = table.getCell(i, 1);
+
+        const label = labelCell.getText().asString().trim();
+        const value = valueCell.getText().asString().trim();
+
+        if (label === '名稱' || label.includes('名稱')) {
+          // 格式：麻雀無雙(2026/5/5)
+          const match = value.match(/^(.+?)\((\d{4}\/\d{1,2}\/\d{1,2})\)/);
+          if (match) {
+            mathInfo.gameName = match[1].trim();
+            mathInfo.releaseDate = match[2];
+          } else {
+            mathInfo.gameName = value;
+          }
+
+        } else if (label === '玩法分類') {
+          mathInfo.gameplayTypes = value;
+
+        } else if (label === '玩法簡述' || label.includes('玩法簡述')) {
+          // 🔄 原「詳細玩法」改為「玩法簡述」
+          mathInfo.gameplayDescription = value;
+
+        } else if (label === '美術簡述' || label.includes('美術簡述')) {
+          // 🆕 新欄位
+          mathInfo.artDescription = value;
+
+        } else if (label === '盤面大小' || label.includes('盤面')) {
+          mathInfo.gridSize = value;
+
+        } else if (label === '有參考遊戲' || label.includes('參考')) {
+          mathInfo.referenceGames = value || '無';
+
+        } else if (label === '特色購買' || label.includes('特色')) {
+          mathInfo.featureBuy = value || '無';
+
+        } else if (label === 'Extra Bet' || label.includes('Extra')) {
+          mathInfo.extraBet = value || '無';
+        }
+
+      } catch (e) {
+        if (!e.message || !e.message.includes('指定的欄')) {
+          console.log(`讀取數學表格第 ${i} 列時發生錯誤：`, e);
+        }
+      }
+    }
+
+    if (!mathInfo.gameName) {
+      console.log('⚠️ 數學時間軸表格缺少遊戲名稱');
+      return null;
+    }
+
+    console.log('✅ 提取數學資料：', mathInfo);
+    console.log(`   - 玩法分類：${mathInfo.gameplayTypes}`);
+    console.log(`   - 玩法簡述：${mathInfo.gameplayDescription}`);
+    console.log(`   - 美術簡述：${mathInfo.artDescription}`);
+    return mathInfo;
+
+  } catch (e) {
+    console.log('提取數學表格資料時發生錯誤：', e);
+    return null;
+  }
+}
+// ============================================
+// 🆕 寫入數學資料到快取 G-I 欄（JSON 格式）
+// ============================================
+function writeToMathCache(cacheSheet, mathDataArray) {
+  if (!mathDataArray || mathDataArray.length === 0) {
+    console.log('⚠️ 沒有數學資料需要寫入');
+    return 0;
+  }
+
+  console.log(`📝 準備寫入 ${mathDataArray.length} 筆數學資料到 G-I 欄（JSON格式）...`);
+
+  // 按競品分組
+  const gamesByProduct = {};
+  mathDataArray.forEach(item => {
+    if (!gamesByProduct[item.product]) {
+      gamesByProduct[item.product] = [];
+    }
+
+    // 🔄 整理遊戲資料（含新欄位）
+    gamesByProduct[item.product].push({
+      name: item.gameName,
+      releaseDate: item.releaseDate,
+      gameplayTypes: item.gameplayTypes,
+      gameplayDescription: item.gameplayDescription || '',   // 🔄 玩法簡述
+      artDescription: item.artDescription || '',             // 🆕 美術簡述
+      gridSize: item.gridSize,
+      referenceGames: item.referenceGames,
+      featureBuy: item.featureBuy,
+      extraBet: item.extraBet,
+      slideUrl: item.slideUrl
+    });
+  });
+
+  // 找到 G 欄實際最後一筆有資料的列
+  const gValues = cacheSheet.getRange('G:G').getValues();
+  let lastRowInG = 1;
+  for (let i = gValues.length - 1; i >= 0; i--) {
+    if (gValues[i][0] !== '') { lastRowInG = i + 1; break; }
+  }
+
+  let startRow = lastRowInG + 1;
+  const timestamp = Utilities.formatDate(new Date(), 'GMT+8', 'yyyy-MM-dd HH:mm:ss');
+  const MAX_CELL_SIZE = 45000;
+
+  let totalRows = 0;
+
+  // 逐個競品寫入
+  for (let [productName, games] of Object.entries(gamesByProduct)) {
+    console.log(`處理競品：${productName}（${games.length} 個遊戲）`);
+
+    let jsonStr = JSON.stringify(games);
+
+    if (jsonStr.length > MAX_CELL_SIZE) {
+      console.log(`⚠️ JSON 過大（${jsonStr.length} 字元），需要拆分`);
+
+      let currentBatch = [];
+
+      for (let game of games) {
+        const testBatch = [...currentBatch, game];
+        const testStr = JSON.stringify(testBatch);
+
+        if (testStr.length > MAX_CELL_SIZE) {
+          if (currentBatch.length > 0) {
+            cacheSheet.getRange(startRow, 7, 1, 3).setValues([[
+              productName, JSON.stringify(currentBatch), timestamp
+            ]]);
+            console.log(`  ✓ 寫入第 ${startRow} 列：${currentBatch.length} 個遊戲`);
+            startRow++;
+            totalRows++;
+          }
+          currentBatch = [game];
+        } else {
+          currentBatch.push(game);
+        }
+      }
+
+      if (currentBatch.length > 0) {
+        cacheSheet.getRange(startRow, 7, 1, 3).setValues([[
+          productName, JSON.stringify(currentBatch), timestamp
+        ]]);
+        console.log(`  ✓ 寫入第 ${startRow} 列：${currentBatch.length} 個遊戲`);
+        startRow++;
+        totalRows++;
+      }
+
+    } else {
+      cacheSheet.getRange(startRow, 7, 1, 3).setValues([[
+        productName, jsonStr, timestamp
+      ]]);
+      console.log(`  ✓ 寫入第 ${startRow} 列：${games.length} 個遊戲`);
+      startRow++;
+      totalRows++;
+    }
+  }
+
+  console.log(`✅ 已寫入 ${totalRows} 列數學資料到 G-I 欄`);
+  return totalRows;
+}
+
+function ping() { return true; }

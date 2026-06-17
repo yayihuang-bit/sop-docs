@@ -1,0 +1,447 @@
+<script>
+// 依賴（需先載入）：util.html（escapeHtml）
+  // ===== 權限管理核心功能 =====
+  function updateTabsVisibility() {
+    try {
+      var allowed = (userPermissions && Array.isArray(userPermissions.allowedTabs)) ? userPermissions.allowedTabs : [];
+      
+      if (!allowed.length) {
+        var buttons = document.querySelectorAll('.tab-button');
+        var contents = document.querySelectorAll('.tab-content');
+        buttons.forEach(function(btn){ btn.style.display = 'none'; });
+        contents.forEach(function(content){ content.style.display = 'none'; });
+        
+        var tabNav = document.getElementById('tabNav');
+        if (tabNav) {
+          tabNav.innerHTML = '<div style="padding: 20px; color: #666; text-align: center;">您沒有權限查看任何頁籤，請聯繫管理員設定權限。</div>';
+        }
+        return;
+      }
+      
+      // ⭐ 新增：數學資料庫權限檢查
+      var buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(function(btn){
+        var label = (btn.textContent || '').trim();
+        var show = false;
+        if (label === '營收分析') show = allowed.indexOf('營收分析') !== -1;
+        else if (label === '活動類型總表') show = allowed.indexOf('活動類型總表') !== -1;
+        else if (label === '數學資料庫') show = allowed.indexOf('數學資料庫') !== -1;
+        else if (label === '行銷資料庫') show = allowed.indexOf('行銷資料庫') !== -1;
+        else if (label === '跨產品搜尋') show = allowed.indexOf('跨產品搜尋') !== -1;
+        else if (label === '其他資料') show = allowed.indexOf('其他資料') !== -1;
+        else show = allowed.indexOf(label) !== -1;
+        btn.style.display = show ? 'inline-block' : 'none';
+      });
+      
+      // ⭐ 新增：數學資料庫內容顯示權限
+      var contents = document.querySelectorAll('.tab-content');
+      contents.forEach(function(content){
+        var id = content.id || '';
+        var show = false;
+        if (id === 'content-revenue') show = allowed.indexOf('營收分析') !== -1;
+        else if (id === 'content-activityTypes') show = allowed.indexOf('活動類型總表') !== -1;
+        else if (id === 'content-math') show = allowed.indexOf('數學資料庫') !== -1;
+        else if (id === 'content-marketing') show = allowed.indexOf('行銷資料庫') !== -1;
+        else if (id === 'content-crossSearch') show = allowed.indexOf('跨產品搜尋') !== -1;
+        else if (id === 'content-other') show = allowed.indexOf('其他資料') !== -1;
+        else if (id.indexOf('content-') === 0) {
+          var name = id.replace('content-','');
+          show = allowed.indexOf(name) !== -1;
+        }
+        content.style.display = show ? 'block' : 'none';
+      });
+      
+      // ⭐ 新增：數學資料庫預設頁籤邏輯
+      var first = Array.from(document.querySelectorAll('.tab-button')).find(function(b){ return b.style.display !== 'none'; });
+      if (first) {
+        var label = (first.textContent || '').trim();
+        if (label === '營收分析') switchTab('revenue');
+        else if (label === '活動類型總表') switchTab('activityTypes');
+        else if (label === '數學資料庫') switchTab('math');
+        else if (label === '行銷資料庫') switchTab('marketing');
+        else if (label === '跨產品搜尋') switchTab('crossSearch');
+        else if (label === '其他資料') switchTab('other');
+        else switchTab(label);
+      }
+    } catch(e) { console.warn('updateTabsVisibility 失敗', e); }
+  }
+
+  // ===== 活動類型總表篩選功能 =====
+  function setupActivityTypeFilters() {
+    try {
+      var typeInput = document.getElementById('typeFilterInput');
+      if (typeInput) {
+        var typingTimer;
+        typeInput.addEventListener('input', function(){
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(function(){
+            filterAndRenderTable();
+          }, 1000);
+        });
+      }
+      
+      document.addEventListener('click', function(e){
+        var wrapper = document.getElementById('competitorMultiSelect');
+        var dropdown = document.getElementById('competitorDropdown');
+        if (!wrapper || !dropdown) return;
+        if (dropdown.style.display === 'block') {
+          var inside = e.target.closest('#competitorMultiSelect');
+          if (!inside) {
+            dropdown.style.display = 'none';
+            wrapper.classList.remove('open');
+          }
+        }
+      });
+    } catch (e) { console.warn('setupActivityTypeFilters 失敗', e); }
+  }
+
+  function toggleCompetitorDropdown(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var dropdown = document.getElementById('competitorDropdown');
+    var wrapper = document.getElementById('competitorMultiSelect');
+    if (!dropdown || !wrapper) return;
+    var willShow = dropdown.style.display !== 'block';
+    dropdown.style.display = willShow ? 'block' : 'none';
+    if (willShow) {
+      wrapper.classList.add('open');
+    } else {
+      wrapper.classList.remove('open');
+    }
+  }
+
+  function onCompetitorCheckboxChange(checkbox, competitorName) {
+    try {
+      var idx = selectedCompetitors.indexOf(competitorName);
+      if (checkbox.checked) {
+        if (idx === -1) selectedCompetitors.push(competitorName);
+      } else {
+        if (idx !== -1) selectedCompetitors.splice(idx, 1);
+      }
+      updateCompetitorSelectText();
+      filterAndRenderTable();
+    } catch (e) { console.warn('onCompetitorCheckboxChange 失敗', e); }
+  }
+
+  function updateCompetitorSelectText() {
+    var selectText = document.getElementById('competitorSelectText');
+    if (selectText) {
+      if (!selectedCompetitors || selectedCompetitors.length === 0) {
+        selectText.textContent = '未選擇';
+      } else {
+        selectText.textContent = selectedCompetitors.length + ' 個已選';
+      }
+    }
+  }
+
+  function updateCompetitorDropdownOptions(compNames) {
+    var dropdown = document.getElementById('competitorDropdown');
+    if (!dropdown) return;
+    compNames = (compNames || []).filter(function(n){ return n && n.trim(); });
+    
+    var wasOpen = dropdown.style.display === 'block';
+    var prevScroll = dropdown.scrollTop || 0;
+    var html = '';
+    
+    compNames.forEach(function(name){
+      var id = 'comp-' + name.replace(/[^a-zA-Z0-9]/g, '');
+      var checked = selectedCompetitors.indexOf(name) !== -1 ? 'checked' : '';
+      html += '<div class="multi-select-option" style="padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">';
+      html += '<input type="checkbox" id="' + id + '" ' + checked + ' onchange="onCompetitorCheckboxChange(this,\'' + name.replace(/'/g, "\\'") + '\')" style="margin: 0;">';
+      html += '<label for="' + id + '" style="margin-left:6px; cursor:pointer;">' + escapeHtml(name) + '</label>';
+      html += '</div>';
+    });
+    
+    dropdown.innerHTML = html || '<div style="padding:8px 12px;color:#888;">沒有可選競品</div>';
+    
+    if (!Array.isArray(selectedCompetitors)) selectedCompetitors = [];
+    selectedCompetitors = selectedCompetitors.filter(function(n){ return compNames.indexOf(n) !== -1; });
+    updateCompetitorSelectText();
+    
+    if (wasOpen) {
+      dropdown.style.display = 'block';
+      dropdown.scrollTop = prevScroll;
+    }
+  }
+
+  function filterAndRenderTable() {
+    var activityTypesTableElement = document.getElementById('activityTypesTableContent');
+    if (!activityTypesTableElement) return;
+    
+    try {
+      var typeKeywordInput = document.getElementById('typeFilterInput');
+      var typeKeyword = typeKeywordInput ? typeKeywordInput.value.trim() : '';
+      typeKeyword = typeKeyword.toLowerCase();
+      
+      var tableData = originalActivityTypesData;
+      if (!tableData || !tableData.data) {
+        google.script.run
+          .withSuccessHandler(function(data){
+            originalActivityTypesData = data;
+            filterAndRenderTable();
+          })
+          .getActivityTypesTableData(window.__sessionToken);
+        return;
+      }
+      
+      var filtered = tableData.data.filter(function(item){
+        return selectedCompetitors.indexOf(item.competitorName) !== -1;
+      });
+      
+      if (typeKeyword) {
+        filtered = filtered.filter(function(item){
+          var t = (item.itemType || '').toLowerCase();
+          var n = (item.itemName || '').toLowerCase();
+          return t.indexOf(typeKeyword) !== -1 || n.indexOf(typeKeyword) !== -1;
+        });
+      }
+      
+      try {
+        var allCompNames = Array.from(new Set(tableData.data.map(function(it){ return it.competitorName; })));
+        updateCompetitorDropdownOptions(allCompNames);
+      } catch (e) { console.warn('更新競品清單失敗', e); }
+
+      renderActivityTypesTable({ headers: tableData.headers, data: filtered });
+    } catch (e) {
+      console.warn('filterAndRenderTable 失敗', e);
+    }
+  }
+
+  function loadActivityTypesTable() {
+    var loadingElement = document.getElementById('activityTypesTableContent');
+    if (loadingElement) {
+      loadingElement.innerHTML = '<div class="no-data">載入中...</div>';
+    }
+    
+    google.script.run
+      .withSuccessHandler(function(data) {
+        originalActivityTypesData = data || { headers: [], data: [] };
+
+        try {
+          var dropdown = document.getElementById('competitorDropdown');
+          if (dropdown) {
+            var compNames = Array.from(new Set((originalActivityTypesData.data || []).map(function(it){
+              return (it.competitorName || '').trim();
+            }).filter(function(n){ return n; })));
+            
+            selectedCompetitors = compNames.slice();
+            updateCompetitorSelectText();
+            updateCompetitorDropdownOptions(compNames);
+            console.log('競品清單建立完成（預設全選）：', compNames);
+          }
+        } catch (e) { console.warn('初始化競品清單失敗', e); }
+
+        renderActivityTypesTable(originalActivityTypesData);
+        filterAndRenderTable();
+
+        var typeInput = document.getElementById('typeFilterInput');
+        if (typeInput) {
+          var typingTimer;
+          typeInput.addEventListener('input', function(){
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(function(){
+              filterAndRenderTable();
+            }, 1000);
+          });
+        }
+      })
+      .withFailureHandler(function(error) {
+        var loadingElement = document.getElementById('activityTypesTableContent');
+        if (loadingElement) {
+          loadingElement.innerHTML = '<div class="no-data" style="color: red;">載入失敗：' + error.message + '</div>';
+        }
+      })
+      .getActivityTypesTableData(window.__sessionToken);
+  }
+
+  // ===== 活動類型總表渲染函數 =====
+  function renderActivityTypesTable(tableData) {
+    var activityTypesTableElement = document.getElementById('activityTypesTableContent');
+    
+    if (!activityTypesTableElement) {
+      console.log('找不到活動類型總表容器');
+      return;
+    }
+    
+    if (!tableData || !tableData.data || tableData.data.length === 0) {
+      activityTypesTableElement.innerHTML = '<div class="no-data">暫無活動類型資料</div>';
+      return;
+    }
+    
+    console.log('開始渲染活動類型總表，資料筆數：', tableData.data.length);
+    
+    // 按競品分組
+    var competitorGroups = {};
+    var totalItems = 0;
+    var totalLinks = 0;
+    
+    tableData.data.forEach(function(item) {
+      if (!competitorGroups[item.competitorName]) {
+        competitorGroups[item.competitorName] = {};
+      }
+      
+      if (!competitorGroups[item.competitorName][item.itemType]) {
+        competitorGroups[item.competitorName][item.itemType] = [];
+      }
+      
+      competitorGroups[item.competitorName][item.itemType].push(item);
+      totalItems++;
+      
+      if (item.itemLink && item.itemLink.trim() !== '') {
+        totalLinks++;
+      }
+    });
+    
+    var totalCompetitors = Object.keys(competitorGroups).length;
+    var totalTypes = new Set();
+    Object.values(competitorGroups).forEach(function(competitor) {
+      Object.keys(competitor).forEach(function(type) {
+        totalTypes.add(type);
+      });
+    });
+    
+    // 開始建構 HTML
+    var htmlParts = [];
+    
+    // 統計信息
+    htmlParts.push('<div class="activity-types-summary" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">');
+    htmlParts.push('<div class="summary-stats" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">');
+    htmlParts.push('<span class="stat-item" style="font-weight: 600; color: #333;"><strong>' + totalItems + '</strong> 個項目</span>');
+    htmlParts.push('<span class="stat-item" style="font-weight: 600; color: #333;"><strong>' + totalCompetitors + '</strong> 個競品</span>');
+    htmlParts.push('<span class="stat-item" style="font-weight: 600; color: #333;"><strong>' + totalTypes.size + '</strong> 個類型</span>');
+    htmlParts.push('<span class="stat-item" style="font-weight: 600; color: #333;"><strong>' + totalLinks + '</strong> 個連結</span>');
+    htmlParts.push('</div>');
+    htmlParts.push('</div>');
+    
+    // 競品卡片容器
+    htmlParts.push('<div class="activity-types-cards" style="display: grid; gap: 20px; grid-template-columns: repeat(2, 1fr);">');
+    
+    // 按競品名稱排序
+    var sortedCompetitors = Object.keys(competitorGroups).sort();
+    var gradientPalette = [
+      ['#6B73FF','#000DFF'],
+      ['#FF6B6B','#FF8E53'],
+      ['#4ECDC4','#44A08D'],
+      ['#A8E6CF','#3D5A80'],
+      ['#FFD93D','#FF6B6B']
+    ];
+    
+    sortedCompetitors.forEach(function(competitorName, compIndex) {
+      var competitorData = competitorGroups[competitorName];
+      
+      htmlParts.push('<div class="competitor-group" style="margin-bottom: 30px; border-radius: 18px; overflow: hidden; background: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.12);">');
+      
+      var gi = compIndex % gradientPalette.length;
+      var g1 = gradientPalette[gi][0];
+      var g2 = gradientPalette[gi][1];
+      
+      htmlParts.push('<h2 class="competitor-title" style="background: linear-gradient(135deg, ' + g1 + ', ' + g2 + '); color: white; padding: 24px 20px; margin: 0; font-size: 24px; font-weight: 700; text-align: center; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 10px;">');
+      htmlParts.push('<span style="font-size:18px;opacity:.9">🎯</span>' + competitorName);
+      htmlParts.push('</h2>');
+      
+      htmlParts.push('<div class="competitor-types" style="display: grid; gap: 20px; padding: 15px; grid-template-columns: repeat(2, 1fr);">');
+      
+      // 按類型排序
+      var typeOrder = ['老虎機', '魚機', '柏青', '牌桌', '新遊戲', '系統功能', '儲值', '通用', '其他'];
+      var sortedTypes = Object.keys(competitorData).sort(function(a, b) {
+        var indexA = typeOrder.indexOf(a);
+        var indexB = typeOrder.indexOf(b);
+        if (indexA === -1) indexA = typeOrder.length;
+        if (indexB === -1) indexB = typeOrder.length;
+        return indexA - indexB;
+      });
+      
+      sortedTypes.forEach(function(itemType) {
+        var items = competitorData[itemType];
+        
+        htmlParts.push('<div class="activity-type-group" style="border-radius: 12px; overflow: hidden; box-shadow: 0 10px 24px rgba(0,0,0,0.08); background: #ffffff;">');
+        
+        // 類型標題
+        var iconMap = {
+          '老虎機': '🎰',
+          '魚機': '🐟',
+          '儲值': '💳',
+          '牌桌': '🎲',
+          '柏青': '🎰',
+          '柏青哥': '🎰',
+          '新遊戲': '🆕'
+        };
+        var icon = iconMap[itemType] || '🧩';
+        
+        htmlParts.push('<div class="type-header" style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; background: #f7f8fa; border-bottom: 1px solid #f0f0f0; color: #2c3e50; cursor: pointer;">');
+        htmlParts.push('<h4 style="margin: 0; font-size: 18px; font-weight: 700; color: #2c3e50;">');
+        htmlParts.push('<span class="type-emoji" style="margin-right: 8px; font-size: 18px;">' + icon + '</span>' + itemType);
+        htmlParts.push('</h4>');
+        htmlParts.push('<span style="display:flex;align-items:center;gap:8px;">');
+        htmlParts.push('<span class="item-count" style="font-size: 12px; color: #ffffff; background: linear-gradient(135deg, #FF6B6B, #FF8E53); padding: 4px 10px; border-radius: 999px; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);">' + items.length + ' 項</span>');
+        htmlParts.push('<span class="expand-icon" style="margin-left: 10px; font-size: 12px; color: #6c757d; transition: transform 0.2s ease; user-select: none;">▼</span>');
+        htmlParts.push('</span>');
+        htmlParts.push('</div>');
+        
+        // 項目卡片
+        htmlParts.push('<div class="type-items" style="padding: 14px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">');
+        
+        items.forEach(function(item) {
+          htmlParts.push('<div class="activity-item-card" style="background: #f8f9fa; border-radius: 10px; padding: 12px 14px; border-left: 4px solid transparent; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: flex-start;">');
+          
+          // 安全處理項目名稱和連結
+          var itemName = escapeHtml(item.itemName || '');
+          var itemLink = escapeHtml(item.itemLink || '');
+          var itemNotes = escapeHtml(item.notes || '');
+          
+          // 項目名稱和連結
+          if (itemLink && itemLink.trim() !== '') {
+            htmlParts.push('<div class="item-name-link" style="margin-bottom: 4px; width: 100%;">');
+            htmlParts.push('<a href="' + itemLink + '" target="_blank" class="item-link" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #3498DB; font-weight: 600; font-size: 16px; transition: color 0.2s ease;">');
+            htmlParts.push('<span class="link-icon" style="font-size: 14px;">🔗</span>');
+            htmlParts.push('<span class="item-name" style="flex: 1; font-size: 16px; line-height: 1.3;">' + itemName + '</span>');
+            htmlParts.push('<span class="external-icon" style="font-size: 10px; opacity: 0.7;">↗</span>');
+            htmlParts.push('</a>');
+            htmlParts.push('</div>');
+          } else {
+            htmlParts.push('<div class="item-name-text" style="display: flex; align-items: center; gap: 6px; color: #495057; font-weight: 500; font-size: 16px; margin-bottom: 4px; width: 100%;">');
+            htmlParts.push('<span class="doc-icon" style="font-size: 14px;">📄</span>');
+            htmlParts.push('<span class="item-name" style="flex: 1; font-size: 16px; line-height: 1.3;">' + itemName + '</span>');
+            htmlParts.push('</div>');
+          }
+          
+          // 備註
+          if (itemNotes && itemNotes.trim() !== '') {
+            htmlParts.push('<div class="item-notes" style="display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: #6c757d; line-height: 1.3; width: 100%;">');
+            htmlParts.push('<span class="notes-icon" style="font-size: 14px;">💡</span>');
+            htmlParts.push('<span>' + itemNotes + '</span>');
+            htmlParts.push('</div>');
+          }
+          
+          htmlParts.push('</div>');
+        });
+        
+        htmlParts.push('</div>');
+        htmlParts.push('</div>');
+      });
+      
+      htmlParts.push('</div>');
+      htmlParts.push('</div>');
+    });
+    
+    htmlParts.push('</div>');
+    
+    // 一次性設置 innerHTML
+    activityTypesTableElement.innerHTML = htmlParts.join('');
+    
+    // 綁定摺疊事件
+    try {
+      var headers = activityTypesTableElement.querySelectorAll('.type-header');
+      headers.forEach(function(header){
+        header.addEventListener('click', function(){
+          var itemsEl = header.nextElementSibling;
+          if (!itemsEl) return;
+          itemsEl.classList.toggle('collapsed');
+          var icon = header.querySelector('.expand-icon');
+          if (icon) icon.classList.toggle('rotated');
+        });
+      });
+    } catch (e) { console.warn('綁定摺疊事件失敗', e); }
+    
+    console.log('活動類型總表渲染完成');
+  }
+</script>

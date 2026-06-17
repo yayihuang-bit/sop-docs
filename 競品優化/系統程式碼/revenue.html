@@ -1,0 +1,981 @@
+<script>
+  // ===== 營收分析核心功能 =====
+  function createRevenueAnalysisHTML() {
+    var productOptionsHtml = '';
+    var productNames = SENSOR_TOWER_CONFIG.PRODUCT_NAMES;
+
+    for (var i = 0; i < productNames.length; i++) {
+      var name = productNames[i];
+      productOptionsHtml +=
+        '<label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">' +
+          '<input type="checkbox" value="' + escapeHtml(name) + '" class="revenue-product-checkbox" ' +
+          'style="margin-right: 8px; cursor: pointer; width: 16px; height: 16px;">' +
+          '<span style="font-size: 14px;">' + escapeHtml(name) + '</span>' +
+        '</label>';
+    }
+    
+    return (
+      '<div class="control-panel">' +
+        '<div style="display: grid; grid-template-columns: 1fr 1fr 2fr 1fr; gap: 20px; align-items: end;">' +
+          '<div>' +
+            '<label style="display: block; margin-bottom: 8px; font-weight: 500; color: #333;">開始日期</label>' +
+            '<input type="date" id="revenueStartDate" ' +
+            'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="display: block; margin-bottom: 8px; font-weight: 500; color: #333;">結束日期</label>' +
+            '<input type="date" id="revenueEndDate" ' +
+            'style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">' +
+          '</div>' +
+          '<div>' +
+            '<label style="display: block; margin-bottom: 8px; font-weight: 500; color: #333;">選擇產品</label>' +
+            '<div style="max-height: 120px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; background: white;">' +
+              productOptionsHtml +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<button id="revenueUpdateBtn" onclick="updateRevenueData()" ' +
+            'style="width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; ' +
+            'cursor: pointer; font-size: 14px; font-weight: 500;">更新數據</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="revenueLoading" style="display: none; text-align: center; margin-top: 20px;">' +
+          '<div style="display: inline-block; width: 24px; height: 24px; border: 3px solid #f3f3f3; ' +
+          'border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>' +
+          '<span style="margin-left: 12px; font-size: 14px;">正在獲取數據...</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin:0 20px 10px 20px;flex-wrap:wrap;">' +
+        '<label style="font-weight:500;color:#333;">競品資料篩選</label>' +
+        '<select id="dashboardProductSelect" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:160px;">' +
+          '<option value="ALL">全部（合併）</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="stats-grid" style="margin-top:0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 0 20px 20px 20px;">' +
+        '<div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">' +
+          '<div class="stat-value" id="statTotalRevenue" style="font-size: 22px; font-weight: 700; margin-bottom: 6px;">-</div>' +
+          '<div class="stat-label" style="font-size: 13px; opacity: .9;">總營收</div>' +
+        '</div>' +
+        '<div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">' +
+          '<div class="stat-value" id="statAvgDaily" style="font-size: 22px; font-weight: 700; margin-bottom: 6px;">-</div>' +
+          '<div class="stat-label" style="font-size: 13px; opacity: .9;">日均營收</div>' +
+        '</div>' +
+        '<div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">' +
+          '<div class="stat-value" id="statMaxDaily" style="font-size: 22px; font-weight: 700; margin-bottom: 6px;">-</div>' +
+          '<div class="stat-label" style="font-size: 13px; opacity: .9;">單日最高</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="chart-container">' +
+        '<div class="chart-header">📈 營收趨勢分析</div>' +
+        '<div style="display:flex;justify-content:flex-end;align-items:center;padding:8px 20px;gap:8px;">' +
+          '<label for="revenueGranularitySelect" style="color:#333;font-weight:500;">資料顯示單位</label>' +
+          '<select id="revenueGranularitySelect" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:120px;">' +
+            '<option value="day">日</option>' +
+            '<option value="week">週</option>' +
+            '<option value="month">月</option>' +
+            '<option value="year">年</option>' +
+          '</select>' +
+        '</div>' +
+        '<div id="revenueChart" class="chart-main">請選擇日期範圍和產品，然後點擊「更新數據」</div>' +
+      '</div>' +
+      '<div class="chart-container">' +
+        '<div class="chart-header">📱 下載量趨勢分析</div>' +
+        '<div style="display:flex;justify-content:flex-end;align-items:center;padding:8px 20px;gap:8px;">' +
+          '<label for="downloadsGranularitySelect" style="color:#333;font-weight:500;">資料顯示單位</label>' +
+          '<select id="downloadsGranularitySelect" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:120px;">' +
+            '<option value="day">日</option>' +
+            '<option value="week">週</option>' +
+            '<option value="month">月</option>' +
+            '<option value="year">年</option>' +
+          '</select>' +
+        '</div>' +
+        '<div id="downloadsChart" class="chart-main">請選擇日期範圍和產品，然後點擊「更新數據」</div>' +
+      '</div>' +
+      '<div class="chart-container">' +
+        '<div class="chart-header">🔬 進階：年度同期比較</div>' +
+        '<div style="display:flex;gap:12px;align-items:center;padding:8px 20px;flex-wrap:wrap;">' +
+          '<label style="font-weight:500;color:#333;">產品</label>' +
+          '<select id="advancedProductSelect" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:160px;"></select>' +
+          '<label style="font-weight:500;color:#333;">年份</label>' +
+          '<div id="advancedYearOptions" style="display:flex;gap:10px;flex-wrap;"></div>' +
+          '<label style="font-weight:500;color:#333;">資料顯示單位</label>' +
+          '<select id="advancedGranularitySelect" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:120px;">' +
+            '<option value="day">日</option>' +
+            '<option value="week">週</option>' +
+            '<option value="month">月</option>' +
+          '</select>' +
+          '<button id="advancedUpdateBtn" class="refresh-btn" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; white-space: nowrap;">更新分析</button>' +
+        '</div>' +
+        '<div id="advancedRevenueYoY" class="chart-main"></div>' +
+        '<div id="advancedDownloadsYoY" class="chart-main"></div>' +
+      '</div>'
+    );
+  }
+
+  // ===== 營收分析設置 =====
+  function setupRevenueAnalysis() {
+    var today = new Date();
+    var yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    var maxDate = yesterday.toISOString().split('T')[0];
+    
+    var startDateInput = document.getElementById('revenueStartDate');
+    var endDateInput = document.getElementById('revenueEndDate');
+    
+    if (startDateInput) {
+      startDateInput.max = maxDate;
+      var defaultStart = new Date(yesterday);
+      defaultStart.setDate(yesterday.getDate() - 6);
+      startDateInput.value = defaultStart.toISOString().split('T')[0];
+    }
+    
+    if (endDateInput) {
+      endDateInput.max = maxDate;
+      endDateInput.value = maxDate;
+    }
+    
+    var checkboxes = document.querySelectorAll('.revenue-product-checkbox');
+    checkboxes.forEach(function(checkbox) {
+      var productName = checkbox.value;
+      if (productName === '星城' || productName === '金好運') {
+        checkbox.checked = true;
+      }
+    });
+    
+    try {
+      var sel = document.getElementById('dashboardProductSelect');
+      if (sel) {
+        // 避免重複累加：僅在尚未初始化時建立選項，或強制重建一次並去重
+        var names = SENSOR_TOWER_CONFIG.PRODUCT_NAMES;
+        var uniqueNames = Array.from(new Set(names));
+        if (sel.getAttribute('data-init') !== '1') {
+          sel.innerHTML = '';
+          var optAll = document.createElement('option');
+          optAll.value = 'ALL';
+          optAll.textContent = 'ALL (合併)';
+          sel.appendChild(optAll);
+          uniqueNames.forEach(function(n){
+            var opt = document.createElement('option');
+            opt.value = n;
+            opt.textContent = n;
+            sel.appendChild(opt);
+          });
+          sel.setAttribute('data-init', '1');
+        }
+        sel.onchange = function(){ 
+          dashboardProduct = sel.value; 
+          if (revenueData && revenueData.dates && revenueData.dates.length) renderRevenueCharts(); 
+        };
+      }
+    } catch (e) { console.warn('初始化儀表板產品選單失敗', e); }
+
+    try {
+      var gsel = document.getElementById('revenueGranularitySelect');
+      if (gsel) {
+        gsel.onchange = function(){ 
+          revenueGranularity = gsel.value; 
+          if (revenueData && revenueData.dates && revenueData.dates.length) renderRevenueChart(); 
+        };
+      }
+      var dgsel = document.getElementById('downloadsGranularitySelect');
+      if (dgsel) {
+        dgsel.onchange = function(){ 
+          downloadsGranularity = dgsel.value; 
+          if (revenueData && revenueData.dates && revenueData.dates.length) renderDownloadsChart(); 
+        };
+      }
+    } catch (e) { console.warn('初始化顯示粒度下拉失敗', e); }
+    
+    console.log('營收分析功能設置完成');
+  }
+
+  // ===== 營收數據更新 =====
+  function updateRevenueData() {
+    var startDate = document.getElementById('revenueStartDate').value;
+    var endDate = document.getElementById('revenueEndDate').value;
+    var selectedProducts = Array.from(document.querySelectorAll('.revenue-product-checkbox:checked'))
+      .map(function(cb) { return cb.value; });
+    
+    if (!startDate || !endDate) {
+      alert('請選擇日期範圍');
+      return;
+    }
+    
+    if (selectedProducts.length === 0) {
+      alert('請至少選擇一個產品');
+      return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+      alert('開始日期不能大於結束日期');
+      return;
+    }
+    
+    var loadingDiv = document.getElementById('revenueLoading');
+    var updateBtn = document.getElementById('revenueUpdateBtn');
+    
+    if (loadingDiv) loadingDiv.style.display = 'block';
+    if (updateBtn) updateBtn.disabled = true;
+    
+    console.log('開始更新營收數據', { startDate: startDate, endDate: endDate, selectedProducts: selectedProducts });
+    
+    google.script.run
+      .withSuccessHandler(function(data) {
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        if (updateBtn) updateBtn.disabled = false;
+        
+        if (data && data.length > 0) {
+          revenueData = processRevenueData(data);
+          renderRevenueCharts();
+          updateDashboardProductOptions();
+          try { setupAdvancedYoYControls(); renderAdvancedYoY(); } catch(e){ console.warn('初始化進階同期比較失敗', e); }
+          console.log('營收數據更新成功', data.length, '筆記錄');
+        } else {
+          alert('未獲取到有效數據，請檢查日期範圍和產品選擇');
+        }
+      })
+      .withFailureHandler(function(error) {
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        if (updateBtn) updateBtn.disabled = false;
+        alert('API 調用失敗：' + error.message);
+        console.error('營收數據更新失敗', error);
+      })
+      .getSensorTowerData(startDate, endDate, selectedProducts);
+  }
+
+  // ===== 數據處理 =====
+  function processRevenueData(rawData) {
+    var processedData = {
+      dates: [],
+      products: {},
+      totalRevenue: [],
+      totalDownloads: []
+    };
+    
+    var dateGroups = {};
+    rawData.forEach(function(item) {
+      var date = item.date;
+      if (!dateGroups[date]) {
+        dateGroups[date] = {
+          totalRevenue: 0,
+          totalDownloads: 0,
+          products: {}
+        };
+      }
+      
+      var productName = item.product_name;
+      
+      dateGroups[date].totalRevenue += Math.round(item.total_revenue / 100);
+      dateGroups[date].totalDownloads += item.total_units;
+      
+      if (!dateGroups[date].products[productName]) {
+        dateGroups[date].products[productName] = {
+          revenue: 0,
+          downloads: 0
+        };
+      }
+      
+      dateGroups[date].products[productName].revenue += Math.round(item.total_revenue / 100);
+      dateGroups[date].products[productName].downloads += item.total_units;
+    });
+    
+    var sortedDates = Object.keys(dateGroups).sort();
+    processedData.dates = sortedDates;
+    
+    var allProducts = new Set();
+    rawData.forEach(function(item) {
+      allProducts.add(item.product_name);
+    });
+    
+    allProducts.forEach(function(productName) {
+      processedData.products[productName] = {
+        revenue: [],
+        downloads: []
+      };
+      
+      sortedDates.forEach(function(date) {
+        var dayData = dateGroups[date];
+        var productData = dayData.products[productName] || { revenue: 0, downloads: 0 };
+        
+        processedData.products[productName].revenue.push(productData.revenue);
+        processedData.products[productName].downloads.push(productData.downloads);
+      });
+    });
+    
+    sortedDates.forEach(function(date) {
+      var dayData = dateGroups[date];
+      processedData.totalRevenue.push(dayData.totalRevenue);
+      processedData.totalDownloads.push(dayData.totalDownloads);
+    });
+    
+    return processedData;
+  }
+
+  function updateDashboardProductOptions() {
+    if (!revenueData || !revenueData.products) return;
+    
+    var psel = document.getElementById('dashboardProductSelect');
+    if (!psel) return;
+    
+    psel.innerHTML = '';
+    
+    var allOption = document.createElement('option');
+    allOption.value = 'ALL';
+    allOption.textContent = 'ALL (合併)';
+    psel.appendChild(allOption);
+    
+    Object.keys(revenueData.products).forEach(function(productName) {
+      var option = document.createElement('option');
+      option.value = productName;
+      option.textContent = productName;
+      psel.appendChild(option);
+    });
+    
+    dashboardProduct = 'ALL';
+    psel.value = 'ALL';
+  }
+
+  // ===== 圖表渲染 =====
+  function renderRevenueCharts() {
+    if (!revenueData || !revenueData.dates || revenueData.dates.length === 0) {
+      console.warn('沒有營收數據可以渲染');
+      return;
+    }
+    
+    console.log('開始渲染營收圖表', revenueData);
+    
+    renderRevenueChart();
+    renderDownloadsChart();
+
+    // 計算並更新統計卡
+    try {
+      var total = 0;
+      var maxDaily = 0;
+      var days = revenueData.dates.length;
+      if (dashboardProduct === 'ALL') {
+        revenueData.totalRevenue.forEach(function(v){ total += v; if (v > maxDaily) maxDaily = v; });
+      } else {
+        var prod = revenueData.products[dashboardProduct] || { revenue: [] };
+        prod.revenue.forEach(function(v){ total += v; if (v > maxDaily) maxDaily = v; });
+      }
+      var avgDaily = days > 0 ? Math.round(total / days) : 0;
+
+      var fmt = function(n){ return formatMoneyUSD(n); };
+      var elTotal = document.getElementById('statTotalRevenue');
+      var elAvg = document.getElementById('statAvgDaily');
+      var elMax = document.getElementById('statMaxDaily');
+      if (elTotal) elTotal.textContent = fmt(total);
+      if (elAvg) elAvg.textContent = fmt(avgDaily);
+      if (elMax) elMax.textContent = fmt(maxDaily);
+    } catch (e) { console.warn('更新統計卡失敗', e); }
+  }
+
+  function renderRevenueChart() {
+    var chartElement = document.getElementById('revenueChart');
+    if (!chartElement) return;
+    
+    if (!charts.revenueChart) {
+      charts.revenueChart = echarts.init(chartElement);
+    }
+    
+    var chart = charts.revenueChart;
+    
+    var productColors = {
+      '星城': '#FF6B6B',
+      '金好運': '#4ECDC4', 
+      '滿貫': '#45B7D1',
+      '老子': '#F39C12',
+      '豪神': '#9B59B6',
+      '錢街': '#E74C3C',
+      '包你發': '#2ECC71'
+    };
+    
+    var series = [];
+    var legendNames = [];
+    var xLabels = [];
+    
+    if (revenueGranularity === 'day') {
+      xLabels = revenueData.dates;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: revenueData.products[productName].revenue });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (revenueData.products[dashboardProduct]||{revenue:[]}).revenue });
+      }
+    } else if (revenueGranularity === 'month') {
+      var monthly = computeMonthlyRevenue(revenueData);
+      xLabels = monthly.months;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: monthly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (monthly.products[dashboardProduct]||[]) });
+      }
+    } else if (revenueGranularity === 'year') {
+      var yearly = computeYearlyRevenue(revenueData);
+      xLabels = yearly.years;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: yearly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (yearly.products[dashboardProduct]||[]) });
+      }
+    } else { // week
+      var weekly = computeWeeklyRevenue(revenueData);
+      xLabels = weekly.weeks;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: weekly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (weekly.products[dashboardProduct]||[]) });
+      }
+    }
+    
+    chart.clear();
+    
+    chart.setOption({
+      title: {
+        text: '營收趨勢',
+        left: 'center',
+        textStyle: {
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: function(params) {
+          var date = params[0].axisValue;
+          var html = '<div style="font-weight: bold; margin-bottom: 8px;">' + date + '</div>';
+          
+          var total = 0;
+          params.forEach(function(param) {
+            var value = param.value;
+            total += value;
+            html += '<div style="display: flex; align-items: center; margin: 4px 0;">';
+            html += '<span style="display: inline-block; width: 12px; height: 12px; background: ' + param.color + '; margin-right: 8px; border-radius: 50%;"></span>';
+            html += '<span style="flex: 1;">' + param.seriesName + '</span>';
+            html += '<span style="font-weight: bold;">$' + value.toLocaleString() + '</span>';
+            html += '</div>';
+          });
+          
+          html += '<div style="border-top: 1px solid #eee; margin-top: 8px; padding-top: 8px; font-weight: bold;">';
+          html += '總計: $' + total.toLocaleString();
+          html += '</div>';
+          
+          return html;
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        textStyle: {
+          color: '#333'
+        },
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 6px;'
+      },
+      legend: {
+        data: legendNames,
+        top: 40,
+        type: 'scroll'
+      },
+      grid: {
+        left: 80,
+        right: 40,
+        top: 80,
+        bottom: 60
+      },
+      xAxis: {
+        type: 'category',
+        data: xLabels,
+        name: (revenueGranularity==='month'?'月份':(revenueGranularity==='week'?'週':(revenueGranularity==='year'?'年份':'日期'))),
+        nameLocation: 'middle',
+        nameGap: 25,
+        axisLabel: {
+          rotate: 45,
+          fontSize: 12
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: '營收 (USD)',
+        nameLocation: 'middle',
+        nameGap: 50,
+        axisLabel: {
+          formatter: function(value) {
+            return '$' + (value / 1000).toFixed(0) + 'K';
+          }
+        }
+      },
+      series: series
+    });
+  }
+
+  function renderDownloadsChart() {
+    var chartElement = document.getElementById('downloadsChart');
+    if (!chartElement) return;
+    
+    if (!charts.downloadsChart) {
+      charts.downloadsChart = echarts.init(chartElement);
+    }
+    
+    var chart = charts.downloadsChart;
+    
+    var productColors = {
+      '星城': '#FF6B6B',
+      '金好運': '#4ECDC4', 
+      '滿貫': '#45B7D1',
+      '老子': '#F39C12',
+      '豪神': '#9B59B6',
+      '錢街': '#E74C3C',
+      '包你發': '#2ECC71'
+    };
+    
+    var series = [];
+    var legendNames = [];
+    var xLabels = [];
+    
+    if (downloadsGranularity === 'day') {
+      xLabels = revenueData.dates;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: revenueData.products[productName].downloads });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (revenueData.products[dashboardProduct]||{downloads:[]}).downloads });
+      }
+    } else if (downloadsGranularity === 'month') {
+      var monthly = computeMonthlyDownloads(revenueData);
+      xLabels = monthly.months;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: monthly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (monthly.products[dashboardProduct]||[]) });
+      }
+    } else if (downloadsGranularity === 'year') {
+      var yearly = computeYearlyDownloads(revenueData);
+      xLabels = yearly.years;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: yearly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (yearly.products[dashboardProduct]||[]) });
+      }
+    } else { // week
+      var weekly = computeWeeklyDownloads(revenueData);
+      xLabels = weekly.weeks;
+      if (dashboardProduct === 'ALL') {
+        Object.keys(revenueData.products).forEach(function(productName){
+          legendNames.push(productName);
+          series.push({ name: productName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+            itemStyle: { color: productColors[productName] || '#95A5A6' }, lineStyle: { width: 3 },
+            data: weekly.products[productName] || [] });
+        });
+      } else {
+        legendNames = [dashboardProduct];
+        series.push({ name: dashboardProduct, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: productColors[dashboardProduct] || '#95A5A6' }, lineStyle: { width: 3 },
+          data: (weekly.products[dashboardProduct]||[]) });
+      }
+    }
+    
+    chart.clear();
+    chart.setOption({
+      title: {
+        text: '下載量趨勢',
+        left: 'center',
+        textStyle: {
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: function(params) {
+          var date = params[0].axisValue;
+          var html = '<div style="font-weight: bold; margin-bottom: 8px;">' + date + '</div>';
+          
+          var total = 0;
+          params.forEach(function(param) {
+            var value = param.value;
+            total += value;
+            html += '<div style="display: flex; align-items: center; margin: 4px 0;">';
+            html += '<span style="display: inline-block; width: 12px; height: 12px; background: ' + param.color + '; margin-right: 8px; border-radius: 50%;"></span>';
+            html += '<span style="flex: 1;">' + param.seriesName + '</span>';
+            html += '<span style="font-weight: bold;">' + value.toLocaleString() + '</span>';
+            html += '</div>';
+          });
+          
+          html += '<div style="border-top: 1px solid #eee; margin-top: 8px; padding-top: 8px; font-weight: bold;">';
+          html += '總計: ' + total.toLocaleString();
+          html += '</div>';
+          
+          return html;
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        textStyle: {
+          color: '#333'
+        },
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 6px;'
+      },
+      legend: {
+        data: legendNames,
+        top: 40,
+        type: 'scroll'
+      },
+      grid: {
+        left: 80,
+        right: 40,
+        top: 80,
+        bottom: 60
+      },
+      xAxis: {
+        type: 'category',
+        data: xLabels,
+        name: (downloadsGranularity==='month'?'月份':(downloadsGranularity==='week'?'週':(downloadsGranularity==='year'?'年份':'日期'))),
+        nameLocation: 'middle',
+        nameGap: 25,
+        axisLabel: {
+          rotate: 45,
+          fontSize: 12
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: '下載量',
+        nameLocation: 'middle',
+        nameGap: 50,
+        axisLabel: {
+          formatter: function(value) {
+            if (value >= 1000) {
+              return (value / 1000).toFixed(1) + 'K';
+            }
+            return value.toString();
+          }
+        }
+      },
+      series: series
+    });
+  }
+
+  // ===== 數據彙總函數 =====
+  function computeMonthlyRevenue(data) {
+    var monthly = { months: [], total: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return monthly;
+    var monthSet = new Set();
+    data.dates.forEach(function(d){ monthSet.add(d.substring(0,7)); });
+    var months = Array.from(monthSet).sort();
+    monthly.months = months;
+    months.forEach(function(m){ monthly.total.push(0); });
+    Object.keys(data.products).forEach(function(p){ monthly.products[p] = new Array(months.length).fill(0); });
+
+    months.forEach(function(m, mi){
+      data.dates.forEach(function(date, di){
+        if (date.substring(0,7) === m) {
+          Object.keys(data.products).forEach(function(p){
+            var v = data.products[p].revenue[di] || 0;
+            monthly.products[p][mi] += v;
+            monthly.total[mi] += v;
+          });
+        }
+      });
+    });
+    return monthly;
+  }
+
+  function computeYearlyRevenue(data) {
+    var yearly = { years: [], total: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return yearly;
+    var yearSet = new Set();
+    data.dates.forEach(function(d){ yearSet.add(d.substring(0,4)); });
+    var years = Array.from(yearSet).sort();
+    yearly.years = years;
+    years.forEach(function(y){ yearly.total.push(0); });
+    Object.keys(data.products).forEach(function(p){ yearly.products[p] = new Array(years.length).fill(0); });
+
+    years.forEach(function(y, yi){
+      data.dates.forEach(function(date, di){
+        if (date.substring(0,4) === y) {
+          Object.keys(data.products).forEach(function(p){
+            var v = data.products[p].revenue[di] || 0;
+            yearly.products[p][yi] += v;
+            yearly.total[yi] += v;
+          });
+        }
+      });
+    });
+    return yearly;
+  }
+
+  function computeWeeklyRevenue(data) {
+    var weekly = { weeks: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return weekly;
+    var mapIndex = {};
+    function getWeekKey(dateStr){
+      var d = new Date(dateStr + 'T00:00:00');
+      var day = (d.getDay() + 6) % 7; // 0=Mon
+      var monday = new Date(d); monday.setDate(d.getDate() - day);
+      var y = monday.getFullYear();
+      var oneJan = new Date(y,0,1);
+      var days = Math.floor((monday - oneJan) / 86400000) + 1;
+      var week = Math.ceil(days / 7);
+      return y + '-W' + String(week).padStart(2,'0');
+    }
+    data.dates.forEach(function(ds, di){
+      var key = getWeekKey(ds);
+      if (mapIndex[key] === undefined) { mapIndex[key] = weekly.weeks.length; weekly.weeks.push(key); }
+      var wi = mapIndex[key];
+      Object.keys(data.products).forEach(function(p){
+        if (!weekly.products[p]) weekly.products[p] = new Array(weekly.weeks.length).fill(0);
+        if (weekly.products[p].length < weekly.weeks.length) {
+          weekly.products[p].push(0);
+        }
+        var v = data.products[p].revenue[di] || 0;
+        weekly.products[p][wi] = (weekly.products[p][wi] || 0) + v;
+      });
+    });
+    return weekly;
+  }
+
+  function computeMonthlyDownloads(data) {
+    var monthly = { months: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return monthly;
+    var monthSet = new Set();
+    data.dates.forEach(function(d){ monthSet.add(d.substring(0,7)); });
+    var months = Array.from(monthSet).sort();
+    monthly.months = months;
+    Object.keys(data.products).forEach(function(p){ monthly.products[p] = new Array(months.length).fill(0); });
+
+    months.forEach(function(m, mi){
+      data.dates.forEach(function(date, di){
+        if (date.substring(0,7) === m) {
+          Object.keys(data.products).forEach(function(p){
+            var v = data.products[p].downloads[di] || 0;
+            monthly.products[p][mi] += v;
+          });
+        }
+      });
+    });
+    return monthly;
+  }
+
+  function computeYearlyDownloads(data) {
+    var yearly = { years: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return yearly;
+    var yearSet = new Set();
+    data.dates.forEach(function(d){ yearSet.add(d.substring(0,4)); });
+    var years = Array.from(yearSet).sort();
+    yearly.years = years;
+    Object.keys(data.products).forEach(function(p){ yearly.products[p] = new Array(years.length).fill(0); });
+
+    years.forEach(function(y, yi){
+      data.dates.forEach(function(date, di){
+        if (date.substring(0,4) === y) {
+          Object.keys(data.products).forEach(function(p){
+            var v = data.products[p].downloads[di] || 0;
+            yearly.products[p][yi] += v;
+          });
+        }
+      });
+    });
+    return yearly;
+  }
+
+  function computeWeeklyDownloads(data) {
+    var weekly = { weeks: [], products: {} };
+    if (!data || !data.dates || data.dates.length === 0) return weekly;
+    var mapIndex = {};
+    function getWeekKey(dateStr){
+      var d = new Date(dateStr + 'T00:00:00');
+      var day = (d.getDay() + 6) % 7; // 0=Mon
+      var monday = new Date(d); monday.setDate(d.getDate() - day);
+      var y = monday.getFullYear();
+      var oneJan = new Date(y,0,1);
+      var days = Math.floor((monday - oneJan) / 86400000) + 1;
+      var week = Math.ceil(days / 7);
+      return y + '-W' + String(week).padStart(2,'0');
+    }
+    data.dates.forEach(function(ds, di){
+      var key = getWeekKey(ds);
+      if (mapIndex[key] === undefined) { mapIndex[key] = weekly.weeks.length; weekly.weeks.push(key); }
+      var wi = mapIndex[key];
+      Object.keys(data.products).forEach(function(p){
+        if (!weekly.products[p]) weekly.products[p] = new Array(weekly.weeks.length).fill(0);
+        if (weekly.products[p].length < weekly.weeks.length) {
+          weekly.products[p].push(0);
+        }
+        var v = data.products[p].downloads[di] || 0;
+        weekly.products[p][wi] = (weekly.products[p][wi] || 0) + v;
+      });
+    });
+    return weekly;
+  }
+
+  // ===== 進階年度同期比較 =====
+  function setupAdvancedYoYControls() {
+    var prodSel = document.getElementById('advancedProductSelect');
+    var yearsBox = document.getElementById('advancedYearOptions');
+    var btn = document.getElementById('advancedUpdateBtn');
+    var gsel = document.getElementById('advancedGranularitySelect');
+    if (!prodSel || !yearsBox) return;
+    
+    var productNames = Object.keys(revenueData.products || {});
+    lastAdvancedProducts = productNames.slice();
+    prodSel.innerHTML = '';
+    productNames.forEach(function(name){
+      var opt = document.createElement('option');
+      opt.value = name; opt.textContent = name; prodSel.appendChild(opt);
+    });
+    
+    var yearSet = new Set();
+    (revenueData.dates || []).forEach(function(d){ if (d && d.length>=4) yearSet.add(d.substring(0,4)); });
+    var years = Array.from(yearSet).sort();
+    yearsBox.innerHTML = '';
+    years.forEach(function(y){
+      var id = 'adv-year-' + y;
+      var label = document.createElement('label');
+      label.className = 'revenue-adv-year';
+      label.style.marginRight = '10px';
+      label.innerHTML = '<input type="checkbox" id="'+id+'" value="'+y+'" style="margin-right:6px;">'+y;
+      yearsBox.appendChild(label);
+    });
+    
+    if (years.length) {
+      var last = years[years.length-1];
+      var cb = document.getElementById('adv-year-' + last);
+      if (cb) cb.checked = true;
+    }
+    if (btn) btn.onclick = function(){ renderAdvancedYoY(); };
+    if (gsel) gsel.onchange = function(){ renderAdvancedYoY(); };
+  }
+
+  function renderAdvancedYoY() {
+    var prodSel = document.getElementById('advancedProductSelect');
+    var yearsBox = document.getElementById('advancedYearOptions');
+    var gsel = document.getElementById('advancedGranularitySelect');
+    var revEl = document.getElementById('advancedRevenueYoY');
+    var dwnEl = document.getElementById('advancedDownloadsYoY');
+    if (!prodSel || !yearsBox || !revEl || !dwnEl) return;
+    var product = prodSel.value;
+    if (!product) return;
+    var yearChecks = Array.from(yearsBox.querySelectorAll('input[type="checkbox"]:checked'));
+    var years = yearChecks.map(function(cb){ return cb.value; });
+    if (years.length === 0) return;
+
+    var gran = (gsel && gsel.value) || 'day';
+    var x = [];
+    if (gran === 'day') { for (var i=1;i<=365;i++) x.push(i); }
+    else if (gran === 'week') { for (var i=1;i<=53;i++) x.push('W'+i); }
+    else { for (var i=1;i<=12;i++) x.push(i+'月'); }
+    function dayOfYear(ds){
+      var d = new Date(ds + 'T00:00:00');
+      var start = new Date(d.getFullYear(),0,1);
+      return Math.min(365, Math.floor((d - start)/86400000)+1);
+    }
+    function weekOfYear(ds){
+      var d = new Date(ds + 'T00:00:00');
+      var day = (d.getDay()+6)%7; // Monday=0
+      var monday = new Date(d); monday.setDate(d.getDate()-day);
+      var y = monday.getFullYear();
+      var oneJan = new Date(y,0,1);
+      var diff = Math.floor((monday - oneJan)/86400000)+1;
+      return Math.max(1, Math.min(53, Math.ceil(diff/7)));
+    }
+    function monthIndex(ds){ return parseInt(ds.substring(5,7),10); }
+    
+    var colorList = ['#007bff','#FF6B6B','#4ECDC4','#45B7D1','#F39C12','#9B59B6','#2ECC71','#E74C3C'];
+    var revSeries = [];
+    var dwnSeries = [];
+    years.forEach(function(y, yi){
+      var len = (gran==='day'?365:(gran==='week'?53:12));
+      var revArr = new Array(len).fill(0);
+      var dwnArr = new Array(len).fill(0);
+      var prodData = revenueData.products[product] || {revenue:[], downloads:[]};
+      (revenueData.dates || []).forEach(function(ds, idx){
+        if (ds.substring(0,4) === y){
+          var di = 0;
+          if (gran==='day') di = dayOfYear(ds) - 1;
+          else if (gran==='week') di = weekOfYear(ds) - 1;
+          else di = monthIndex(ds) - 1;
+          revArr[di] += prodData.revenue[idx] || 0;
+          dwnArr[di] += prodData.downloads[idx] || 0;
+        }
+      });
+      revSeries.push({ name: y, type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, itemStyle: { color: colorList[yi%colorList.length] }, data: revArr });
+      dwnSeries.push({ name: y, type: 'line', smooth: true, symbol: 'none', lineStyle: { width: 2 }, itemStyle: { color: colorList[yi%colorList.length] }, data: dwnArr });
+    });
+
+    if (!charts.advancedRevenueYoY) charts.advancedRevenueYoY = echarts.init(revEl);
+    if (!charts.advancedDownloadsYoY) charts.advancedDownloadsYoY = echarts.init(dwnEl);
+    charts.advancedRevenueYoY.clear();
+    charts.advancedRevenueYoY.setOption({
+      title: { text: '年度營收比較（按天序對齊）', left: 'center' },
+      tooltip: { trigger: 'axis', valueFormatter: function(v){ return '$' + (v||0).toLocaleString(); } },
+      legend: { top: 30 },
+      grid: { left: 60, right: 30, top: 60, bottom: 50 },
+      xAxis: { type: 'category', name: (gran==='day'?'第N天':(gran==='week'?'第N週':'月份')), data: x },
+      yAxis: { type: 'value', name: '營收 (USD)', axisLabel: { formatter: function(v){ return '$' + (v/1000).toFixed(0) + 'K'; } } },
+      series: revSeries
+    });
+    charts.advancedDownloadsYoY.clear();
+    charts.advancedDownloadsYoY.setOption({
+      title: { text: '年度下載量比較（按天序對齊）', left: 'center' },
+      tooltip: { trigger: 'axis' },
+      legend: { top: 30 },
+      grid: { left: 60, right: 30, top: 60, bottom: 50 },
+      xAxis: { type: 'category', name: (gran==='day'?'第N天':(gran==='week'?'第N週':'月份')), data: x },
+      yAxis: { type: 'value', name: '下載量' },
+      series: dwnSeries
+    });
+  }
+</script>

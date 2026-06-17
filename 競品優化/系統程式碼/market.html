@@ -1,0 +1,679 @@
+<script>
+// 依賴（需先載入）：util.html（buildTimelineDateHeader, buildTimelineWeekdayHeader, getActivityTypeClass, getProductColor, escapeHtml）, timeline.html（calculateActivityRowsIntelligent）
+console.log('📦 marketing.js 開始載入...');
+
+if (typeof window.marketingData === 'undefined') window.marketingData = [];
+if (typeof window.mktViewMode === 'undefined') window.mktViewMode = 'byMonth';
+
+// ============================================================
+// 初始化 HTML
+// ============================================================
+window.initMarketingTab = function() {
+  var html = '';
+
+
+
+  // 篩選器（複用現有 control-panel-wrapper 樣式）
+  html += '<div class="control-panel-wrapper">';
+  html += '<div class="control-panel-header" style="background:linear-gradient(135deg,#667eea 0%, #764ba2 100%);">';
+  html += '<span class="control-panel-title">📋 篩選條件</span>';
+  html += '</div>';
+  html += '<div class="control-panel">';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:15px;align-items:flex-end;">';
+
+
+  // 競品篩選
+  html += '<div style="flex:0 1 150px;min-width:130px;">';
+  html += '<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px;">競品</label>';
+  html += '<select id="mktProductFilter" onchange="window.applyMktFilters()" style="width:100%;height:42px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
+  html += '<option value="all">全部競品</option>';
+  html += '</select>';
+  html += '</div>';
+
+  // 開始月份
+  html += '<div style="flex:0 1 160px;min-width:130px;">';
+  html += '<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px;">📅 開始月份</label>';
+  html += '<input type="month" id="mktStartMonth" onchange="window.applyMktFilters()" style="width:100%;height:42px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+
+  // 結束月份
+  html += '<div style="flex:0 1 160px;min-width:130px;">';
+  html += '<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px;">📅 結束月份</label>';
+  html += '<input type="month" id="mktEndMonth" onchange="window.applyMktFilters()" style="width:100%;height:42px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+
+  // 關鍵字篩選
+  html += '<div style="flex:1 1 220px;min-width:180px;">';
+  html += '<label style="display:block;margin-bottom:8px;font-weight:600;color:#333;font-size:14px;">🔍 關鍵字（多個請用 , 分隔）</label>';
+  html += '<input type="text" id="mktKeywordFilter" placeholder="例：折扣,限時,聯名" onchange="window.applyMktFilters()" oninput="window.applyMktFilters()" style="width:100%;height:42px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">';
+  html += '</div>';
+
+  // 重置
+  html += '<div style="flex:0 0 auto;">';
+  html += '<button onclick="window.resetMktFilters()" class="clear-btn" style="height:42px;padding:0 18px;box-sizing:border-box;">重置</button>';
+  html += '</div>';
+
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+
+
+
+  // 圖表區塊
+  html += '<div class="timeline-container" style="margin-bottom:0;border-radius:8px 8px 0 0;">';
+  html += '<div class="timeline-header" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;display:flex;justify-content:space-between;align-items:center;">📊 分類數據追蹤<div style="display:flex;gap:6px;"><button id="mktChartTypeBar" onclick="window.setMktChartType(\'bar\')" style="height:28px;padding:0 12px;border:1.5px solid rgba(255,255,255,0.6);border-radius:5px;background:rgba(255,255,255,0.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">長條圖</button><button id="mktChartTypeLine" onclick="window.setMktChartType(\'line\')" style="height:28px;padding:0 12px;border:1.5px solid rgba(255,255,255,0.6);border-radius:5px;background:transparent;color:rgba(255,255,255,0.75);font-size:12px;font-weight:600;cursor:pointer;">折線圖</button></div></div>';
+  html += '<div style="padding:16px 20px 20px;">';
+  html += '<div id="mktChartContainer" style="width:100%;height:360px;"></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // 時間軸（複用 timeline-container）
+  html += '<div class="timeline-container" style="border-radius:0 0 8px 8px;border-top:none;">';
+  html += '<div class="timeline-header">📣 行銷活動時間軸</div>';
+  html += '<div class="timeline-content" id="mktTimelineContent">';
+  html += '<div class="no-data">載入中...</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // 按鈕樣式
+  html += '<style>';
+  html += '.mkt-mode-btn{height:42px;padding:0 16px;border:2px solid #ddd;border-radius:6px;background:#fff;color:#666;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;box-sizing:border-box;}';
+  html += '.mkt-mode-btn.mkt-mode-active{border-color:#667eea;background:#667eea;color:#fff;}';
+  html += '.mkt-product-badge{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;font-weight:700;color:#fff;margin-bottom:3px;white-space:nowrap;}';
+  html += '</style>';
+
+  return html;
+};
+
+// ============================================================
+// 載入資料
+// ============================================================
+window.loadMarketingDatabase = function() {
+  // 有快取就直接渲染，不重新呼叫後端
+  if (window.marketingData && window.marketingData.length > 0) {
+    window.buildMktFilterOptions(window.marketingData);
+    window.applyMktFilters();
+    return;
+  }
+
+  var content = document.getElementById('mktTimelineContent');
+  if (content) content.innerHTML = '<div class="no-data"><div style="font-size:36px;margin-bottom:12px;">⏳</div>載入中...</div>';
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('✅ 行銷資料載入成功，筆數：' + data.length);
+      window.marketingData = data;
+      window.buildMktFilterOptions(data);
+      window.applyMktFilters();
+    })
+    .withFailureHandler(function(err) {
+      console.error('❌ 行銷資料載入失敗：', err);
+      var c = document.getElementById('mktTimelineContent');
+      if (c) c.innerHTML = '<div class="no-data" style="color:#dc3545;"><div style="font-size:36px;margin-bottom:12px;">❌</div>載入失敗：' + err + '</div>';
+    })
+    .getMarketingDatabaseData();
+};
+
+// ============================================================
+// 建立篩選器選項
+// ============================================================
+window.buildMktFilterOptions = function(data) {
+  var products = [];
+  var months = [];
+  data.forEach(function(a) {
+    if (a.product && products.indexOf(a.product) === -1) products.push(a.product);
+    if (a.month && months.indexOf(a.month) === -1) months.push(a.month);
+  });
+  products.sort();
+  months.sort();
+
+  var sel = document.getElementById('mktProductFilter');
+  if (sel) {
+    var opts = '<option value="all">全部競品</option>';
+    products.forEach(function(p) { opts += '<option value="' + p + '">' + p + '</option>'; });
+    sel.innerHTML = opts;
+  }
+  if (months.length > 0) {
+    var s = document.getElementById('mktStartMonth');
+    var e = document.getElementById('mktEndMonth');
+    if (s && !s.value) s.value = months[0];
+    if (e && !e.value) e.value = months[months.length - 1];
+  }
+};
+
+// ============================================================
+// 切換模式
+// ============================================================
+window.setMktViewMode = function(mode) {
+  window.mktViewMode = mode;
+  var b1 = document.getElementById('mktBtnByMonth');
+  var b2 = document.getElementById('mktBtnByProduct');
+  if (b1) { b1.classList.toggle('mkt-mode-active', mode === 'byMonth'); }
+  window.applyMktFilters();
+};
+
+// ============================================================
+// 重置
+// ============================================================
+window.resetMktFilters = function() {
+  var p = document.getElementById('mktProductFilter');
+  if (p) p.value = 'all';
+  var k = document.getElementById('mktKeywordFilter');
+  if (k) k.value = '';
+  window.buildMktFilterOptions(window.marketingData);
+  window.applyMktFilters();
+};
+
+// ============================================================
+// 跨月展開：一筆活動 → 每個涵蓋月份各一筆
+// ============================================================
+window.expandMktActivity = function(a) {
+  if (!a.startDate || !a.endDate) return [a];
+
+  var startParts = a.startDate.split('/');
+  var endParts   = a.endDate.split('/');
+  if (startParts.length < 2 || endParts.length < 2) return [a];
+
+  var baseYear = parseInt((a.month || '').split('-')[0]) || new Date().getFullYear();
+  var startYear, startMon, endYear, endMon;
+
+  // 判斷是否含年份（YYYY/M/D 有3段，M/D 只有2段）
+  if (startParts.length >= 3) {
+    startYear = parseInt(startParts[0]);
+    startMon  = parseInt(startParts[1]);
+  } else {
+    startYear = baseYear;
+    startMon  = parseInt(startParts[0]);
+  }
+
+  if (endParts.length >= 3) {
+    endYear = parseInt(endParts[0]);
+    endMon  = parseInt(endParts[1]);
+  } else {
+    endYear = baseYear;
+    endMon  = parseInt(endParts[0]);
+    // 沒有年份時才用舊的跨年判斷
+    if (endMon < startMon) endYear = startYear + 1;
+  }
+
+  // 產生所有涵蓋月份，並將 startDate/endDate 裁切為當月範圍
+  var results = [];
+  var curYear = startYear;
+  var curMon  = startMon;
+
+  var startDayNum = parseInt((startParts.length >= 3 ? startParts[2] : startParts[1]) || '1');
+  var endDayNum   = parseInt((endParts.length   >= 3 ? endParts[2]   : endParts[1])   || '1');
+
+  while (curYear < endYear || (curYear === endYear && curMon <= endMon)) {
+    var mm = (curMon < 10 ? '0' : '') + curMon;
+    var daysInCurMonth = new Date(curYear, curMon, 0).getDate();
+
+    // 裁切起始日：第一個月用原始起始日，其他月份從 1 日開始
+    var clipStart = (curYear === startYear && curMon === startMon) ? startDayNum : 1;
+    // 裁切結束日：最後一個月用原始結束日，其他月份到月底
+    var clipEnd   = (curYear === endYear   && curMon === endMon)   ? endDayNum   : daysInCurMonth;
+
+    results.push(Object.assign({}, a, {
+      month:     curYear + '-' + mm,
+      startDate: curMon + '/' + clipStart,
+      endDate:   curMon + '/' + clipEnd
+    }));
+
+    curMon++;
+    if (curMon > 12) { curMon = 1; curYear++; }
+
+    // 防無窮迴圈（超過 24 個月就停）
+    if (results.length > 24) break;
+  }
+
+  return results.length > 0 ? results : [a];
+};
+
+// ============================================================
+// 套用篩選
+// ============================================================
+window.applyMktFilters = function() {
+  var data = window.marketingData || [];
+  if (!data.length) return;
+
+  var product    = (document.getElementById('mktProductFilter') || {}).value || 'all';
+  var startMonth = (document.getElementById('mktStartMonth')   || {}).value || '';
+  var endMonth   = (document.getElementById('mktEndMonth')     || {}).value || '';
+  var keywordRaw = (document.getElementById('mktKeywordFilter') || {}).value || '';
+  var keywords   = keywordRaw.split(',').map(function(k) { return k.trim(); }).filter(function(k) { return k.length > 0; });
+
+  // 先展開跨月活動
+  var expanded = [];
+  data.forEach(function(a) {
+    window.expandMktActivity(a).forEach(function(e) { expanded.push(e); });
+  });
+
+  var filtered = expanded.filter(function(a) {
+    if (product !== 'all' && a.product !== product) return false;
+    if (startMonth && a.month < startMonth) return false;
+    if (endMonth   && a.month > endMonth)   return false;
+    if (keywords.length > 0) {
+      var searchText = ((a.name || '') + ' ' + (a.category || '') + ' ' + (a.product || '')).toLowerCase();
+      var matched = keywords.some(function(kw) { return searchText.indexOf(kw.toLowerCase()) !== -1; });
+      if (!matched) return false;
+    }
+    return true;
+  });
+
+  if (window.mktViewMode === 'byProduct') {
+    window.renderMktByProduct(filtered);
+  } else {
+    window.renderMktByMonth(filtered);
+  }
+
+  window.renderMktChart(filtered);
+};
+
+// ============================================================
+// ECharts 圖表：分類數據追蹤
+// ============================================================
+window._mktChart = null;
+window._mktChartType = 'bar';
+
+window.setMktChartType = function(type) {
+  window._mktChartType = type;
+  var barBtn = document.getElementById('mktChartTypeBar');
+  var lineBtn = document.getElementById('mktChartTypeLine');
+  if (barBtn && lineBtn) {
+    if (type === 'bar') {
+      barBtn.style.background = 'rgba(255,255,255,0.25)';
+      barBtn.style.color = '#fff';
+      lineBtn.style.background = 'transparent';
+      lineBtn.style.color = 'rgba(255,255,255,0.75)';
+    } else {
+      lineBtn.style.background = 'rgba(255,255,255,0.25)';
+      lineBtn.style.color = '#fff';
+      barBtn.style.background = 'transparent';
+      barBtn.style.color = 'rgba(255,255,255,0.75)';
+    }
+  }
+  // Re-render with current data
+  var data = window.marketingData || [];
+  if (!data.length) return;
+  var expanded = [];
+  data.forEach(function(a) {
+    window.expandMktActivity(a).forEach(function(e) { expanded.push(e); });
+  });
+  var product    = (document.getElementById('mktProductFilter') || {}).value || 'all';
+  var startMonth = (document.getElementById('mktStartMonth')   || {}).value || '';
+  var endMonth   = (document.getElementById('mktEndMonth')     || {}).value || '';
+  var keywordRaw = (document.getElementById('mktKeywordFilter') || {}).value || '';
+  var keywords   = keywordRaw.split(',').map(function(k) { return k.trim(); }).filter(function(k) { return k.length > 0; });
+  var filtered = expanded.filter(function(a) {
+    if (product !== 'all' && a.product !== product) return false;
+    if (startMonth && a.month < startMonth) return false;
+    if (endMonth   && a.month > endMonth)   return false;
+    if (keywords.length > 0) {
+      var searchText = ((a.name || '') + ' ' + (a.category || '') + ' ' + (a.product || '')).toLowerCase();
+      var matched = keywords.some(function(kw) { return searchText.indexOf(kw.toLowerCase()) !== -1; });
+      if (!matched) return false;
+    }
+    return true;
+  });
+  window.renderMktChart(filtered);
+};
+
+window.renderMktChart = function(data) {
+  var container = document.getElementById('mktChartContainer');
+  if (!container) return;
+
+  // 統計每月每分類的活動數量
+  var monthTypeCount = {};
+  data.forEach(function(a) {
+    var m = a.month || '';
+    var t = a.category || '其他類型';
+    if (!monthTypeCount[m]) monthTypeCount[m] = {};
+    if (!monthTypeCount[m][t]) monthTypeCount[m][t] = 0;
+    monthTypeCount[m][t]++;
+  });
+
+  var months = Object.keys(monthTypeCount).sort();
+  var types = MKT_TYPE_ORDER.filter(function(t) {
+    return months.some(function(m) { return monthTypeCount[m][t]; });
+  });
+
+  var colorMap = {};
+  types.forEach(function(t) {
+    var s = window.getMktTypeStyle(t);
+    colorMap[t] = s.chart || s.bg;
+  });
+
+  var chartType = window._mktChartType || 'bar';
+  var series = types.map(function(type) {
+    var base = {
+      name: type,
+      type: chartType,
+      itemStyle: { color: colorMap[type] },
+      emphasis: { itemStyle: { opacity: 0.85 } },
+      data: months.map(function(m) {
+        return (monthTypeCount[m] && monthTypeCount[m][type]) ? monthTypeCount[m][type] : 0;
+      })
+    };
+    if (chartType === 'bar') {
+      base.stack = 'total';
+      base.barMaxWidth = 60;
+      base.itemStyle.borderRadius = 0;
+    } else {
+      base.smooth = true;
+      base.symbol = 'circle';
+      base.symbolSize = 7;
+      base.lineStyle = { width: 2.5 };
+      base.areaStyle = { opacity: 0.08 };
+    }
+    return base;
+  });
+
+  // 格式化 X 軸標籤 2025-01 → 2025/01
+  var xLabels = months.map(function(m) { return m.replace('-', '/'); });
+
+  if (window._mktChart) {
+    try { window._mktChart.dispose(); } catch(e) {}
+  }
+  window._mktChart = echarts.init(container);
+
+  window._mktChart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255,255,255,0.97)',
+      borderColor: '#ddd',
+      borderWidth: 1,
+      textStyle: { color: '#333' },
+      extraCssText: 'box-shadow:0 4px 12px rgba(0,0,0,0.12);border-radius:6px;',
+      formatter: function(params) {
+        var total = 0;
+        params.forEach(function(p) { total += p.value; });
+        var html = '<div style="font-weight:700;margin-bottom:8px;font-size:14px;">' + params[0].axisValue + '　共 ' + total + ' 筆</div>';
+        params.forEach(function(p) {
+          if (p.value > 0) {
+            html += '<div style="display:flex;justify-content:space-between;gap:20px;margin:4px 0;">' +
+              '<span>' + p.marker + ' ' + p.seriesName + '</span>' +
+              '<span style="font-weight:600;">' + p.value + '</span></div>';
+          }
+        });
+        return html;
+      }
+    },
+    legend: {
+      data: types,
+      top: 8,
+      type: 'scroll',
+      orient: 'horizontal',
+      itemGap: 12,
+      itemWidth: 20,
+      itemHeight: 12,
+      textStyle: { fontSize: 12, color: '#555' }
+    },
+    grid: { left: 60, right: 30, top: 55, bottom: 50 },
+    xAxis: {
+      type: 'category',
+      data: xLabels,
+      axisLabel: { rotate: 45, fontSize: 12, color: '#555' },
+      axisLine: { lineStyle: { color: '#ddd' } }
+    },
+    yAxis: {
+      type: 'value',
+      name: '活動數量',
+      nameTextStyle: { color: '#888', fontSize: 12 },
+      minInterval: 1,
+      axisLabel: { fontSize: 12, color: '#555' },
+      splitLine: { lineStyle: { color: '#f0f0f0' } }
+    },
+    series: series
+  });
+};
+
+// ============================================================
+// 工具：行銷專屬型態配色（低飽和，不影響其他頁籤）
+// ============================================================
+window.getMktTypeStyle = function(type) {
+  var palette = {
+    // ── 行銷分類（8 種，低飽和柔和色系）──
+    'TVC':      { bg: '#dbeafe', color: '#1e3a8a', chart: '#93c5fd' },  // 霧藍
+    '抽獎券活動': { bg: '#ede9fe', color: '#4c1d95', chart: '#c4b5fd' },  // 薰衣草紫
+    '新遊戲':    { bg: '#d1fae5', color: '#065f46', chart: '#6ee7b7' },  // 薄荷綠
+    '社群貼文':  { bg: '#ffedd5', color: '#7c2d12', chart: '#fdba74' },  // 奶橙
+    '異業合作':  { bg: '#ccfbf1', color: '#134e4a', chart: '#5eead4' },  // 淺青綠
+    '通路儲值':  { bg: '#fef9c3', color: '#713f12', chart: '#fde047' },  // 奶黃
+    '產包':      { bg: '#fce7f3', color: '#831843', chart: '#f9a8d4' },  // 淡玫瑰
+    '其他類型':  { bg: '#f1f5f9', color: '#334155', chart: '#94a3b8' },  // 石板灰
+  };
+  if (palette[type]) return palette[type];
+  if (type && type.indexOf('魚機') !== -1) return { bg: '#dbeafe', color: '#1e40af' };
+  return { bg: '#f9fafb', color: '#6b7280' };
+};
+
+var MKT_TYPE_ORDER = [
+  'TVC','抽獎券活動','新遊戲','社群貼文','異業合作','通路儲值','產包','其他類型'
+];
+
+function mktSortTypes(typeObj) {
+  var ordered = MKT_TYPE_ORDER.filter(function(t) { return typeObj[t]; });
+  Object.keys(typeObj).forEach(function(t) {
+    if (MKT_TYPE_ORDER.indexOf(t) === -1) ordered.push(t);
+  });
+  return ordered;
+}
+
+// ============================================================
+// 內部工具：將行銷活動轉為時間軸相容格式
+// ============================================================
+function mktToTimelineActivity(a) {
+  return {
+    name:            a.name || '',
+    type:            a.category || '其他類型',
+    month:           a.month || '',
+    startDate:       a.startDate || '',
+    endDate:         a.endDate || '',
+    url:             a.slideUrl || '',
+    originalContent: a.name || '',
+    product:         a.product || ''
+  };
+}
+
+// ============================================================
+// 渲染：依月份（混合所有競品）—— 甘特圖
+// ============================================================
+window.renderMktByMonth = function(data) {
+  var content = document.getElementById('mktTimelineContent');
+  if (!content) return;
+  if (!data.length) { content.innerHTML = '<div class="no-data">沒有符合條件的資料</div>'; return; }
+
+  // 按月份分組
+  var byMonth = {};
+  data.forEach(function(a) {
+    var m = a.month || '';
+    if (!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(a);
+  });
+
+  var months = Object.keys(byMonth).sort().reverse();
+  var html = '';
+
+  months.forEach(function(month) {
+    var parts     = month.split('-');
+    var year      = parseInt(parts[0]);
+    var monthNum  = parseInt(parts[1]);
+    var daysInMonth = new Date(year, monthNum, 0).getDate();
+
+    // 按 category 分組
+    var byCategory = {};
+    byMonth[month].forEach(function(a) {
+      var cat = a.category || '其他類型';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(a);
+    });
+
+    var calcMinWidth = (daysInMonth * 46) + 200;
+    html += '<div class="month-section">';
+    html += '<div class="month-header">' + year + '年' + monthNum + '月</div>';
+    html += '<table class="timeline-table" style="min-width:' + calcMinWidth + 'px !important; width:auto;">';
+    html += buildTimelineDateHeader(daysInMonth);
+    html += buildTimelineWeekdayHeader(year, monthNum, daysInMonth);
+
+    // 按固定順序排 type
+    var availableTypes = MKT_TYPE_ORDER.filter(function(t) { return byCategory[t]; });
+    Object.keys(byCategory).forEach(function(t) {
+      if (MKT_TYPE_ORDER.indexOf(t) === -1) availableTypes.push(t);
+    });
+
+    availableTypes.forEach(function(type) {
+      var tlActs  = byCategory[type].map(mktToTimelineActivity);
+      var typeClass = (typeof getActivityTypeClass === 'function') ? getActivityTypeClass(type) : '';
+      var rows    = calculateActivityRowsIntelligent(tlActs, daysInMonth);
+      var mktStyle = window.getMktTypeStyle(type);
+      var inlineStyle = 'background:' + mktStyle.bg + ';color:' + mktStyle.color + ';';
+
+      rows.forEach(function(rowActivities, rowIndex) {
+        html += '<tr>';
+
+        if (rowIndex === 0) {
+          html += '<td class="category-cell ' + typeClass + '" rowspan="' + rows.length + '" style="' + inlineStyle + '">' + type + '</td>';
+        }
+
+        for (var day = 1; day <= daysInMonth; day++) {
+          var slot = rowActivities[day - 1];
+          if (slot && slot.isStart) {
+            var act   = slot.activity;
+            var color = (window.getProductColor ? window.getProductColor(act.product) : '#667eea');
+            var title = (act.product ? '[' + act.product + '] ' : '') + act.originalContent;
+
+            var safeDuration = Math.min(slot.duration, daysInMonth - day + 1);
+            html += '<td class="activity-cell ' + typeClass + '" colspan="' + safeDuration + '" style="' + inlineStyle + '" title="' + title.replace(/"/g,'&quot;') + '">';
+
+            // 競品色塊 badge（byMonth 模式才顯示，方便區分）
+            if (act.product) {
+              html += '<span style="display:inline-block;background:' + color + ';color:#fff;' +
+                      'border-radius:3px;padding:0 4px;font-size:10px;margin-right:3px;' +
+                      'vertical-align:middle;white-space:nowrap;">' + escapeHtml(act.product) + '</span>';
+            }
+
+            if (act.url) {
+              html += '<a href="' + escapeHtml(act.url) + '" target="_blank" ' +
+                      'style="color:inherit;text-decoration:none;font-weight:bold;">' + escapeHtml(act.name) + '</a>';
+            } else {
+              html += escapeHtml(act.name);
+            }
+            html += '</td>';
+            day += safeDuration - 1;
+          } else if (!slot) {
+            html += '<td></td>';
+          }
+        }
+
+        html += '</tr>';
+      });
+    });
+
+    html += '</table></div>';
+  });
+
+  content.innerHTML = html;
+};
+
+// ============================================================
+// 渲染：依競品 —— 甘特圖
+// ============================================================
+window.renderMktByProduct = function(data) {
+  var content = document.getElementById('mktTimelineContent');
+  if (!content) return;
+  if (!data.length) { content.innerHTML = '<div class="no-data">沒有符合條件的資料</div>'; return; }
+
+  // 按競品 → 月份 → category 分組
+  var byProduct = {};
+  data.forEach(function(a) {
+    var p = a.product || '未知';
+    var m = a.month || '';
+    var t = a.category || '其他類型';
+    if (!byProduct[p]) byProduct[p] = {};
+    if (!byProduct[p][m]) byProduct[p][m] = {};
+    if (!byProduct[p][m][t]) byProduct[p][m][t] = [];
+    byProduct[p][m][t].push(a);
+  });
+
+  var products = Object.keys(byProduct).sort();
+  var html = '';
+
+  products.forEach(function(product) {
+    var color   = (window.getProductColor ? window.getProductColor(product) : '#667eea');
+    var months  = Object.keys(byProduct[product]).sort().reverse();
+
+    html += '<div style="margin-bottom:36px;">';
+    // 競品大標題
+    html += '<div style="background:' + color + ';color:#fff;padding:14px 20px;' +
+            'border-radius:8px 8px 0 0;font-size:18px;font-weight:700;' +
+            'position:sticky;top:0;z-index:4;">' + product + '</div>';
+
+    months.forEach(function(month) {
+      var parts       = month.split('-');
+      var year        = parseInt(parts[0]);
+      var monthNum    = parseInt(parts[1]);
+      var daysInMonth = new Date(year, monthNum, 0).getDate();
+      var byCategory  = byProduct[product][month];
+
+      var calcMinWidth = (daysInMonth * 46) + 200;
+      html += '<div class="month-section" style="border-radius:0;margin-bottom:0;border-top:none;">';
+      html += '<div class="month-header" style="font-size:15px;padding:8px 16px;">' + year + '年' + monthNum + '月</div>';
+      html += '<table class="timeline-table" style="min-width:' + calcMinWidth + 'px !important; width:auto;">';
+      html += buildTimelineDateHeader(daysInMonth);
+      html += buildTimelineWeekdayHeader(year, monthNum, daysInMonth);
+
+      var availableTypes = MKT_TYPE_ORDER.filter(function(t) { return byCategory[t]; });
+      Object.keys(byCategory).forEach(function(t) {
+        if (MKT_TYPE_ORDER.indexOf(t) === -1) availableTypes.push(t);
+      });
+
+      availableTypes.forEach(function(type) {
+        var tlActs    = byCategory[type].map(mktToTimelineActivity);
+        var typeClass = (typeof getActivityTypeClass === 'function') ? getActivityTypeClass(type) : '';
+        var rows      = calculateActivityRowsIntelligent(tlActs, daysInMonth);
+        var mktStyle  = window.getMktTypeStyle(type);
+        var inlineStyle = 'background:' + mktStyle.bg + ';color:' + mktStyle.color + ';';
+
+        rows.forEach(function(rowActivities, rowIndex) {
+          html += '<tr>';
+
+          if (rowIndex === 0) {
+            html += '<td class="category-cell ' + typeClass + '" rowspan="' + rows.length + '" style="' + inlineStyle + '">' + type + '</td>';
+          }
+
+          for (var day = 1; day <= daysInMonth; day++) {
+            var slot = rowActivities[day - 1];
+            if (slot && slot.isStart) {
+              var act   = slot.activity;
+              var title = act.originalContent.replace(/"/g, '&quot;');
+              var safeDuration = Math.min(slot.duration, daysInMonth - day + 1);
+              html += '<td class="activity-cell ' + typeClass + '" colspan="' + safeDuration + '" style="' + inlineStyle + '" title="' + title + '">';
+              if (act.url) {
+                html += '<a href="' + escapeHtml(act.url) + '" target="_blank" ' +
+                        'style="color:inherit;text-decoration:none;font-weight:bold;">' + escapeHtml(act.name) + '</a>';
+              } else {
+                html += escapeHtml(act.name);
+              }
+              html += '</td>';
+              day += safeDuration - 1;
+            } else if (!slot) {
+              html += '<td></td>';
+            }
+          }
+
+          html += '</tr>';
+        });
+      });
+
+      html += '</table></div>';
+    });
+
+    html += '</div>'; // end product section
+  });
+
+  content.innerHTML = html;
+};
+
+console.log('✅ marketing.js 載入完成');
+</script>

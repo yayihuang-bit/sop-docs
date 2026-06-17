@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競品活動分析系統 — 管理者指南</title>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --primary-light: #e8f0fe;
+    --warn-bg: #fff8e1;
+    --warn-border: #f9a825;
+    --tip-bg: #e8f5e9;
+    --tip-border: #43a047;
+    --code-bg: #f5f5f5;
+    --border: #e0e0e0;
+    --text: #202124;
+    --text-muted: #5f6368;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    background: #fafafa;
+  }
+
+  /* ── Layout ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    overflow-y: auto;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    z-index: 100;
+  }
+  #sidebar h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  #sidebar ul { list-style: none; }
+  #sidebar li { margin: 2px 0; }
+  #sidebar a {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 15px;
+    transition: background .15s;
+  }
+  #sidebar a:hover { background: var(--primary-light); color: var(--primary); }
+  #sidebar a.spy-active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+    border-left: 3px solid var(--primary);
+    padding-left: 5px;
+  }
+  #sidebar .indent { padding-left: 20px; }
+  #sidebar .indent a { font-size: 13px; color: var(--text-muted); }
+  #sidebar .indent a.spy-active { font-size: 13px; }
+
+  #content {
+    margin-left: var(--sidebar-w);
+    padding: 48px 56px;
+    max-width: calc(100vw - var(--sidebar-w));
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 32px; }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 40px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 10px;
+    color: #333;
+  }
+  h4 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
+  p { margin: 10px 0; }
+  strong { font-weight: 700; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  img { max-width: 100%; border-radius: 6px; margin: 10px 0; border: 1px solid var(--border); }
+
+  /* ── Lists ── */
+  ul { padding-left: 22px; margin: 10px 0; }
+  ul li { margin: 4px 0; }
+  #content ol {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0;
+    counter-reset: step-counter;
+  }
+  #content ol li {
+    counter-increment: step-counter;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  #content ol li::before {
+    content: counter(step-counter);
+    background: #1a73e8;
+    color: #fff;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--primary);
+    color: #fff;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  tr:hover td { background: var(--primary-light); }
+
+  /* ── Blockquotes ── */
+  blockquote {
+    border-left: 4px solid var(--warn-border);
+    background: var(--warn-bg);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  blockquote.tip {
+    border-left-color: var(--tip-border);
+    background: var(--tip-bg);
+  }
+
+  /* ── Code ── */
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* ── Special boxes ── */
+  .info-box {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+
+  /* ── Back to top ── */
+  #back-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  #back-top.show { display: flex; }
+
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    #content { margin-left: 0; padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav id="sidebar">
+  <h2>📋 目錄</h2>
+  <ul>
+    <li><a href="#changelog">📝 修訂紀錄</a></li>
+    <li><a href="#s1">1. 權限說明</a></li>
+    <li><a href="#s2">2. 資料來源說明</a></li>
+    <li><a href="#s3">3. 快取更新</a></li>
+    <li><a href="#s4">4. 常見問題</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
+<main id="content">
+
+  <h1><img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 8px 0 0;vertical-align:middle;">🔐 競品活動分析系統 — 管理者指南<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 0 0 8px;vertical-align:middle;"></h1>
+  <p class="subtitle">版本：v1.0　撰寫日期：2026-05-26　BY 呱呱🦆</p>
+
+  <div style="background:#e8f0fe;border-left:4px solid #1a73e8;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:28px;font-size:14px;">
+    📌 本文件為管理員專用。一般使用者操作說明請參閱 <strong>使用指南.html</strong>。
+  </div>
+
+  <!-- ── 修訂紀錄 ── -->
+  <h2 id="changelog">📝 修訂紀錄</h2>
+
+  <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:14px;color:#5f4000;">
+    ⚠️ <strong>維護提醒：</strong>每次修改 <code>管理者指南_source.html</code> 確認完畢後，須重新執行 <code>_embed_admin.py</code> 輸出 <code>管理者指南.html</code>。
+  </div>
+  <div style="background:#e8f5e9;border:1px solid #43a047;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#1b5e20;">
+    🖼️ <strong>更新圖片／影片：</strong>請聯繫管理員協助更換，管理員會重新嵌入並輸出 <code>管理者指南.html</code>。
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="white-space:nowrap;">版本</th><th style="white-space:nowrap;">日期</th><th style="white-space:nowrap;">執行人</th><th>修訂內容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="white-space:nowrap;">v1.0</td>
+        <td style="white-space:nowrap;">2026-06-05</td>
+        <td style="white-space:nowrap;">呱呱</td>
+        <td>正式發布，含權限說明、快取更新、新增競品（SensorTower）、重新部署說明</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ── 1 ── -->
+  <h2 id="s1">1. 權限說明</h2>
+  <img src="示意圖/image-19.png" alt="權限說明示意圖">
+  <p>系統依 Google 帳號 Email 控管頁籤存取，若看不到某個頁籤，請聯繫管理員申請權限。</p>
+
+  <h3>申請權限時，請提供以下資訊</h3>
+  <table>
+    <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>Email</td><td>登入系統使用的公司 Google 帳號</td></tr>
+      <tr><td>單位</td><td>所屬部門或團隊名稱</td></tr>
+      <tr><td>可查看頁籤</td><td>需要存取的頁籤名稱（見下方清單）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>可申請的頁籤清單</h3>
+  <table>
+    <thead><tr><th>頁籤名稱</th><th>內容說明</th></tr></thead>
+    <tbody>
+      <tr><td>星城 / 滿貫大亨 / 金好運 … 等各競品時間軸</td><td>各競品活動甘特圖，可個別申請特定競品</td></tr>
+      <tr><td>跨產品搜尋</td><td>同時搜尋所有競品活動</td></tr>
+      <tr><td>活動類型總表</td><td>各競品遊戲項目分類整理</td></tr>
+      <tr><td>行銷資料庫</td><td>競品行銷活動甘特圖</td></tr>
+      <tr><td>數學資料庫</td><td>競品老虎機遊戲規格</td></tr>
+      <tr><td>營收分析</td><td>SensorTower 競品 App 營收與下載量</td></tr>
+      <tr><td>其他資料</td><td>競品相關連結與營運簡報</td></tr>
+    </tbody>
+  </table>
+  <blockquote>💡 如需一次開放所有頁籤，申請時說明「全部頁籤」即可，管理員會統一設定。</blockquote>
+
+  <hr>
+
+  <!-- ── 2 ── -->
+  <h2 id="s2">2. 資料來源說明</h2>
+  <p>系統各頁籤的資料來自不同來源，以下為對照表：</p>
+  <table>
+    <thead><tr><th>功能頁籤</th><th>資料來源</th><th>原始檔案位置</th><th>更新方式</th><th>需要的權限</th></tr></thead>
+    <tbody>
+      <tr><td>競品時間軸</td><td>Google Slides（各競品季度營運簡報）</td><td><a href="https://drive.google.com/drive/folders/1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn" target="_blank">企劃簡報資料夾</a></td><td>手動執行「快取更新」</td><td>對應競品名稱，或 <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>活動類型總表</td><td>Google Slides（各競品季度營運簡報）</td><td><a href="https://drive.google.com/drive/folders/1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn" target="_blank">企劃簡報資料夾</a></td><td>手動執行「快取更新」</td><td><code>readonly</code> / <code>basic</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>跨產品搜尋</td><td>Google Slides（各競品季度營運簡報）</td><td><a href="https://drive.google.com/drive/folders/1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn" target="_blank">企劃簡報資料夾</a></td><td>手動執行「快取更新」</td><td><code>跨產品搜尋</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>行銷資料庫</td><td>Google Slides（行銷活動簡報）</td><td><a href="https://drive.google.com/drive/folders/1YnmltpcksZXL5NsMa0gBY65zkN_M8s33" target="_blank">行銷簡報資料夾</a></td><td>手動執行「快取更新」</td><td><code>行銷資料庫</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>數學資料庫</td><td>Google Slides（遊戲數學規格簡報）</td><td><a href="https://drive.google.com/drive/folders/1hzm_M_LelaC2DpDZ98784vppfqIQyD73" target="_blank">數學簡報資料夾</a></td><td>手動執行「快取更新」</td><td><code>數學資料庫</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>營收分析</td><td>SensorTower API（即時查詢）</td><td>—</td><td>即時查詢，無需更新</td><td><code>basic</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td>其他資料</td><td>Google Sheets 目錄工作表</td><td><a href="https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI/edit?gid=796982050" target="_blank">競品追蹤試算表 → 「目錄」分頁</a></td><td>直接編輯工作表後重新整理頁面</td><td><code>basic</code> / <code>all</code> / <code>admin</code></td></tr>
+      <tr><td><strong>權限控管</strong></td><td>Google Sheets 權限管理工作表（Email → 可存取頁籤）</td><td><a href="https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI" target="_blank">競品追蹤試算表 → 「權限管理」分頁</a></td><td>管理員直接編輯工作表，重新整理頁面後生效</td><td>僅 <code>admin</code> 可修改</td></tr>
+    </tbody>
+  </table>
+  <blockquote class="tip">💡 <strong>競品時間軸 / 行銷 / 數學</strong> 三類資料都是從 Google Slides 掃描而來，簡報修改後需手動執行快取更新才會反映到系統。<br><strong>營收分析</strong> 則是每次查詢時即時呼叫 SensorTower API，資料永遠是最新的。</blockquote>
+
+  <hr>
+
+  <!-- ── 3 ── -->
+  <h2 id="s4">3. 快取更新（管理員操作）</h2>
+  <div style="margin:16px 0 24px;">
+    <video controls style="width:100%;max-width:720px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+      <source src="參考影片/快取更新教學_h264.mp4" type="video/mp4">
+    </video>
+    <p style="font-size:12px;color:#888;margin-top:6px;">▲ 快取更新操作教學影片</p>
+  </div>
+  <img src="示意圖/image-15.png" alt="快取更新示意圖">
+  <p>系統資料來自 Google Sheets 快取，需【<strong>手動</strong>】觸發更新：</p>
+  <p><strong>步驟</strong>：</p>
+  <ol>
+    <li>開啟 <a href="https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI/edit?gid=796982050" target="_blank">競品追蹤 Google Sheets</a></li>
+    <li>點選選單「資料管理」→「更新活動快取」</li>
+    <li>選擇要更新的<strong>年度</strong>（支援多選，可同時更新多個年度）</li>
+    <li>選擇<strong>部門</strong>（企劃 / 行銷 / 數學）</li>
+    <li>點選「開始更新」</li>
+    <li>系統會自動掃描對應年度的 Google Slides，<strong>若資料量大（超過 4 分鐘），會自動分段續傳</strong>，過程中請勿關閉瀏覽器</li>
+  </ol>
+  <p><strong>更新進度確認</strong>：可從同一選單點選「檢查進度」查看目前掃描到第幾個年度/產品。</p>
+  <p><strong>更新頻率建議</strong>：每季簡報完成後更新一次。</p>
+
+  <hr>
+
+  <h3>【兩階段寫入說明】</h3>
+  <p>快取更新採用<strong>兩階段流程</strong>，確保資料不會在未確認前影響系統：</p>
+  <table>
+    <thead><tr><th>階段</th><th>工作表</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>第一階段（自動）</td><td><code>投影片資料快取</code></td><td>腳本掃描完畢後，所有資料先寫入此分頁</td></tr>
+      <tr><td>第二階段（手動確認）</td><td><code>企劃資料快取</code> / <code>行銷html資料快取</code> / <code>數學html資料快取</code></td><td>確認資料無誤後，手動貼至對應部門快取，Web App 才會讀到新資料</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 若只完成第一階段而未套用至部門快取，系統前端顯示的資料不會改變，建議第一階段要移動至第二階段時，先對第二階段進行備份，以防資料遺失。</blockquote>
+  <blockquote class="tip">💡 <strong>執行第二階段前，建議先確認異常 LOG（見下方說明）</strong>，若有資料問題請先修正來源簡報並重新執行快取更新，確認無誤後再套用至部門快取。</blockquote>
+
+  <h4>第一階段示意圖</h4>
+  <img src="示意圖/image-21.png" alt="第一階段示意圖">
+  <h4>第二階段示意圖</h4>
+  <img src="示意圖/image-22.png" alt="第二階段示意圖">
+
+  <hr>
+
+  <h3>【異常 LOG 說明】</h3>
+  <img src="示意圖/image-16.png" alt="異常LOG示意圖">
+  <blockquote>⚠️ 更新完成後，系統若發現問題會自動在 Google Sheets 建立「<strong>異常LOG</strong>」工作表，記錄兩類狀況：</blockquote>
+
+  <hr>
+
+  <h4>一、跨年活動（最常見）</h4>
+  <p>活動日期橫跨兩個年度時（如 2025/12/20 ~ 2026/1/5），系統的處理方式：</p>
+  <ol>
+    <li><strong>自動擴展掃描範圍</strong>：選 2025 時，系統會自動同時掃描 2024、2025、2026 的資料夾，確保跨年活動不漏掉</li>
+    <li><strong>自動拆分寫入快取</strong>：2025/12/20~12/31 寫入 2025 快取，2026/1/1~1/5 寫入 2026 快取</li>
+    <li><strong>記錄到 LOG</strong>：純紀錄用途，<strong>不需要任何手動操作</strong></li>
+  </ol>
+  <table>
+    <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>時間戳記</td><td>本次更新的執行時間</td></tr>
+      <tr><td>產品名稱</td><td>哪個競品的活動</td></tr>
+      <tr><td>掃描年度</td><td>本次掃描的年度</td></tr>
+      <tr><td>跨年年度</td><td>活動實際延伸到哪個年度</td></tr>
+      <tr><td>活動數量</td><td>受影響的活動筆數</td></tr>
+      <tr><td>活動清單</td><td>活動名稱、類型、日期範圍（逐筆列出）</td></tr>
+      <tr><td>狀態</td><td>系統自動填入「待處理」，純紀錄用，不需要手動修改</td></tr>
+    </tbody>
+  </table>
+  <blockquote class="tip">💡 看到 LOG 有跨年活動不需要緊張，代表系統已正常處理完畢。</blockquote>
+
+  <hr>
+
+  <h4>二、讀取錯誤</h4>
+  <p>掃描 Google Slides 時若遇到無法解析的內容，會記錄到同一個「異常LOG」分頁，格式不同（無「跨年年度」欄）：</p>
+  <table>
+    <thead><tr><th>錯誤類型</th><th>意思</th><th>處理建議</th></tr></thead>
+    <tbody>
+      <tr><td>簡報讀取失敗</td><td>某份 Slides 無法開啟，通常是權限問題</td><td>確認該 Slides 已開放給腳本帳號存取</td></tr>
+      <tr><td>表格讀取失敗</td><td>某張投影片的表格結構無法解析</td><td>開啟來源欄的連結，檢查該頁表格格式</td></tr>
+      <tr><td>Shape讀取失敗</td><td>投影片內某個圖形物件讀取失敗</td><td>通常可忽略（非表格內容）</td></tr>
+      <tr><td>日期解析錯誤 / 日期格式錯誤</td><td>活動日期欄填寫格式不符（如少了斜線、多了空格）</td><td>開啟來源連結，修正該格日期格式後重新更新</td></tr>
+      <tr><td>缺少分類</td><td>活動內容無法對應任何活動類型</td><td>確認該活動是否歸類正確，或新增對應的活動類型</td></tr>
+      <tr><td>分類 / 內容讀取錯誤</td><td>解析表格列時發生例外</td><td>查看「錯誤詳情」欄的具體訊息</td></tr>
+    </tbody>
+  </table>
+  <p><strong>查看方式</strong>：更新完成後開啟競品追蹤 Sheets，點選底部「<strong>異常LOG</strong>」分頁（若無此分頁表示本次更新沒有任何異常）。</p>
+  <blockquote>⚠️ 修復問題簡報後，需重新執行一次「快取更新」，才能讓修正後的內容寫入快取。異常 LOG 本身不會自動清除，確認處理完畢後可手動刪除該列。</blockquote>
+
+  <hr>
+
+  <!-- ── 3 ── -->
+  <h2 id="s4">4. 常見問題</h2>
+
+  <h3>Q: 程式碼更新後，該怎麼重新部署？網址會變嗎？</h3>
+  <img src="示意圖/image-26.png" alt="重新部署示意圖">
+  <p>GAS Web App 有兩種部署方式，效果不同：</p>
+  <table>
+    <thead><tr><th>操作</th><th>路徑</th><th>網址</th><th>適用情況</th></tr></thead>
+    <tbody>
+      <tr><td><strong>更新現有部署</strong></td><td>部署 → 管理部署 → 編輯（鉛筆圖示）→ 版本選「新版本」→ 部署</td><td><strong>不變</strong></td><td>所有程式碼更新，不論大小，包含功能改寫、全新版本</td></tr>
+      <tr><td><strong>新增部署</strong></td><td>部署 → 新增部署</td><td><strong>產生新網址</strong></td><td>① 需要改「執行身分」或「存取權限」設定　② 想讓新舊版本同時並存（如測試用）　③ 舊部署損壞或封存後需重新建立</td></tr>
+    </tbody>
+  </table>
+  <p>程式碼更新不管改多大，都只需要「更新現有部署」，網址不會變。「新增部署」不是為了大版本更新用的，是為了改部署設定或建立獨立環境。</p>
+  <p><strong>如果網址換了，舊網址會怎樣？</strong></p>
+  <p>舊網址仍然有效，但指向<strong>舊版程式碼</strong>，使用者還在舊網址上會看到更新前的畫面。需要手動到「管理部署」將舊部署封存（Archive）才會停用。</p>
+  <img src="示意圖/image-27.png" alt="舊部署封存示意圖">
+  <p>處理步驟：</p>
+  <ol>
+    <li>確認新網址運作正常</li>
+    <li>到「管理部署」將舊部署封存</li>
+    <li>更新所有已分享的連結（書籤、內部文件、使用指南等）</li>
+    <li>通知使用者更換網址</li>
+  </ol>
+
+  <hr>
+
+  <h3>Q: 如何新增競品的 SensorTower 營收查詢？</h3>
+  <p>需修改後端程式碼 <code>競品圖表.txt</code> 的 <code>SENSOR_TOWER_CONFIG</code>，加入新競品的 Product ID：</p>
+  <blockquote>⚠️ 通常會找數據協助</blockquote>
+  <pre><code>PRODUCT_IDS: [
+  // 現有競品...
+  'xxxxxxxxxxxxxxxxxxxxxxxx'   // 新競品 Product ID
+],
+PRODUCT_NAMES: {
+  // 現有競品...
+  'xxxxxxxxxxxxxxxxxxxxxxxx': '新競品名稱'
+}</code></pre>
+  <p>同時在前端 <code>util.html</code> 的 <code>SENSOR_TOWER_CONFIG.PRODUCT_NAMES</code> 陣列補上名稱：</p>
+  <pre><code>PRODUCT_NAMES: ['包你發', '星城', ..., '新競品名稱']</code></pre>
+  <blockquote>⚠️ Product ID 需從 SensorTower 平台查詢，修改後需重新部署 GAS Web App 才會生效。</blockquote>
+
+  <hr>
+
+</main>
+
+<!-- back to top -->
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('back-top').classList.toggle('show', window.scrollY > 300);
+  });
+
+  // ── Scroll Spy ──
+  (function(){
+    var headings = Array.from(document.querySelectorAll('#content h1[id],#content h2[id],#content h3[id],#content h4[id]'));
+    var linkMap = {};
+    headings.forEach(function(h){
+      var a = document.querySelector('#sidebar a[href="#' + h.id + '"]');
+      if(a) linkMap[h.id] = a;
+    });
+
+    function update(){
+      var scrollTop = window.scrollY + 100;
+      var current = null;
+      for(var i = headings.length - 1; i >= 0; i--){
+        if(headings[i].offsetTop <= scrollTop){ current = headings[i].id; break; }
+      }
+      Object.values(linkMap).forEach(function(a){ a.classList.remove('spy-active'); });
+      if(current && linkMap[current]){
+        linkMap[current].classList.add('spy-active');
+        var el = linkMap[current];
+        var sidebar = document.getElementById('sidebar');
+        if(el.offsetTop < sidebar.scrollTop || el.offsetTop + el.offsetHeight > sidebar.scrollTop + sidebar.clientHeight){
+          el.scrollIntoView({block:'nearest'});
+        }
+      }
+    }
+
+    window.addEventListener('scroll', update, {passive: true});
+    update();
+  })();
+</script>
+
+<!-- ── 隨機飛過的 GIF ── -->
+<script>
+  var FLY_GIFS = [
+    'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+    'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+    'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+    'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+    'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+    'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzcxc3l2cXZ5OHMxNGticzkydG44dXlvaHpteWxyODhoaDVvMGR5MyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UGu7dKDOTEuTpOIF2b/giphy.gif'
+  ];
+
+  FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
+  var FLY_MAX = 3;
+  var _flyCount = 0;
+
+  function triggerFlyGif(){
+    if(_flyCount >= FLY_MAX) return;
+    _flyCount++;
+
+    var gif     = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+    var topPct  = (5 + Math.random() * 85) + '%';
+    var dur     = (2.5 + Math.random() * 5).toFixed(1) + 's';
+    var size    = (100 + Math.random() * 180) + 'px';
+
+    var el = document.createElement('img');
+    el.src = gif;
+    var startTop = parseFloat(topPct);
+    el.style.cssText = 'position:fixed;right:-200px;top:'+topPct+';width:'+size+';height:auto;z-index:500;pointer-events:all;cursor:grab;border:none;outline:none;box-shadow:none;background:transparent;';
+    document.body.appendChild(el);
+
+    var _durMs     = parseFloat(dur) * 1000;
+    var _startTime = Date.now();
+    var _waveAmp   = 8  + Math.random() * 12;
+    var _waveFreq  = 1.5 + Math.random() * 2;
+    var _flyRaf    = null;
+    var _dragging  = false;
+
+    function animateFly(){
+      if(_dragging){ _flyRaf = requestAnimationFrame(animateFly); return; }
+      var elapsed  = Date.now() - _startTime;
+      var progress = elapsed / _durMs;
+      if(progress >= 1){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} return; }
+      var x = (1 - progress) * (window.innerWidth + 200) - 200;
+      el.style.right = 'auto';
+      el.style.left  = x + 'px';
+      var topVal = startTop + Math.sin(progress * Math.PI * 2 * _waveFreq) * _waveAmp;
+      el.style.top = topVal + '%';
+      if(progress > 0.85) el.style.opacity = ((1 - progress) / 0.15).toFixed(2);
+      _flyRaf = requestAnimationFrame(animateFly);
+    }
+    _flyRaf = requestAnimationFrame(animateFly);
+
+    var _autoRemove = setTimeout(function(){
+      cancelAnimationFrame(_flyRaf);
+      if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;}
+    }, _durMs + 200);
+
+    var _holdT = null, _offX = 0, _offY = 0;
+
+    el.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      document.addEventListener('mousemove', onFlyMove);
+      document.addEventListener('mouseup', onFlyUp);
+      _holdT = setTimeout(function(){
+        _dragging = true;
+        var rect = el.getBoundingClientRect();
+        el.style.right = 'auto';
+        el.style.left  = rect.left + 'px';
+        el.style.top   = rect.top  + 'px';
+        el.style.cursor = 'grabbing';
+        _offX = e.clientX - rect.left;
+        _offY = e.clientY - rect.top;
+        clearTimeout(_autoRemove);
+      }, 300);
+    });
+
+    function onFlyMove(e){
+      if(!_dragging) return;
+      el.style.left = (e.clientX - _offX) + 'px';
+      el.style.top  = (e.clientY - _offY) + 'px';
+    }
+    function onFlyUp(){
+      clearTimeout(_holdT); _holdT = null;
+      document.removeEventListener('mousemove', onFlyMove);
+      document.removeEventListener('mouseup', onFlyUp);
+      if(!_dragging) return;
+      _dragging = false;
+      el.style.cursor = 'grab';
+      cancelAnimationFrame(_flyRaf);
+      clearTimeout(_autoRemove);
+      var _releaseTime = Date.now();
+      var _relLeft = parseFloat(el.style.left) || 0;
+      var _relTop  = parseFloat(el.style.top)  || startTop;
+      function animateRelease(){
+        var t = (Date.now() - _releaseTime) / 2000;
+        if(t >= 1){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} return; }
+        el.style.left    = (_relLeft - t * (window.innerWidth + 400)) + 'px';
+        el.style.top     = (_relTop + Math.sin(t * Math.PI * 3) * _waveAmp) + '%';
+        el.style.opacity = (1 - t).toFixed(2);
+        requestAnimationFrame(animateRelease);
+      }
+      requestAnimationFrame(animateRelease);
+      setTimeout(function(){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} }, 2200);
+    }
+  }
+
+  function scheduleFlyGif(){
+    var delay = (30 + Math.random() * 60) * 1000;
+    setTimeout(function(){
+      triggerFlyGif();
+      if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024) scheduleFlyGif();
+    }, delay);
+  }
+
+  if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
+    scheduleFlyGif();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競品活動分析系統 — 使用指南</title>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --primary-light: #e8f0fe;
+    --warn-bg: #fff8e1;
+    --warn-border: #f9a825;
+    --tip-bg: #e8f5e9;
+    --tip-border: #43a047;
+    --code-bg: #f5f5f5;
+    --border: #e0e0e0;
+    --text: #202124;
+    --text-muted: #5f6368;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    background: #fafafa;
+  }
+
+  /* ── Layout ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    overflow-y: auto;
+    background: #fff;
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    z-index: 100;
+  }
+  #sidebar h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  #sidebar ul { list-style: none; }
+  #sidebar li { margin: 2px 0; }
+  #sidebar a {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 15px;
+    transition: background .15s;
+  }
+  #sidebar a:hover { background: var(--primary-light); color: var(--primary); }
+  #sidebar a.spy-active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+    border-left: 3px solid var(--primary);
+    padding-left: 5px;
+  }
+  #sidebar .indent { padding-left: 20px; }
+  #sidebar .indent a { font-size: 13px; color: var(--text-muted); }
+  #sidebar .indent a.spy-active { font-size: 13px; }
+
+  #content {
+    margin-left: var(--sidebar-w);
+    padding: 48px 56px;
+    max-width: calc(100vw - var(--sidebar-w));
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 32px; }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 40px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 10px;
+    color: #333;
+  }
+  h4 { font-size: 14px; font-weight: 700; margin: 16px 0 8px; }
+  p { margin: 10px 0; }
+  strong { font-weight: 700; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  img { max-width: 100%; border-radius: 6px; margin: 10px 0; border: 1px solid var(--border); }
+
+  /* ── Lists ── */
+  ul { padding-left: 22px; margin: 10px 0; }
+  ul li { margin: 4px 0; }
+  #content ol {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0;
+    counter-reset: step-counter;
+  }
+  #content ol li {
+    counter-increment: step-counter;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  #content ol li::before {
+    content: counter(step-counter);
+    background: #1a73e8;
+    color: #fff;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--primary);
+    color: #fff;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f8f9fa; }
+  tr:hover td { background: var(--primary-light); }
+
+  /* ── Blockquotes ── */
+  blockquote {
+    border-left: 4px solid var(--warn-border);
+    background: var(--warn-bg);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  blockquote.tip {
+    border-left-color: var(--tip-border);
+    background: var(--tip-bg);
+  }
+
+  /* ── Code ── */
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* ── Special boxes ── */
+  .info-box {
+    background: var(--primary-light);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .step-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    text-align: center;
+    line-height: 22px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  /* ── Back to top ── */
+  #back-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  #back-top.show { display: flex; }
+
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    #content { margin-left: 0; padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav id="sidebar">
+  <h2>📋 目錄</h2>
+  <ul>
+    <li><a href="#changelog">📝 修訂紀錄</a></li>
+    <li><a href="#quick-start">🏃 快速入門</a></li>
+    <li><a href="#s1">1. 開啟系統</a></li>
+    <li><a href="#s2">2. 頁面配置</a></li>
+    <li><a href="#s3">3. 功能頁籤說明</a></li>
+    <li class="indent"><a href="#s3-1">3.1 競品時間軸</a></li>
+    <li class="indent"><a href="#s3-2">3.2 跨產品搜尋</a></li>
+    <li class="indent"><a href="#s3-3">3.3 活動類型總表</a></li>
+    <li class="indent"><a href="#s3-4">3.4 營收分析</a></li>
+    <li class="indent"><a href="#s3-5">3.5 數學資料庫</a></li>
+    <li class="indent"><a href="#s3-6">3.6 行銷資料庫</a></li>
+    <li class="indent"><a href="#s3-7">3.7 其他資料</a></li>
+    <li><a href="#s4">4. 簡報範本系統</a></li>
+    <li class="indent"><a href="#s4-1">4.1 簡報範本是什麼？</a></li>
+    <li class="indent"><a href="#s4-2">4.2 三種簡報範本</a></li>
+    <li class="indent"><a href="#s3-3">3.3 自動生成邏輯</a></li>
+    <li class="indent"><a href="#s3-4">3.4 表格填寫規則</a></li>
+    <li class="indent"><a href="#s3-5">3.5 簡報範本插入工具</a></li>
+    <li><a href="#s5">5. 新增競品</a></li>
+    <li class="indent"><a href="#s4-1">4.1 時間軸</a></li>
+    <li class="indent"><a href="#s4-2">4.2 開放權限</a></li>
+    <li><a href="#s6">6. 常見問題</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
+<main id="content">
+
+  <h1><img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 8px 0 0;vertical-align:middle;">競品活動分析系統 — 使用指南🌝<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 0 0 8px;vertical-align:middle;"></h1>
+  <p class="subtitle">版本：v1.0　撰寫日期：2026-05-26　BY 呱呱🦆</p>
+
+  <!-- ── 修訂紀錄 ── -->
+  <h2 id="changelog">📝 修訂紀錄</h2>
+
+  <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:14px;color:#5f4000;">
+    ⚠️ <strong>維護提醒：</strong>每次修改 <code>使用指南.md</code> 確認完畢後，須同步轉換為 <code>使用指南.html</code>。
+  </div>
+  <div style="background:#e8f5e9;border:1px solid #43a047;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#1b5e20;">
+    🖼️ <strong>更新圖片／影片：</strong>請聯繫管理員協助更換，管理員會重新嵌入並輸出 <code>使用指南.html</code>。
+  </div>
+
+  <table>
+    <thead>
+      <tr><th style="white-space:nowrap;">版本</th><th style="white-space:nowrap;">日期</th><th style="white-space:nowrap;">執行人</th><th>修訂內容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="white-space:nowrap;">v1.0</td>
+        <td style="white-space:nowrap;">2026-05-28</td>
+        <td style="white-space:nowrap;">呱呱</td>
+        <td>正式發布，含完整功能頁籤說明、快取更新、權限說明、新增競品、簡報範本系統、架構總覽圖、側邊欄 Scroll Spy</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ── 快速入門 ── -->
+  <h2 id="quick-start">🏃 快速入門</h2>
+
+  <h3>這個系統是什麼？</h3>
+  <p>一個<strong>網頁儀表板</strong>，讓你不用打開試算表或翻簡報，就能快速查看台灣手機遊戲（老虎機／麻將類）競品的活動時間軸、行銷策略、遊戲規格與 App 營收趨勢。</p>
+
+  <!-- ── 架構總覽圖 ── -->
+  <div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:14px;padding:32px;margin:28px 0;">
+    <div style="text-align:center;font-weight:700;font-size:15px;color:#5f6368;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px;">系統架構總覽</div>
+
+    <!-- 上層：主要流程 -->
+    <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center;">
+
+      <!-- 簡報來源 -->
+      <div style="flex:1;min-width:170px;max-width:220px;">
+        <div style="background:#e8f0fe;border:2px solid #1a73e8;border-radius:12px;padding:20px;text-align:center;">
+          <div style="font-size:30px;margin-bottom:10px;">📊</div>
+          <div style="font-weight:700;color:#1a73e8;font-size:16px;margin-bottom:14px;">簡報來源</div>
+          <div style="background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0;font-size:14px;">企劃季度簡報</div>
+          <div style="background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0;font-size:14px;">行銷季度簡報</div>
+          <div style="background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0;font-size:14px;">數學季度簡報</div>
+        </div>
+      </div>
+
+      <div style="font-size:28px;color:#bdbdbd;">→</div>
+
+      <!-- 競品分析系統 -->
+      <div style="flex:2;min-width:240px;max-width:360px;">
+        <div style="background:#e8f5e9;border:2px solid #34a853;border-radius:12px;padding:20px;text-align:center;">
+          <div style="font-size:30px;margin-bottom:10px;">🌐</div>
+          <div style="font-weight:700;color:#1e8e3e;font-size:16px;margin-bottom:14px;">競品分析系統</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">競品時間軸</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">行銷資料庫</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">數學資料庫</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">跨產品搜尋</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">活動類型總表</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;">📡 營收分析</div>
+            <div style="background:#fff;border-radius:8px;padding:9px 10px;font-size:14px;grid-column:1/-1;">其他資料</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:28px;color:#bdbdbd;">↕</div>
+
+      <!-- 簡報工具 -->
+      <div style="flex:1;min-width:170px;max-width:220px;">
+        <div style="background:#fce4ec;border:2px solid #e91e63;border-radius:12px;padding:20px;text-align:center;">
+          <div style="font-size:30px;margin-bottom:10px;">📋</div>
+          <div style="font-weight:700;color:#c2185b;font-size:16px;margin-bottom:14px;">簡報工具</div>
+          <div style="background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0;font-size:14px;">自動生成季度簡報</div>
+          <div style="background:#fff;border-radius:8px;padding:9px 12px;margin:6px 0;font-size:14px;">範本插入工具</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 分隔線 -->
+    <div style="display:flex;align-items:center;gap:12px;margin:24px 0 20px;">
+      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+      <div style="font-size:12px;font-weight:700;color:#9e9e9e;letter-spacing:.06em;white-space:nowrap;">後端支援基礎</div>
+      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+    </div>
+
+    <!-- 下層：後端支援 -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:stretch;">
+
+      <!-- 自動刷新時間軸 -->
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div style="background:#fff3e0;border:2px solid #fb8c00;border-radius:12px;padding:16px;text-align:center;height:100%;">
+          <div style="font-size:26px;margin-bottom:8px;">⚙️</div>
+          <div style="font-weight:700;color:#e65100;font-size:15px;margin-bottom:8px;">自動刷新時間軸</div>
+          <div style="font-size:12px;color:#bf360c;background:#ffe0b2;border-radius:6px;padding:5px 8px;">GAS 定時觸發器<br>掃描簡報 → 寫入快取</div>
+        </div>
+      </div>
+
+      <div style="font-size:22px;color:#bdbdbd;align-self:center;">→</div>
+
+      <!-- Google Sheets -->
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div style="background:#e8f5e9;border:2px solid #43a047;border-radius:12px;padding:16px;text-align:center;height:100%;">
+          <div style="font-size:26px;margin-bottom:8px;">🗄️</div>
+          <div style="font-weight:700;color:#2e7d32;font-size:15px;margin-bottom:8px;">Google Sheets</div>
+          <div style="font-size:12px;color:#1b5e20;background:#c8e6c9;border-radius:6px;padding:5px 8px;">主試算表<br>快取儲存 ＋ 資料庫</div>
+        </div>
+      </div>
+
+      <div style="font-size:22px;color:#bdbdbd;align-self:center;">→</div>
+
+      <!-- 競品分析系統（指回） -->
+      <div style="align-self:center;font-size:13px;color:#5f6368;background:#f1f3f4;border:1px dashed #bdbdbd;border-radius:8px;padding:10px 16px;text-align:center;">
+        ↑ 供競品分析系統<br>讀取
+      </div>
+
+      <div style="width:24px;align-self:center;"></div>
+
+      <!-- SensorTower -->
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div style="background:#fff8e1;border:2px solid #f9a825;border-radius:12px;padding:16px;text-align:center;height:100%;">
+          <div style="font-size:26px;margin-bottom:8px;">📡</div>
+          <div style="font-weight:700;color:#f57f17;font-size:15px;margin-bottom:8px;">SensorTower API</div>
+          <div style="font-size:12px;color:#e65100;background:#fff9c4;border-radius:6px;padding:5px 8px;">即時營收 ＋ 下載量<br>後端代理查詢</div>
+        </div>
+      </div>
+
+      <div style="width:24px;align-self:center;"></div>
+
+      <!-- 權限管控 -->
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div style="background:#ede7f6;border:2px solid #7e57c2;border-radius:12px;padding:16px;text-align:center;height:100%;">
+          <div style="font-size:26px;margin-bottom:8px;">🔐</div>
+          <div style="font-weight:700;color:#4527a0;font-size:15px;margin-bottom:8px;">權限管控</div>
+          <div style="font-size:12px;color:#311b92;background:#d1c4e9;border-radius:6px;padding:5px 8px;">Google Sheets<br>權限管理工作表</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>資料從哪裡來？</h3>
+  <p>系統有兩條資料來源，運作方式不同：</p>
+  <table>
+    <thead><tr><th>來源</th><th>是什麼</th><th>怎麼更新</th></tr></thead>
+    <tbody>
+      <tr><td>Google Slides 季報</td><td>企劃、行銷、數學部門各自把競品資料填入簡報</td><td>需要管理員手動執行「快取更新」</td></tr>
+      <tr><td>SensorTower API</td><td>競品 App 在台灣的每日營收與下載量</td><td>每次查詢時即時抓取，無需更新</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <h3>整體運作流程</h3>
+  <pre>【各部門人員】
+  填寫競品資料
+  → 企劃時間軸 / 行銷活動 / 數學遊戲規格
+  → 存入 Google Slides（各競品季度簡報）
+           │
+           ▼
+【管理員】執行「快取更新」
+  （Google Sheets 選單 → 資料管理 → 更新活動快取）
+  → 系統自動掃描 Slides，解析表格內容
+  → 寫入 Google Sheets 快取
+           │
+           ▼
+【所有使用者】開啟系統網址
+  → 系統從快取讀取資料，渲染各頁籤
+  → 可篩選日期、關鍵字、競品，或匯出報表
+
+                     ┌─────────────────────────┐
+                     │  SensorTower API（即時）  │
+                     │  → 營收分析頁籤           │
+                     │  每次查詢直接呼叫，        │
+                     │  不需要快取更新            │
+                     └─────────────────────────┘</pre>
+
+  <hr>
+
+  <h3>哪些功能對我有用？</h3>
+  <table>
+    <thead><tr><th>我想做的事</th><th>去哪個頁籤</th></tr></thead>
+    <tbody>
+      <tr><td>看某競品這幾個月辦了哪些活動</td><td>各競品時間軸（頁籤列選競品名稱）</td></tr>
+      <tr><td>同時比較多家競品的活動規律</td><td>跨產品搜尋</td></tr>
+      <tr><td>看各競品有哪些遊戲項目分類</td><td>活動類型總表</td></tr>
+      <tr><td>看競品的行銷活動（TVC、抽獎券等）</td><td>行銷資料庫</td></tr>
+      <tr><td>查競品老虎機遊戲的玩法規格</td><td>數學資料庫</td></tr>
+      <tr><td>查競品 App 每日營收、下載量</td><td>營收分析</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 看不到某個頁籤？表示你的帳號沒有該頁籤的權限，請聯繫管理員。</blockquote>
+
+  <hr>
+
+  <!-- 導覽結束分隔 -->
+  <h1 style="margin:32px 0 8px;font-size:22px;"><img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="100" style="display:inline;border:none;margin:0 4px 0 0;vertical-align:middle;">導覽結束<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="100" style="display:inline;border:none;margin:0 0 0 4px;vertical-align:middle;"></h1>
+
+  <!-- ── 1 ── -->
+  <h2 id="s1">1. 開啟系統</h2>
+  <p>在瀏覽器輸入系統網址，需使用公司 Google 帳號登入。</p>
+  <p><strong>系統需求</strong>：建議使用 Chrome 或 Edge，螢幕寬度 1280px 以上效果最佳，手機也可使用。</p>
+
+  <hr>
+
+  <!-- ── 2 ── -->
+  <h2 id="s2">2. 頁面配置</h2>
+
+  <hr>
+
+  <!-- ── 2 ── -->
+  <h2 id="s2">2. 頁面配置</h2>
+  <img src="示意圖/image-2.png" alt="頁面配置示意圖">
+  <p>頁籤列可點選「右上角箭頭收合」按鈕隱藏，讓內容區有更多空間。</p>
+
+  <hr>
+
+  <!-- ── 3 ── -->
+  <h2 id="s3">3. 功能頁籤說明</h2>
+
+  <!-- 4.1 -->
+  <h3 id="s3-1">3.1 競品時間軸（星城 / 滿貫大亨 / 金好運 … 等各競品）</h3>
+  <img src="示意圖/image-2.png" alt="競品時間軸示意圖">
+  <p><strong>💡 功能</strong>：以月曆甘特圖顯示該競品每個月的活動分布，按活動類型分列（老虎機新遊戲、魚機活動、抽獎活動等）。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>點選頂部競品名稱頁籤</li>
+    <li>設定<strong>日期範圍</strong>（年月選擇器），預設顯示最近資料</li>
+    <li>選擇<strong>時間粒度</strong>：月份（預設）或年份</li>
+    <li>輸入<strong>關鍵字</strong>搜尋特定活動名稱，多個關鍵字用逗號或空格分隔（OR 邏輯）</li>
+    <li>點選「搜尋」，符合的活動會高亮並自動捲動至第一筆</li>
+  </ol>
+
+  <hr>
+
+  <h3>【圖表說明】</h3>
+  <img src="示意圖/image-3.png" alt="圖表說明示意圖">
+  <ul>
+    <li>上方橫條圖：各月份各活動類型的數量分布</li>
+    <li>下方時間軸：月曆格式，每格代表一天，活動橫條代表持續時間</li>
+    <li>活動橫條顏色代表活動類型，可在統計表中查看圖例</li>
+  </ul>
+
+  <hr>
+
+  <h3>【匯出資料】</h3>
+  <img src="示意圖/image-4.png" alt="匯出資料示意圖">
+  <ul>
+    <li>「匯出統計圖表」：輸出統計圖 + 活動明細清單（.xlsx + .png）</li>
+    <li>「匯出時間軸」：輸出時間軸截圖 + 活動日期清單（.xlsx + .png）</li>
+  </ul>
+
+  <hr>
+
+  <h3>【統計表】</h3>
+  <img src="示意圖/image14.png" alt="統計表示意圖">
+  <p>顯示目前篩選區間內，各活動類型的活動總數量。</p>
+  <table>
+    <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>統計區間</td><td>目前顯示的起訖年月（隨日期篩選條件連動更新）</td></tr>
+      <tr><td>活動類型</td><td>各活動分類名稱，顏色與時間軸橫條一致（可作為圖例對照）</td></tr>
+      <tr><td>數量</td><td>該類型在篩選區間內的活動總筆數</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 切換時間粒度（月 / 年）或更改日期範圍時，統計表會同步更新。</blockquote>
+
+  <hr>
+
+  <!-- 4.2 -->
+  <h3 id="s3-2">3.2 跨產品搜尋</h3>
+  <img src="示意圖/image-5.png" alt="跨產品搜尋示意圖">
+  <p><strong>💡 功能</strong>：同時搜尋所有競品的活動，適合找特定活動類型在多家競品中的出現規律。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>在搜尋框輸入關鍵字（如「抽獎」、「新遊戲」）</li>
+    <li>（選用）從「活動類型」標籤點選篩選特定類型</li>
+    <li>（選用）從「競品篩選」下拉選單指定查看哪些競品</li>
+    <li>點選「搜尋」</li>
+  </ol>
+
+  <hr>
+
+  <h3>【顯示模式】</h3>
+  <table>
+    <thead><tr><th>模式</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>依產品分組</td><td>各競品的搜尋結果分開顯示，可個別展開/收合</td></tr>
+      <tr><td>依時間排序</td><td>所有競品的符合活動混合按月份排序，方便看同期哪些競品有相同活動</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <h3>【統計圖】</h3>
+  <p>搜尋結果下方會顯示各競品在篩選區間內的活動趨勢折線圖。</p>
+
+  <hr>
+
+  <h3>【匯出】</h3>
+  <p>點選「匯出 Excel」可下載搜尋結果表格與截圖。</p>
+
+  <hr>
+
+  <!-- 3.3 -->
+  <h3 id="s3-3">3.3 活動類型總表</h3>
+  <img src="示意圖/image-6.png" alt="活動類型總表示意圖">
+  <p><strong>💡 功能</strong>：查看各競品的特定遊戲項目（老虎機機台、魚機機台等）分類整理，每項目附有連結可直接開啟對應簡報。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>在「競品篩選」下拉選單勾選要查看的競品（預設全選）</li>
+    <li>在關鍵字欄位輸入項目名稱（有 1 秒 debounce）</li>
+    <li>點選各卡片可展開查看詳細清單</li>
+  </ol>
+
+  <hr>
+
+  <!-- 3.4 -->
+  <h3 id="s3-4">3.4 營收分析</h3>
+  <img src="示意圖/image-7.png" alt="營收分析示意圖">
+  <p><strong>💡 功能</strong>：從 SensorTower 即時取得競品 App 在台灣市場的每日營收（美元）與下載量，並以圖表顯示趨勢。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>設定<strong>查詢日期範圍</strong>（起始日期～結束日期）</li>
+    <li>在「選擇競品」下拉勾選要分析的 App（可多選，預設勾選星城、金好運）</li>
+    <li>點選「查詢數據」，系統呼叫 SensorTower API 取得資料</li>
+    <li>選擇<strong>時間粒度</strong>：日 / 週 / 月 / 年</li>
+  </ol>
+
+  <hr>
+
+  <h3>【圖表說明】</h3>
+  <ul>
+    <li><strong>營收趨勢圖</strong>：各競品每日/週/月/年營收（USD）折線圖</li>
+    <li><strong>下載量趨勢圖</strong>：各競品下載次數折線圖</li>
+    <li><strong>年度同期比較</strong>：展開「進階 YoY 分析」，將同一競品不同年份的資料對齊比較</li>
+  </ul>
+
+  <hr>
+
+  <h3>【頂部統計卡】</h3>
+  <table>
+    <thead><tr><th>卡片</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>總營收</td><td>查詢期間所有選中競品的合計</td></tr>
+      <tr><td>日均營收</td><td>總營收 ÷ 天數</td></tr>
+      <tr><td>單日最高</td><td>期間內最高單日營收及日期</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 查詢範圍越大、競品越多，API 回應時間越長（通常 5～15 秒）。</blockquote>
+
+  <hr>
+
+  <!-- 3.5 -->
+  <h3 id="s3-5">3.5 數學資料庫</h3>
+  <img src="示意圖/image-8.png" alt="數學資料庫示意圖">
+  <p><strong>💡 功能</strong>：查看各競品老虎機遊戲的整體規格，包含玩法類型、盤面大小、特色購買、參考遊戲等。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>從「競品」下拉選擇競品（可多選）</li>
+    <li>從「玩法類型」選擇特定玩法（如 Way Game、Cluster、Line 等）</li>
+    <li>設定「上架日期範圍」（年月格式）</li>
+    <li>輸入關鍵字搜尋遊戲名稱</li>
+    <li>點選遊戲卡片展開詳細規格（展開後再點一次收合）</li>
+  </ol>
+
+  <h3>【圖表視圖切換】（卡片列表上方）</h3>
+  <img src="示意圖/image-9.png" alt="圖表視圖切換示意圖 1" style="display:inline-block;max-width:48%;margin-right:2%">
+  <img src="示意圖/image-10.png" alt="圖表視圖切換示意圖 2" style="display:inline-block;max-width:48%">
+  <table>
+    <thead><tr><th>視圖</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>按月趨勢</td><td>各月上架遊戲數量折線圖</td></tr>
+      <tr><td>年度趨勢</td><td>各年上架數量折線圖</td></tr>
+      <tr><td>競品分布</td><td>各競品上架遊戲數量比較</td></tr>
+      <tr><td>玩法分布</td><td>各玩法類型使用頻率</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- 3.6 -->
+  <h3 id="s3-6">3.6 行銷資料庫</h3>
+  <img src="示意圖/image-11.png" alt="行銷資料庫示意圖 1" style="display:inline-block;max-width:48%;margin-right:2%">
+  <img src="示意圖/image-12.png" alt="行銷資料庫示意圖 2" style="display:inline-block;max-width:48%">
+  <p><strong>💡 功能</strong>：以甘特圖顯示各競品的行銷活動（TVC、抽獎券活動、社群貼文、合作推廣等）。</p>
+  <p><strong>操作步驟</strong>：</p>
+  <ol>
+    <li>在「競品」下拉勾選要查看的競品</li>
+    <li>設定月份範圍（年月選擇器）</li>
+    <li>輸入關鍵字篩選活動名稱</li>
+  </ol>
+
+  <h3>【視角切換】</h3>
+  <table>
+    <thead><tr><th>模式</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>依月份</td><td>所有競品混合，按月份顯示甘特圖，適合橫向比較同一時期的行銷力度</td></tr>
+      <tr><td>依競品</td><td>各競品獨立區塊，適合縱向追蹤單一競品的行銷策略變化</td></tr>
+    </tbody>
+  </table>
+
+  <h3>【統計圖】</h3>
+  <p>下方圖表可切換為長條圖或折線圖，X 軸為月份，系列為行銷分類。</p>
+
+  <hr>
+
+  <!-- 3.7 -->
+  <h3 id="s3-7">3.7 其他資料</h3>
+  <img src="示意圖/image-13.png" alt="其他資料示意圖">
+  <p><strong>💡 功能</strong>：提供兩個連結清單的快捷入口。</p>
+  <p><strong>資料來源</strong>：<a href="https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI/edit?gid=796982050" target="_blank">競品追蹤 Google Sheets</a> →「目錄」工作表（需手動維護）</p>
+  <img src="示意圖/image-18.png" alt="目錄工作表示意圖">
+  <table>
+    <thead><tr><th>區域</th><th>對應欄位標題</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>其他項目連結</td><td><code>其他項目連結🎃(需手動更新)</code></td><td>各類參考資料連結</td></tr>
+      <tr><td>營運正式簡報</td><td><code>營運正式簡報連結(需手動更新)🎃</code></td><td>按年份分組的雙週報連結</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 新增或修改連結請直接編輯「目錄」工作表對應欄位，重新整理頁面後即生效。</blockquote>
+  <p>點選連結後：</p>
+  <ul>
+    <li>Google Docs 類型 → 在頁面內以 Overlay 視窗預覽，按 ESC 或右上角 ✕ 關閉</li>
+    <li>Google Drive 資料夾 → 開新分頁</li>
+    <li>其他連結 → 開新分頁</li>
+  </ul>
+
+  <hr>
+
+  <!-- ── 5 ── -->
+  <h2 id="s4">4. 簡報範本系統</h2>
+  <blockquote>⚠️ 本節說明的範本生成工具與競品分析系統<strong>完全獨立</strong>，兩套系統不共用資料，互不影響。</blockquote>
+
+  <hr>
+
+  <h3 id="s4-1">4.1 簡報範本是什麼？</h3>
+  <p>各部門每隔固定週期需要填寫一份<strong>競品營運簡報</strong>，記錄當期各競品的活動、行銷、數學遊戲規格等資料。這些簡報：</p>
+  <ol>
+    <li>由腳本<strong>自動從固定範本複製出新的一份</strong>，存到 Google Drive 指定資料夾</li>
+    <li>部門人員開啟後<strong>手動填入當期競品資料</strong></li>
+    <li>管理員執行「快取更新」後，系統掃描這些簡報，把資料同步到競品分析系統</li>
+  </ol>
+
+  <hr>
+
+  <h3 id="s4-2">4.2 三種簡報範本</h3>
+  <table>
+    <thead><tr><th>種類</th><th>負責部門</th><th>生成頻率</th><th>Drive 資料夾</th></tr></thead>
+    <tbody>
+      <tr><td><strong>企劃</strong></td><td>企劃部門</td><td>每月 1 日</td><td><a href="https://drive.google.com/drive/folders/1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn" target="_blank">企劃簡報資料夾</a></td></tr>
+      <tr><td><strong>行銷</strong></td><td>行銷部門</td><td>每月 1 日</td><td><a href="https://drive.google.com/drive/folders/1YnmltpcksZXL5NsMa0gBY65zkN_M8s33" target="_blank">行銷簡報資料夾</a></td></tr>
+      <tr><td><strong>數學</strong></td><td>數學部門</td><td>每 28 天</td><td><a href="https://drive.google.com/drive/folders/1hzm_M_LelaC2DpDZ98784vppfqIQyD73" target="_blank">數學簡報資料夾</a></td></tr>
+    </tbody>
+  </table>
+  <p>生成後的簡報存放路徑格式：</p>
+  <pre><code>{部門資料夾}/
+  └── {年份}/
+        └── {MMdd}/              ← 日期資料夾，如 0601
+              └── 0601營運簡報   ← 複製自範本的簡報</code></pre>
+
+  <hr>
+
+  <h3 id="s4-3">4.3 自動生成邏輯</h3>
+  <p>腳本執行時會：</p>
+  <ol>
+    <li>掃描 Drive 資料夾，找出<strong>最新已存在的日期</strong></li>
+    <li>計算下一個應生成的日期（企劃/行銷：下個月1日；數學：+28天）</li>
+    <li>若今天日期 &lt; 預計生成日期 → 停止，不提前建立</li>
+    <li>若目標日期資料夾已存在 → 跳過，避免重複</li>
+    <li>複製範本簡報，<strong>自動刪除</strong>投影片左側標有「<strong>範本</strong>」標籤的頁面（空白的示意頁）</li>
+    <li>修改封面標題，加上日期前綴（如 <code>0601營運簡報</code>）</li>
+  </ol>
+  <blockquote class="tip">💡 三支腳本均已在 GAS 設定<strong>每日觸發器</strong>，每天自動執行一次。腳本執行時會自行判斷今天日期是否達到生成週期，符合才複製新簡報，否則直接結束。若某期沒有生成，請到 GAS 確認觸發器是否正常運作。</blockquote>
+
+  <hr>
+
+  <h3 id="s4-4">4.4 表格填寫規則</h3>
+  <p>填好的簡報會被快取更新腳本掃描，因此<strong>表格格式需嚴格遵守</strong>，否則系統無法正確解析。</p>
+
+  <h4>企劃時間軸表格</h4>
+  <p>每張時間軸投影片必須有對應標題（如「星城時間軸」），表格格式如下：</p>
+  <pre><code>┌──────────┬──────────┬──────────────────────────────────────────┐
+│（標題列） │          │                                          │
+├──────────┼──────────┼──────────────────────────────────────────┤
+│          │ 活動類型 │ 活動名稱(MM/DD~MM/DD)                     │
+│          │          │ 活動名稱(MM/DD~MM/DD)   ← 同一列可多行   │
+│          │ 新類型   │ 活動名稱(MM/DD)          ← 無結束日視同單日│
+└──────────┴──────────┴──────────────────────────────────────────┘
+  A 欄（略）  B 欄         C 欄</code></pre>
+  <table>
+    <thead><tr><th>欄位</th><th>規則</th></tr></thead>
+    <tbody>
+      <tr><td><strong>B 欄（活動類型）</strong></td><td>填活動種類（如：老虎機新遊戲、抽獎活動）；空白時自動沿用上一列的類型</td></tr>
+      <tr><td><strong>C 欄（活動內容）</strong></td><td>每行一筆活動，格式：<code>活動名稱(開始日~結束日)</code>；可用前綴標籤：<code>[排行榜] 活動名稱(日期)</code></td></tr>
+    </tbody>
+  </table>
+  <p><strong>日期格式範例</strong>：</p>
+  <table>
+    <thead><tr><th>格式</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><code>活動名稱(12/1~12/31)</code></td><td>一般活動</td></tr>
+      <tr><td><code>活動名稱(12/28~1/5)</code></td><td>跨年（自動偵測，結束月 &lt; 開始月 → 跨年）</td></tr>
+      <tr><td><code>活動名稱(2025/11/25~2025/12/31)</code></td><td>明確指定年份</td></tr>
+      <tr><td><code>活動名稱(3/15)</code></td><td>單日活動（無結束日）</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ C 欄填 <code>-</code> 的那行會被略過。某列 B 欄為空則沿用上一列類型。</blockquote>
+
+  <hr>
+
+  <h4>行銷時間軸表格</h4>
+  <p>每張時間軸投影片必須有對應標題（如「星城行銷時間軸」），欄位結構與企劃相同，但<strong>日期必須包含年份</strong>：</p>
+  <pre><code>┌──────────┬──────────┬──────────────────────────────────────────────────┐
+│（標題列） │          │                                                  │
+├──────────┼──────────┼──────────────────────────────────────────────────┤
+│          │ 活動類型 │ 活動名稱(YYYY/MM/DD~YYYY/MM/DD)                   │
+│          │ 新類型   │ 活動名稱(YYYY/MM/DD)     ← 單日活動               │
+└──────────┴──────────┴──────────────────────────────────────────────────┘
+  A 欄（略）  B 欄         C 欄</code></pre>
+  <blockquote>⚠️ 行銷日期<strong>必須填寫完整年份</strong>（如 <code>2025/06/01~2025/06/30</code>），不可省略年份，否則系統無法正確解析。</blockquote>
+
+  <hr>
+
+  <h4>數學時間軸表格</h4>
+  <p>標題需包含「<strong>XX數學時間軸</strong>」，表格為<strong>直式鍵值對</strong>：</p>
+  <table>
+    <thead><tr><th>標籤（A 欄）</th><th>值（B 欄）</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>名稱</td><td><code>遊戲名稱(YYYY/MM/DD)</code></td><td>括號內為上架日期，格式固定</td></tr>
+      <tr><td>玩法分類</td><td><code>[Way Game][百搭]</code></td><td>方括號標記，可多個</td></tr>
+      <tr><td>玩法簡述</td><td>文字說明</td><td></td></tr>
+      <tr><td>美術簡述</td><td>文字說明</td><td></td></tr>
+      <tr><td>盤面大小</td><td>如 <code>5x5</code></td><td></td></tr>
+      <tr><td>有參考遊戲</td><td>遊戲名稱或「無」</td><td></td></tr>
+      <tr><td>特色購買</td><td>有 / 無</td><td></td></tr>
+      <tr><td>Extra Bet</td><td>有 / 無</td><td></td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 「名稱」列必填且格式要正確，解析失敗的表格整筆略過不寫入快取。</blockquote>
+
+  <hr>
+
+  <h3 id="s4-5">4.5 簡報範本插入工具</h3>
+  <p>這是一個獨立掛在 Google Slides 上的工具，讓你在製作自己的簡報時，可以快速插入公司預先做好的範本投影片，不用手動複製。</p>
+  <img src="示意圖/image.png" alt="簡報範本插入工具示意圖">
+
+  <h4>快速入門</h4>
+  <ol>
+    <li>在 Google Slides 選單點選 <strong>⭐開啟範本工具⭐ → 顯示範本選單</strong></li>
+    <li>在簡報中<strong>點選一張投影片</strong>（作為插入位置）</li>
+    <li>從右側側邊欄選取細項，<strong>點一下</strong>即插入到選取頁後方</li>
+  </ol>
+  <p>找不到範本？在側邊欄頂部搜尋框輸入關鍵字即可篩選。</p>
+
+  <hr>
+
+  <h4>側邊欄功能</h4>
+  <p><strong>瀏覽範本</strong></p>
+  <p>範本依三層結構折疊顯示：</p>
+  <pre><code>主項（如：提案、行銷、企劃）
+  └─ 子項
+       └─ 細項 ← 點擊即插入</code></pre>
+  <p><strong>搜尋</strong>：頂部搜尋框即時過濾，關鍵字以黃底標記。</p>
+  <p><strong>開啟原始範本</strong>：右上角按鈕，在新分頁開啟範本庫 Google Slides。</p>
+  <p><strong>深 / 淺色主題</strong>：右上角 🌙 / ☀️ 切換，記憶到帳號（跨裝置同步）。</p>
+  <p><strong>自動更新</strong>：側邊欄每 30 秒偵測範本庫是否有變更，有變更則自動重新掃描，無需手動重整。</p>
+
+  <hr>
+
+  <h4>管理員：新增 / 修改範本</h4>
+  <p><strong>範本來源說明</strong></p>
+  <p>所有範本統一存放於<strong>企劃簡報範本</strong>（Google Slides），這份簡報同時服務兩個用途：</p>
+  <table>
+    <thead><tr><th>工具</th><th>如何使用企劃簡報範本</th></tr></thead>
+    <tbody>
+      <tr><td>範本插入工具（本工具）</td><td>讀取其中的投影片供使用者選擇插入</td></tr>
+      <tr><td>企劃簡報自動生成腳本</td><td>每月複製整份簡報作為新一期的營運簡報底稿</td></tr>
+    </tbody>
+  </table>
+  <blockquote>⚠️ 企劃簡報範本本身附有製作說明，新增範本前建議先閱讀。</blockquote>
+
+  <hr>
+
+  <p><strong>範本製作流程</strong></p>
+  <ol>
+    <li>在其他地方做好要作為範本的投影片（可多張）</li>
+    <li>在<strong>第一張</strong>投影片的左側邊緣（距左邊 &lt; 100px）放一個文字框，填入分類標記：
+      <img src="示意圖/image-1.png" alt="分類標記示意圖">
+      <pre><code>主項：XXX
+子項：XXX
+細項：XXX</code></pre>
+    </li>
+    <li>把做好的投影片（含標記頁）<strong>複製貼入企劃簡報範本</strong></li>
+    <li>儲存後，側邊欄 30 秒內自動偵測並更新，<strong>無需重新部署</strong></li>
+  </ol>
+  <blockquote>⚠️ 標記文字框若距左邊 ≥ 100px，系統無法識別為標記，投影片會被歸入前一個細項。</blockquote>
+
+  <hr>
+
+  <!-- ── 6 ── -->
+  <h2 id="s5">5. 新增競品</h2>
+  <p>以下三個部分各自獨立，依實際需求選擇要設定哪些：</p>
+
+  <hr>
+
+  <h3 id="s5-1">5.1 時間軸（活動快取）</h3>
+  <img src="示意圖/image-20.png" alt="時間軸範本示意圖">
+  <p><strong>圖以行銷部門要增加競品範本作舉例</strong></p>
+  <p>以行銷新增「星城」為例，企劃、數學的操作邏輯相同：</p>
+  <ol>
+    <li>在對應部門的 Slides 中，找到任一競品的「<strong>XX行銷時間軸</strong>」頁面，複製一份</li>
+    <li>把標題從「XX行銷時間軸」改成「<strong>星城行銷時間軸</strong>」</li>
+    <li>下次執行快取更新時，系統會自動掃描到這個頁面並建立星城的資料</li>
+  </ol>
+  <blockquote>⚠️ 表格結構本身不能改動，只改標題名稱即可。若需新增活動種類，需聯繫管理員修改程式碼（<a href="#s7">見常見問題</a>）。</blockquote>
+
+  <hr>
+
+  <h3 id="s5-2">5.2 開放使用者權限</h3>
+  <p>在 <a href="https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI" target="_blank">權限管理工作表</a> 的對應 Email 欄位，加入新競品名稱（與資料夾名稱一致）。</p>
+
+  <hr>
+
+  <!-- ── 7 ── -->
+  <h2 id="s6">6. 常見問題</h2>
+
+  <h3>Q: 頁籤看不到某些競品或功能？</h3>
+  <p>你的帳號可能沒有該頁籤的存取權限。請聯繫系統管理員確認帳號設定。</p>
+
+  <h3>Q: 競品時間軸資料不是最新的？</h3>
+  <p>快取需手動更新，若最近有新的季度簡報，請通知管理員執行更新。</p>
+
+  <h3>Q: 營收分析查詢很慢或無回應？</h3>
+  <p>查詢日期範圍越長、競品越多，SensorTower API 回應時間越久。建議先用較短的日期範圍（如一個月）測試，確認正常後再擴大範圍。<br>
+  若完全失效可能是短時間大量使用API，導致Sensor啟用保護機制，導致API失效，請通知管理員執行更新。</p>
+
+  <h3>Q: 搜尋關鍵字如何使用？</h3>
+  <p>各頁籤的邏輯不同：</p>
+  <table>
+    <thead><tr><th>頁籤</th><th>分隔符</th><th>多關鍵字邏輯</th><th>比對欄位</th></tr></thead>
+    <tbody>
+      <tr><td>競品時間軸</td><td>逗號或空格</td><td><strong>OR</strong>（任一符合即顯示）</td><td>活動名稱、活動類型、原始內容</td></tr>
+      <tr><td>跨產品搜尋</td><td>逗號或空格</td><td><strong>OR</strong>（任一符合即顯示）</td><td>活動名稱、活動類型、原始內容</td></tr>
+      <tr><td>行銷資料庫</td><td>逗號（不支援空格）</td><td><strong>OR</strong>（任一符合即顯示）</td><td>活動名稱、分類、競品</td></tr>
+      <tr><td>數學資料庫</td><td>逗號（不支援空格）</td><td><strong>AND</strong>（全部關鍵字都要符合）</td><td>競品、遊戲名稱、玩法類型、盤面大小、參考遊戲</td></tr>
+    </tbody>
+  </table>
+  <p>所有頁籤均不區分大小寫。</p>
+
+  <h3>Q: 資料內容為什麼是錯誤的？</h3>
+  <p>資料錯誤通常有兩種情形：</p>
+  <ul>
+    <li><strong>活動類型標籤錯誤</strong>：某個活動被歸類到錯誤的類型（如應該是「抽獎活動」卻顯示為「老虎機新遊戲」）</li>
+    <li><strong>競品資料串位</strong>：A 競品的活動出現在 B 競品的頁籤下</li>
+  </ul>
+  <p>這兩種情形的根源幾乎都是<strong>原始 Google Slides 簡報內的表格填寫有誤</strong>（類型欄填錯、貼到錯誤競品的簡報等）。請開啟對應競品的來源簡報確認表格內容，修正後請通知管理員重新執行快取更新即可。</p>
+
+  <hr>
+
+  <h3>Q: 某個競品的時間軸資料太多，同一頁放不下，可以拆開嗎？</h3>
+  <img src="示意圖/image-23.png" alt="時間軸拆頁示意圖 1" style="display:inline-block;max-width:48%;margin-right:2%">
+  <img src="示意圖/image-24.png" alt="時間軸拆頁示意圖 2" style="display:inline-block;max-width:48%">
+  <p>可以。直接把表格內容拆到多張投影片，每張都保留「<strong>XX時間軸</strong>」的標題，系統掃描時會自動把所有同名時間軸的資料合併起來。</p>
+  <p>例如「星城行銷時間軸」拆成三頁，三頁的標題都叫「星城行銷時間軸」，掃描後星城的行銷資料就會包含三頁的內容。</p>
+
+  <hr>
+
+  <h3>Q: 想新增一個新的活動種類（例如新的行銷類型、老虎機分類），該怎麼做？</h3>
+  <img src="示意圖/image-25.png" alt="新增活動種類示意圖">
+  <p>活動種類是<strong>程式碼寫死</strong>的，不是從簡報自動讀取，所以就算在簡報表格中新增了一列新類型，系統也無法自動辨識。</p>
+  <p>需要聯繫管理員修改程式碼，新增對應的分類定義後重新部署，系統才會正確識別並顯示新種類。</p>
+
+  <hr>
+
+  <h3>Q: 匯出的 Excel 無法開啟？</h3>
+  <p>系統使用 SheetJS 在瀏覽器端產生 .xlsx，若下載後無法開啟，請嘗試以 LibreOffice 或 Google Sheets 開啟。</p>
+
+
+</main>
+
+<!-- back to top -->
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('back-top').classList.toggle('show', window.scrollY > 300);
+  });
+
+  // ── Scroll Spy ──
+  (function(){
+    var headings = Array.from(document.querySelectorAll('#content h1[id],#content h2[id],#content h3[id],#content h4[id]'));
+    var linkMap = {};
+    headings.forEach(function(h){
+      var a = document.querySelector('#sidebar a[href="#' + h.id + '"]');
+      if(a) linkMap[h.id] = a;
+    });
+
+    function update(){
+      var scrollTop = window.scrollY + 100;
+      var current = null;
+      for(var i = headings.length - 1; i >= 0; i--){
+        if(headings[i].offsetTop <= scrollTop){ current = headings[i].id; break; }
+      }
+      Object.values(linkMap).forEach(function(a){ a.classList.remove('spy-active'); });
+      if(current && linkMap[current]){
+        linkMap[current].classList.add('spy-active');
+        // 讓側邊欄自動捲動到可見範圍
+        var el = linkMap[current];
+        var sidebar = document.getElementById('sidebar');
+        if(el.offsetTop < sidebar.scrollTop || el.offsetTop + el.offsetHeight > sidebar.scrollTop + sidebar.clientHeight){
+          el.scrollIntoView({block:'nearest'});
+        }
+      }
+    }
+
+    window.addEventListener('scroll', update, {passive: true});
+    update();
+  })();
+</script>
+
+<!-- ── 隨機飛過的 GIF ── -->
+<script>
+  var FLY_GIFS = [
+    'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+    'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+    'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+    'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+    'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+    'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzcxc3l2cXZ5OHMxNGticzkydG44dXlvaHpteWxyODhoaDVvMGR5MyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UGu7dKDOTEuTpOIF2b/giphy.gif'
+  ];
+
+  FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
+  var FLY_MAX = 3;
+  var _flyCount = 0;
+
+  function triggerFlyGif(){
+    if(_flyCount >= FLY_MAX) return;
+    _flyCount++;
+
+    var gif     = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+    var topPct  = (5 + Math.random() * 85) + '%';
+    var dur     = (2.5 + Math.random() * 5).toFixed(1) + 's';
+    var size    = (100 + Math.random() * 180) + 'px';
+
+    var el = document.createElement('img');
+    el.src = gif;
+    var startTop = parseFloat(topPct);
+    el.style.cssText = 'position:fixed;right:-200px;top:'+topPct+';width:'+size+';height:auto;z-index:500;pointer-events:all;cursor:grab;border:none;outline:none;box-shadow:none;background:transparent;';
+    document.body.appendChild(el);
+
+    var _durMs     = parseFloat(dur) * 1000;
+    var _startTime = Date.now();
+    var _waveAmp   = 8  + Math.random() * 12;
+    var _waveFreq  = 1.5 + Math.random() * 2;
+    var _flyRaf    = null;
+    var _dragging  = false;
+
+    function animateFly(){
+      if(_dragging){ _flyRaf = requestAnimationFrame(animateFly); return; }
+      var elapsed  = Date.now() - _startTime;
+      var progress = elapsed / _durMs;
+      if(progress >= 1){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} return; }
+      var x = (1 - progress) * (window.innerWidth + 200) - 200;
+      el.style.right = 'auto';
+      el.style.left  = x + 'px';
+      var topVal = startTop + Math.sin(progress * Math.PI * 2 * _waveFreq) * _waveAmp;
+      el.style.top = topVal + '%';
+      if(progress > 0.85) el.style.opacity = ((1 - progress) / 0.15).toFixed(2);
+      _flyRaf = requestAnimationFrame(animateFly);
+    }
+    _flyRaf = requestAnimationFrame(animateFly);
+
+    var _autoRemove = setTimeout(function(){
+      cancelAnimationFrame(_flyRaf);
+      if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;}
+    }, _durMs + 200);
+
+    // 長按可抓住 GIF
+    var _holdT = null, _offX = 0, _offY = 0;
+
+    el.addEventListener('mousedown', function(e){
+      e.preventDefault();
+      document.addEventListener('mousemove', onFlyMove);
+      document.addEventListener('mouseup', onFlyUp);
+      _holdT = setTimeout(function(){
+        _dragging = true;
+        var rect = el.getBoundingClientRect();
+        el.style.right = 'auto';
+        el.style.left  = rect.left + 'px';
+        el.style.top   = rect.top  + 'px';
+        el.style.cursor = 'grabbing';
+        _offX = e.clientX - rect.left;
+        _offY = e.clientY - rect.top;
+        clearTimeout(_autoRemove);
+      }, 300);
+    });
+
+    function onFlyMove(e){
+      if(!_dragging) return;
+      el.style.left = (e.clientX - _offX) + 'px';
+      el.style.top  = (e.clientY - _offY) + 'px';
+    }
+    function onFlyUp(){
+      clearTimeout(_holdT); _holdT = null;
+      document.removeEventListener('mousemove', onFlyMove);
+      document.removeEventListener('mouseup', onFlyUp);
+      if(!_dragging) return;
+      _dragging = false;
+      el.style.cursor = 'grab';
+      cancelAnimationFrame(_flyRaf);
+      clearTimeout(_autoRemove);
+      var _releaseTime = Date.now();
+      var _relLeft = parseFloat(el.style.left) || 0;
+      var _relTop  = parseFloat(el.style.top)  || startTop;
+      function animateRelease(){
+        var t = (Date.now() - _releaseTime) / 2000;
+        if(t >= 1){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} return; }
+        el.style.left    = (_relLeft - t * (window.innerWidth + 400)) + 'px';
+        el.style.top     = (_relTop + Math.sin(t * Math.PI * 3) * _waveAmp) + '%';
+        el.style.opacity = (1 - t).toFixed(2);
+        requestAnimationFrame(animateRelease);
+      }
+      requestAnimationFrame(animateRelease);
+      setTimeout(function(){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} }, 2200);
+    }
+  }
+
+  function scheduleFlyGif(){
+    var delay = (30 + Math.random() * 60) * 1000;
+    setTimeout(function(){
+      triggerFlyGif();
+      if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024) scheduleFlyGif();
+    }, delay);
+  }
+
+  // 桌機才跑，30~90 秒後第一次出現
+  if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
+    scheduleFlyGif();
+  }
+</script>
+</body>
+</html>

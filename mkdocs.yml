@@ -28,3 +28,6 @@ markdown_extensions:
 nav:
   - 首頁: index.md
   - 遊戲上線 SOP: 遊戲上線SOP.md
+  - 競品優化:
+    - 使用指南: 競品優化_使用指南.md
+    - 管理者指南: 競品優化_管理者指南.md

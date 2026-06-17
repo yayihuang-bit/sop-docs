@@ -1,0 +1,181 @@
+// 來源 https://docs.google.com/presentation/d/1YN4FeoAq9EhoBmblsJTqyy_EySPyshSZdjD9ue3GLDo/edit?slide=id.g22588a08756_0_44#slide=id.g22588a08756_0_44
+
+function createFolderAndCopyPresentation() {
+  try {
+    // 找出最近的資料夾日期
+    var latestDate = getLatestFolderDate();
+    var today = new Date();
+    
+    // 如果當前日期小於最新檔案日期，則不建立新檔案
+    if (today < latestDate) {
+      Logger.log('當前日期(' + Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy/MM/dd') + 
+                ')小於最新檔案日期(' + Utilities.formatDate(latestDate, Session.getScriptTimeZone(), 'yyyy/MM/dd') + 
+                ')，暫停建立');
+      return;
+    }
+    
+    // 計算下一個簡報日期（最近日期 + 28天）
+    var nextDate = new Date(latestDate);
+    nextDate.setDate(latestDate.getDate() + 28);
+    
+    // 格式化下一個簡報日期
+    var formattedDate = Utilities.formatDate(nextDate, Session.getScriptTimeZone(), 'MMdd');
+    var nextYear = nextDate.getFullYear().toString();
+    
+    // ✅ 新的生成位置資料夾
+    var rootFolderId = '1hzm_M_LelaC2DpDZ98784vppfqIQyD73';
+    var rootFolder = DriveApp.getFolderById(rootFolderId);
+    
+    // 檢查是否已存在目標年份資料夾
+    var yearFolderExists = false;
+    var yearFolder;
+    var folders = rootFolder.getFolders();
+    
+    while (folders.hasNext()) {
+      var folder = folders.next();
+      if (folder.getName() === nextYear) {
+        yearFolderExists = true;
+        yearFolder = folder;
+        break;
+      }
+    }
+    
+    // 如果沒有目標年份資料夾，建立一個
+    if (!yearFolderExists) {
+      yearFolder = rootFolder.createFolder(nextYear);
+      Logger.log('建立新的年份資料夾: ' + nextYear);
+    }
+    
+    // 檢查是否已存在相同日期的資料夾或檔案
+    var existingFolders = yearFolder.getFoldersByName(formattedDate);
+    var existingFiles = yearFolder.getFilesByName(formattedDate + '營運簡報');
+    
+    if (existingFolders.hasNext() || existingFiles.hasNext()) {
+      Logger.log('已存在相同日期的資料夾或檔案，跳過建立: ' + nextYear + '/' + formattedDate);
+      return;
+    }
+    
+    // ✅ 新的簡報範本 ID
+    var templateId = '1YN4FeoAq9EhoBmblsJTqyy_EySPyshSZdjD9ue3GLDo';
+    
+    // 建立新資料夾
+    var newFolder = yearFolder.createFolder(formattedDate);
+    
+    // 直接複製整個簡報
+    var templateFile = DriveApp.getFileById(templateId);
+    var newPresentation = templateFile.makeCopy(formattedDate + '營運簡報', newFolder);
+    
+    // 開啟新簡報進行編輯
+    var presentation = SlidesApp.openById(newPresentation.getId());
+    var slides = presentation.getSlides();
+    
+    // 過濾範本頁面
+    for (var i = slides.length - 1; i >= 0; i--) {
+      var slide = slides[i];
+      var elements = slide.getPageElements();
+      var isTemplate = false;
+      
+      // 先檢查左側的文字方塊
+      for (var j = 0; j < elements.length; j++) {
+        var element = elements[j];
+        try {
+          if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
+            var shape = element.asShape();
+            var left = shape.getLeft();
+            var width = shape.getWidth();
+            var text = shape.getText().asString().trim();
+            
+            // 範本標籤條件
+            if (left < 100 && width < 100 && text === "範本") {
+              Logger.log('找到範本標籤，頁面 ' + (i + 1));
+              isTemplate = true;
+              break;
+            }
+          }
+        } catch (e) {
+          Logger.log('處理元素時發生錯誤: ' + e.message);
+          continue;
+        }
+      }
+      
+      if (isTemplate) {
+        slide.remove();
+      }
+    }
+    
+    // 修改第一頁的日期
+    slides = presentation.getSlides();
+    if (slides.length > 0) {
+      var firstSlide = slides[0];
+      var pageElements = firstSlide.getPageElements();
+      
+      for (var i = 0; i < pageElements.length; i++) {
+        var element = pageElements[i];
+        if (element.getPageElementType() == SlidesApp.PageElementType.SHAPE) {
+          var shape = element.asShape();
+          var text = shape.getText().asString();
+          // 檢查是否包含「-SLOT競品雙周報」字樣
+          if (text.includes('-SLOT競品雙周報')) {
+            var newText = formattedDate + '-SLOT競品雙周報';
+            shape.getText().setText(newText);
+            break;
+          }
+        }
+      }
+    }
+    
+    Logger.log('已創建資料夾和簡報: ' + formattedDate);
+    
+  } catch (e) {
+    Logger.log('Error: ' + e.message);
+  }
+}
+
+function getLatestFolderDate() {
+  var currentYear = new Date().getFullYear();
+  var latestDate = new Date(0);
+  
+  // ✅ 同樣更新根目錄
+  var rootFolderId = '1hzm_M_LelaC2DpDZ98784vppfqIQyD73';
+  var rootFolder = DriveApp.getFolderById(rootFolderId);
+  
+  var yearFolders = rootFolder.getFolders();
+  var yearFolder = null;
+  
+  while (yearFolders.hasNext()) {
+    var folder = yearFolders.next();
+    var folderName = folder.getName();
+    if (/^\d{4}$/.test(folderName)) {
+      var folderYear = parseInt(folderName);
+      if (folderYear <= currentYear && 
+          (yearFolder === null || folderYear > parseInt(yearFolder.getName()))) {
+        yearFolder = folder;
+      }
+    }
+  }
+  
+  if (yearFolder) {
+    var dateFolders = yearFolder.getFolders();
+    var allDates = [];
+    
+    while (dateFolders.hasNext()) {
+      var dateFolder = dateFolders.next();
+      var dateName = dateFolder.getName();
+      if (/^\d{4}$/.test(dateName) && dateName.length === 4) {
+        var month = parseInt(dateName.substring(0, 2));
+        var day = parseInt(dateName.substring(2, 4));
+        var folderDate = new Date(parseInt(yearFolder.getName()), month - 1, day);
+        allDates.push(folderDate);
+      }
+    }
+    
+    if (allDates.length > 0) {
+      allDates.sort(function(a, b) {
+        return b - a;
+      });
+      latestDate = allDates[0];
+    }
+  }
+  
+  return latestDate;
+}

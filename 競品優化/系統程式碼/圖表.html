@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>競品活動類型月度統計分析</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <?!= HtmlService.createHtmlOutputFromFile('styles').getContent() ?>
+    <!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  </head>
+  <body>
+    <!-- ⭐ Loading 畫面（含進度條）-->
+    <div id="loading" style="
+      position: fixed;
+      left: 0; 
+      top: 0; 
+      right: 0; 
+      bottom: 0;
+      background: linear-gradient(to bottom, 
+        #ffffff 0%, 
+        #ffffff 70%, 
+        #e8e4f3 100%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s;
+    ">
+      <img id="loadingGif" 
+           alt="Loading..." 
+           style="
+             width: 400px; 
+             height: 400px; 
+             object-fit: contain;
+             margin-bottom: 15px;
+           "
+           onerror="console.log('GIF 載入失敗'); this.style.display='none';">
+      
+      <span style="
+        font-size: 48px; 
+        font-weight: 600; 
+        color: #333;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+      ">資料載入中，請稍候...</span>
+
+      <!-- ⭐ 進度條容器 -->
+      <div style="
+        width: 600px;
+        max-width: 80%;
+        height: 16px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+      ">
+        <!-- ⭐ 進度條 -->
+        <div id="progressBar" style="
+          width: 0%;
+          height: 100%;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+          border-radius: 10px;
+          transition: width 0.3s ease;
+        "></div>
+      </div>
+
+      <!-- ⭐ 百分比顯示 -->
+      <span id="progressText" style="
+        margin-top: 12px;
+        font-size: 28px;
+        color: #666;
+        font-weight: 500;
+      ">0%</span>
+    
+    </div>
+
+    <!-- ⭐ 隨機選擇 GIF 的 JavaScript -->
+    <script>
+      (function() {
+        // 隨機 GIF
+        var gifUrls = [
+          'https://media.giphy.com/media/WtuluEMoBgXu3ogucN/giphy.gif',
+          'https://media.giphy.com/media/heWnDkgPIxXhe13oC4/giphy.gif',
+          'https://media1.tenor.com/m/1MfIiC1yllEAAAAC/cat-huh-cat-huh-etr.gif',
+          'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWk1eHNtcjJmdHdxYjdqeTc2bGM3Mmw2ZGJwNHV3YzFuZ3RjbmI2MSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pegndekggcxGoeYp0B/giphy.gif',
+          'https://media1.tenor.com/m/1sq4rsLudV8AAAAd/twirling-dance.gif',
+          'https://media1.tenor.com/m/yCLvo-8sPacAAAAd/pikmin-yellow-pikmin.gif',
+          'https://media.tenor.com/wWL6xhMwfXgAAAAM/pikmin-close-to-you.gif',
+          'https://media.tenor.com/XG7pALCkjWwAAAAM/pikmin.gif',
+          'https://media.giphy.com/media/h09xVLseEjLVlhiuLQ/giphy.gif',
+          'https://media.giphy.com/media/Tlqc6D8knWgf2ZsnXj/giphy.gif'
+        ];
+        
+        var randomIndex = Math.floor(Math.random() * gifUrls.length);
+        var selectedGif = gifUrls[randomIndex];
+        
+        var imgElement = document.getElementById('loadingGif');
+        if (imgElement) {
+          imgElement.src = selectedGif;
+          console.log('🎲 隨機選擇的 GIF：', selectedGif);
+        }
+
+        // ⭐ 進度條動畫 - 慢慢跑到 99% 然後等待
+        var progress = 0;
+        var progressBar = document.getElementById('progressBar');
+        var progressText = document.getElementById('progressText');
+        var targetProgress = 99;
+        var isWaiting = false;
+        
+        var progressInterval = setInterval(function() {
+          // 慢慢增長到 99%
+          if (progress < targetProgress) {
+            var remaining = targetProgress - progress;
+            var speed;
+            
+            // 90% 之前：正常速度
+            if (progress < 90) {
+              speed = remaining * 0.06;
+            } 
+            // 90% 之後：開始減速
+            else {
+              speed = remaining * 0.03; // 減速到一半
+            }
+            
+            progress += speed;
+            
+            // 接近 99% 時停止
+            if (progress > 98.8) {
+              progress = 99;
+              isWaiting = true;
+              console.log('⏸️ 進度條已到達 99%，等待資料載入完成...');
+            }
+          }
+          
+          if (progressBar && progressText) {
+            progressBar.style.width = progress + '%';
+            progressText.textContent = Math.floor(progress) + '%';
+          }
+          
+          // 到達 99% 後停止自動增長
+          if (isWaiting) {
+            clearInterval(progressInterval);
+          }
+        }, 100);
+        
+        // ⭐ 提供全域函數讓外部呼叫，標記載入完成
+        window.finishLoading = function() {
+          console.log('✅ 資料載入完成，進度條從 99% 衝向 100%');
+          clearInterval(progressInterval);
+          
+          // 從當前進度（應該是 99%）平滑過渡到 100%
+          var smoothInterval = setInterval(function() {
+            if (progress < 100) {
+              progress += (100 - progress) * 0.3; // 快速衝刺
+              
+              if (progress > 99.9) {
+                progress = 100;
+              }
+              
+              if (progressBar && progressText) {
+                progressBar.style.width = progress + '%';
+                progressText.textContent = Math.floor(progress) + '%';
+              }
+            }
+            
+            // 到達 100% 後淡出
+            if (progress >= 100) {
+              clearInterval(smoothInterval);
+              console.log('🎉 進度條完成，準備進入畫面');
+              
+              setTimeout(function() {
+                var loadingDiv = document.getElementById('loading');
+                if (loadingDiv) {
+                  loadingDiv.style.opacity = '0';
+                  setTimeout(function() {
+                    loadingDiv.style.display = 'none';
+                  }, 300);
+                }
+              }, 400);
+            }
+          }, 50);
+        };
+      })();
+    </script>
+
+    <div class="tab-container">
+      <div class="tab-nav" id="tabNav"></div>
+    </div>
+
+    <div id="tabContents"></div>
+
+
+
+    <!-- 引入各個功能模組 -->
+    <?!= HtmlService.createHtmlOutputFromFile('utils').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('permissions').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('revenue').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('timeline').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('math').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('marketing').getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile('main').getContent() ?>
+  </body>
+</html>

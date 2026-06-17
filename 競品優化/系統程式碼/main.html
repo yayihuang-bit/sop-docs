@@ -1,0 +1,2507 @@
+<script>
+// 依賴（需先載入）：util.html（escapeHtml）, permissions.html（toggleCompetitorDropdown, onCompetitorCheckboxChange, filterAndRenderTable）, math.html（cleanupMathChart, loadMathDatabase, initMathTab）, market.html（buildMktFilterOptions, applyMktFilters, loadMarketingDatabase, initMarketingTab）
+ // ===== 頁籤管理 =====
+function switchTab(competitorName) {
+  // 🆕 離開數學資料庫時清理圖表（避免與其他頁籤衝突）
+  if (currentCompetitor === 'math' && competitorName !== 'math') {
+    console.log('🧹 離開數學資料庫，清理圖表');
+    if (typeof window.cleanupMathChart === 'function') {
+      window.cleanupMathChart();
+    }
+  }
+  
+  var contents = document.querySelectorAll('.tab-content');
+  contents.forEach(function(content) {
+    content.classList.remove('active');
+    content.style.display = 'none';
+  });
+  
+  var buttons = document.querySelectorAll('.tab-button');
+  buttons.forEach(function(button) {
+    button.classList.remove('active');
+  });
+  
+  var targetContent = document.getElementById('content-' + competitorName);
+  var targetButton = document.getElementById('tab-' + competitorName);
+  
+  if (targetContent) {
+    targetContent.style.display = 'block';
+    targetContent.classList.add('active');
+  }
+  
+  if (targetButton) {
+    targetButton.classList.add('active');
+  }
+  
+  currentCompetitor = competitorName;
+  
+  setTimeout(function() {
+    if (competitorName === 'revenue') {
+      if (typeof setupRevenueAnalysis === 'function') {
+        try { setupRevenueAnalysis(); } catch(e) {}
+      }
+      if (charts.revenueChart) { charts.revenueChart.resize(); }
+      if (charts.downloadsChart) { charts.downloadsChart.resize(); }
+    } else if (competitorName === 'activityTypes') {
+      console.log('切換到活動類型總表頁籤');
+    } else if (competitorName === 'crossSearch') {
+      initializeCrossSearchTab();
+    } else if (competitorName === 'marketing') {
+      console.log('📊 切換到行銷資料庫頁籤');
+      if (typeof window.loadMarketingDatabase === 'function') {
+        // 有快取資料就直接渲染，不重新呼叫後端
+        if (window.marketingData && window.marketingData.length > 0) {
+          window.buildMktFilterOptions(window.marketingData);
+          window.applyMktFilters();
+        } else {
+          window.loadMarketingDatabase();
+        }
+      }
+    } else if (competitorName === 'math') {
+      // 🆕 數學資料庫頁籤
+      console.log('📊 切換到數學資料庫頁籤');
+      
+      // ⭐ 防禦性檢查
+      if (typeof window.loadMathDatabase !== 'function') {
+        console.error('❌ loadMathDatabase 函數不存在');
+        var container = document.getElementById('mathTimelineContainer');
+        if (container) {
+          container.innerHTML = '<div class="error-message" style="text-align:center; padding:100px 20px; color:#dc3545;"><h3>載入失敗</h3><p>找不到 loadMathDatabase 函數</p></div>';
+        }
+        return;
+      }
+      
+      // 🔄 修改：每次切換到數學資料庫都重新載入（確保圖表正確）
+      console.log('🔄 載入數學資料庫');
+      window.loadMathDatabase();
+    } else if (competitorName === 'other') {
+      if (!window.__otherTabLoaded) { loadOtherData(); window.__otherTabLoaded = true; }
+    } else if (charts[competitorName]) {
+      charts[competitorName].resize();
+      // ... 其他程式碼
+    }
+    // ... 其他程式碼
+  }, 50);
+}
+ 
+  // ===== 頁籤初始化 =====
+  function initializeTabs(competitorData) {
+    var tabNav = document.getElementById('tabNav');
+    var tabContents = document.getElementById('tabContents');
+    var competitorNames = Object.keys(competitorData);
+    
+    // ⭐ 沒有競品資料不代表錯誤（可能只有非競品 tab 權限），繼續建立其他 tab
+    
+    tabNav.innerHTML = '';
+    tabContents.innerHTML = '';
+    
+    var revenueButton = document.createElement('button');
+    revenueButton.className = 'tab-button';
+    revenueButton.id = 'tab-revenue';
+    revenueButton.textContent = '營收分析';
+    revenueButton.onclick = function() { switchTab('revenue'); };
+    tabNav.appendChild(revenueButton);
+    
+    var activityTypesButton = document.createElement('button');
+    activityTypesButton.className = 'tab-button';
+    activityTypesButton.id = 'tab-activityTypes';
+    activityTypesButton.textContent = '活動類型總表';
+    activityTypesButton.onclick = function() { switchTab('activityTypes'); };
+    tabNav.appendChild(activityTypesButton);
+
+    var otherButton = document.createElement('button');
+    otherButton.className = 'tab-button';
+    otherButton.id = 'tab-other';
+    otherButton.textContent = '其他資料';
+    otherButton.onclick = function() { switchTab('other'); };
+    tabNav.appendChild(otherButton);
+    
+    // 🆕 數學資料庫頁籤
+    var mathButton = document.createElement('button');
+    mathButton.className = 'tab-button';
+    mathButton.id = 'tab-math';
+    mathButton.textContent = '數學資料庫';
+    mathButton.onclick = function() { switchTab('math'); };
+    tabNav.appendChild(mathButton);
+
+    // 🆕 行銷資料庫頁籤
+    var marketingButton = document.createElement('button');
+    marketingButton.className = 'tab-button';
+    marketingButton.id = 'tab-marketing';
+    marketingButton.textContent = '行銷資料庫';
+    marketingButton.onclick = function() { switchTab('marketing'); };
+    tabNav.appendChild(marketingButton);
+
+    var crossButton = document.createElement('button');
+    crossButton.className = 'tab-button';
+    crossButton.id = 'tab-crossSearch';
+    crossButton.textContent = '跨產品搜尋';
+    crossButton.onclick = function() { switchTab('crossSearch'); };
+    tabNav.appendChild(crossButton);
+    
+    competitorNames.forEach(function(name, index) {
+      var button = document.createElement('button');
+      button.className = 'tab-button' + (index === 0 ? ' active' : '');
+      button.id = 'tab-' + name;
+      button.textContent = name;
+      button.onclick = function() { switchTab(name); };
+      tabNav.appendChild(button);
+    });
+    
+    createTabContents(competitorNames, tabContents);
+    
+    currentCompetitor = competitorNames[0];
+    
+    competitorNames.forEach(function(name) {
+      initializeCompetitorData(name);
+      setupDateInputs(name);
+      setupSearchInputs(name);
+      setupTimeGranularitySelector(name);  // ⭐ 新增：綁定時間維度選擇器
+    });
+    
+    setupRevenueAnalysis();
+    loadActivityTypesTable();
+    
+    // ⭐ 背景預載行銷資料庫，避免切換頁籤時重新載入
+    setTimeout(function() {
+      if (typeof window.loadMarketingDatabase === 'function') {
+        console.log('🔄 背景預載行銷資料庫...');
+        window.loadMarketingDatabase();
+      }
+    }, 500);
+  }
+
+  // ===== 創建頁籤內容 =====
+  function createTabContents(competitorNames, tabContents) {
+    var revenueContent = document.createElement('div');
+    revenueContent.className = 'tab-content';
+    revenueContent.id = 'content-revenue';
+    revenueContent.innerHTML = createRevenueAnalysisHTML();
+    tabContents.appendChild(revenueContent);
+    
+    var activityTypesContent = document.createElement('div');
+    activityTypesContent.className = 'tab-content';
+    activityTypesContent.id = 'content-activityTypes';
+    activityTypesContent.innerHTML = createActivityTypesHTML();
+    tabContents.appendChild(activityTypesContent);
+
+    var otherContent = document.createElement('div');
+    otherContent.className = 'tab-content';
+    otherContent.id = 'content-other';
+    otherContent.innerHTML = createOtherDataHTML();
+    tabContents.appendChild(otherContent);
+
+    var crossContent = document.createElement('div');
+    crossContent.className = 'tab-content';
+    crossContent.id = 'content-crossSearch';
+    crossContent.innerHTML = '<div class="no-data">載入中...</div>';
+    
+    // 🆕 數學資料庫內容
+    var mathContent = document.createElement('div');
+    mathContent.className = 'tab-content';
+    mathContent.id = 'content-math';
+    mathContent.innerHTML = initMathTab();
+    tabContents.appendChild(mathContent);
+
+    // 🆕 行銷資料庫內容（預先建立完整 HTML，讓 mktTimelineContent 存在）
+    var marketingContent = document.createElement('div');
+    marketingContent.className = 'tab-content';
+    marketingContent.id = 'content-marketing';
+    marketingContent.innerHTML = (typeof window.initMarketingTab === 'function')
+      ? window.initMarketingTab()
+      : '<div id="marketingDatabaseContainer" style="padding: 20px;"><div id="mktTimelineContent" class="no-data">載入中...</div></div>';
+    tabContents.appendChild(marketingContent);
+    tabContents.appendChild(crossContent);
+    
+    competitorNames.forEach(function(name, index) {
+      var content = document.createElement('div');
+      content.className = 'tab-content' + (index === 0 ? ' active' : '');
+      content.id = 'content-' + name;
+      content.innerHTML = createCompetitorHTML(name);
+      tabContents.appendChild(content);
+    });
+  }
+
+  // ===== 跨產品搜尋 =====
+  var crossSelectedTypes = [];
+  var crossSelectedCompetitors = []; // ⭐ 新增：儲存選中的競品清單（空陣列表示選擇全部）
+  var crossViewMode = 'byProduct'; // ⭐ 新增：檢視模式 ('byProduct' 或 'byTime')
+  
+  (function ensureCrossBtnActiveStyle(){
+    try {
+      if (!document.getElementById('crossTypeBtnActiveStyle')) {
+        var st = document.createElement('style');
+        st.id = 'crossTypeBtnActiveStyle';
+        st.textContent = ''+
+          '.filter-btn.cross-type-btn{background:#fff;border:1px solid #ddd;color:#333;border-radius:4px;padding:6px 10px;}'+
+          '.filter-btn.cross-type-btn:hover{background:#f5f7fb;border-color:#ccc;}'+
+          '.filter-btn.cross-type-btn.active{background:#eaf2ff;color:#007bff;border-color:#007bff;box-shadow:none}';
+        document.head.appendChild(st);
+      }
+    } catch(e) {}
+  })();
+
+  if (typeof window.isActivityMatchKeyword !== 'function') {
+    /**
+     * 多標籤關鍵字匹配函數（跨產品搜尋版本）
+     * 
+     * 使用方式：
+     * 1. 單一關鍵字：「魚機」
+     * 2. 多個關鍵字（逗號分隔）：「魚機,活動海皇,老虎機」
+     * 3. 多個關鍵字（空格分隔）：「魚機 活動海皇 老虎機」
+     * 4. 混合使用：「魚機, 活動海皇」（逗號後可有空格）
+     * 
+     * 匹配邏輯：
+     * - 只要活動名稱、類型或內容包含任一個關鍵字，就算匹配成功
+     * - 例如：搜尋「魚機,新遊戲」會找出所有包含「魚機」或「新遊戲」的活動
+     */
+    window.isActivityMatchKeyword = function(activity, keyword) {
+      if (!keyword || (keyword + '').trim() === '') return false;
+      
+      // ⭐ 步驟 1：拆分多個關鍵字
+      var keywords = (keyword + '')
+        .toLowerCase()
+        .split(/[,\s]+/)  // 用逗號或空格分隔
+        .map(function(k) { return k.trim(); })
+        .filter(function(k) { return k.length > 0; });
+      
+      // ⭐ 步驟 2：準備活動的搜尋目標文字
+      var activityName = (activity && activity.name ? activity.name : '').toLowerCase();
+      var activityType = (activity && activity.type ? activity.type : '').toLowerCase();
+      var originalContent = (activity && activity.originalContent ? activity.originalContent : '').toLowerCase();
+      
+      // ⭐ 步驟 3：檢查是否有任一個關鍵字匹配（OR 邏輯）
+      for (var i = 0; i < keywords.length; i++) {
+        var k = keywords[i];
+        if (activityName.indexOf(k) !== -1 ||
+            activityType.indexOf(k) !== -1 ||
+            originalContent.indexOf(k) !== -1) {
+          return true;
+        }
+      }
+      
+      return false;
+    };
+  }
+  
+  if (typeof window.highlightKeyword !== 'function') {
+    /**
+     * 多標籤關鍵字高亮函數（跨產品搜尋版本）
+     * 
+     * 功能：將文字中所有匹配的關鍵字標記為高亮
+     * 
+     * 使用方式：
+     * - 單一關鍵字：highlightKeyword("魚機活動", "魚機") → <span>魚機</span>活動
+     * - 多個關鍵字：highlightKeyword("魚機活動海皇", "魚機,海皇") → <span>魚機</span>活動<span>海皇</span>
+     */
+    window.highlightKeyword = function(text, keyword) {
+      if (!keyword || (keyword + '').trim() === '' || !text) return text;
+      
+      // ⭐ 步驟 1：拆分多個關鍵字
+      var keywords = (keyword + '')
+        .split(/[,\s]+/)
+        .map(function(k) { return k.trim(); })
+        .filter(function(k) { return k.length > 0; });
+      
+      // ⭐ 步驟 2：依序將每個關鍵字標記為高亮
+      var result = text + '';
+      
+      keywords.forEach(function(k) {
+        var escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var regex = new RegExp('(' + escaped + ')', 'gi');
+        result = result.replace(regex, '<span class="search-match-text">$1</span>');
+      });
+      
+      return result;
+    };
+  }
+
+  function initializeCrossSearchTab() {
+    var crossContent = document.getElementById('content-crossSearch');
+    if (!crossContent) return;
+    if (crossContent.innerHTML.indexOf('載入中') !== -1) {
+      crossContent.innerHTML = buildCrossSearchHTML();
+      setTimeout(function(){
+        // ⭐ 新增：初始化競品篩選器
+        initializeCrossCompetitorFilter();
+        
+        var btn = document.getElementById('crossSearchBtn');
+        var clr = document.getElementById('crossClearBtn');
+        if (btn) btn.addEventListener('click', performCrossSearch);
+        if (clr) clr.addEventListener('click', clearCrossSearch);
+        var input = document.getElementById('crossSearchKeyword');
+        if (input) input.addEventListener('keypress', function(e){ if (e.key==='Enter') performCrossSearch(); });
+        
+        document.addEventListener('click', function(e){
+          var t = e.target;
+          if (t && t.classList && t.classList.contains('cross-type-btn')) {
+            var group = document.getElementById('crossTypeBtns');
+             var type = t.getAttribute('data-type') || '';
+             if (type === 'ALL') {
+               crossSelectedTypes = [];
+               if (group) {
+                 Array.prototype.forEach.call(group.querySelectorAll('.cross-type-btn'), function(x){ x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+               }
+               t.classList.add('active');
+               t.setAttribute('aria-pressed','true');
+             } else {
+               var idx = crossSelectedTypes.indexOf(type);
+               if (idx === -1) { crossSelectedTypes.push(type); t.classList.add('active'); t.setAttribute('aria-pressed','true'); }
+               else { crossSelectedTypes.splice(idx,1); t.classList.remove('active'); t.setAttribute('aria-pressed','false'); }
+               if (group) {
+                 var allBtn = group.querySelector('[data-type="ALL"]');
+                 if (allBtn) { allBtn.classList.remove('active'); allBtn.setAttribute('aria-pressed','false'); }
+               }
+             }
+             renderCrossSearchResults(window.__crossLastMatched || [], window.__crossLastKeyword || '');
+          }
+        });
+        
+        // ⭐ 綁定檢視模式切換按鈕
+        var viewByProductBtn = document.getElementById('crossViewByProduct');
+        var viewByTimeBtn = document.getElementById('crossViewByTime');
+        
+        if (viewByProductBtn) {
+          viewByProductBtn.addEventListener('click', function() {
+            switchCrossViewMode('byProduct');
+          });
+        }
+        
+        if (viewByTimeBtn) {
+          viewByTimeBtn.addEventListener('click', function() {
+            switchCrossViewMode('byTime');
+          });
+        }
+        
+        // ⭐ 綁定匯出按鈕
+        var exportBtn = document.getElementById('crossExportBtn');
+        if (exportBtn) {
+          exportBtn.addEventListener('click', function() {
+            exportCrossSearchToExcel();
+          });
+        }
+      }, 50);
+    }
+  }
+
+  /**
+   * 切換跨產品搜尋的檢視模式
+   * @param {string} mode - 'byProduct' 或 'byTime'
+   */
+  function switchCrossViewMode(mode) {
+    if (mode !== 'byProduct' && mode !== 'byTime') {
+      console.warn('無效的檢視模式：' + mode);
+      return;
+    }
+    
+    // 更新全域變數
+    crossViewMode = mode;
+    
+    // 更新按鈕狀態
+    var byProductBtn = document.getElementById('crossViewByProduct');
+    var byTimeBtn = document.getElementById('crossViewByTime');
+    
+    if (byProductBtn && byTimeBtn) {
+      if (mode === 'byProduct') {
+        byProductBtn.classList.add('active');
+        byTimeBtn.classList.remove('active');
+      } else {
+        byProductBtn.classList.remove('active');
+        byTimeBtn.classList.add('active');
+      }
+    }
+    
+    // 重新渲染搜尋結果（如果有的話）
+    if (window.__crossLastMatched && window.__crossLastMatched.length > 0) {
+      renderCrossSearchResults(window.__crossLastMatched, window.__crossLastKeyword || '');
+    }
+    
+    console.log('檢視模式已切換為：' + (mode === 'byProduct' ? '依產品分組' : '依時間排序'));
+  }
+
+  /**
+   * 匯出單一競品資料到 Excel
+   * @param {string} competitorName - 競品名稱
+   */
+  function exportCompetitorToExcel(competitorName) {
+    // ⭐ 步驟 1：檢查是否有資料
+    if (!allCompetitorData[competitorName] || !allCompetitorData[competitorName].activities) {
+      alert('無法匯出：找不到 ' + competitorName + ' 的資料');
+      return;
+    }
+    
+    // 顯示載入提示
+    var exportBtn = document.getElementById('exportBtn-' + competitorName);
+    var originalText = exportBtn ? exportBtn.textContent : '';
+    if (exportBtn) {
+      exportBtn.textContent = '⏳ 匯出中...';
+      exportBtn.disabled = true;
+    }
+    
+    // ⭐ 步驟 2：動態載入 SheetJS 庫
+    loadSheetJS(function() {
+      try {
+        // ⭐ 步驟 3：獲取圖表圖片
+        var chart = charts[competitorName];
+        var chartImage = null;
+        if (chart) {
+          try {
+            chartImage = chart.getDataURL({
+              type: 'png',
+              pixelRatio: 2,
+              backgroundColor: '#fff'
+            });
+          } catch (e) {
+            console.warn('獲取圖表圖片失敗：', e);
+          }
+        }
+        
+        // ⭐ 步驟 4：獲取活動資料並套用篩選
+        var activities = allCompetitorData[competitorName].activities || [];
+        
+        // 讀取起迄月份篩選條件
+        var startMonthEl = document.getElementById('startMonth-' + competitorName);
+        var endMonthEl = document.getElementById('endMonth-' + competitorName);
+        var startMonth = startMonthEl ? (startMonthEl.value || '').trim() : '';
+        var endMonth = endMonthEl ? (endMonthEl.value || '').trim() : '';
+        
+        // 讀取關鍵字篩選條件
+        var keywordEl = document.getElementById('searchKeyword-' + competitorName);
+        var keyword = keywordEl ? (keywordEl.value || '').trim() : '';
+        
+        // 如果有設定月份範圍，進行篩選
+        if (startMonth && endMonth) {
+          activities = activities.filter(function(activity) {
+            return activity.month >= startMonth && activity.month <= endMonth;
+          });
+          console.log('套用月份篩選：', startMonth, '~', endMonth, '，篩選後活動數：', activities.length);
+        }
+        
+        // 如果有設定關鍵字，進行篩選
+        if (keyword && typeof window.isActivityMatchKeyword === 'function') {
+          activities = activities.filter(function(activity) {
+            return window.isActivityMatchKeyword(activity, keyword);
+          });
+          console.log('套用關鍵字篩選：', keyword, '，篩選後活動數：', activities.length);
+        }
+        
+        // 檢查是否有資料可以匯出
+        if (activities.length === 0) {
+          alert('目前篩選條件下沒有活動資料可以匯出');
+          if (exportBtn) {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+          }
+          return;
+        }
+        
+        // ⭐ 步驟 5：生成 Excel
+        var wb = XLSX.utils.book_new();
+        
+        // === 工作表1：統計圖表 ===
+        var chartSheetData = [];
+        
+        // 添加統計表格（直接從第一行開始）
+        chartSheetData.push(['活動類型統計']);
+        chartSheetData.push(['活動類型', '數量', '佔比']);
+        
+        // 計算活動類型統計
+        var typeCount = {};
+        var totalCount = 0;
+        activities.forEach(function(activity) {
+          var type = activity.type || '未分類';
+          typeCount[type] = (typeCount[type] || 0) + 1;
+          totalCount++;
+        });
+        
+        // 按數量排序
+        var sortedTypes = Object.keys(typeCount).sort(function(a, b) {
+          return typeCount[b] - typeCount[a];
+        });
+        
+        sortedTypes.forEach(function(type) {
+          var count = typeCount[type];
+          var percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) + '%' : '0%';
+          chartSheetData.push([type, count, percentage]);
+        });
+        
+        // 總計
+        chartSheetData.push(['總計', totalCount, '100%']);
+        
+        // 建立工作表
+        var ws1 = XLSX.utils.aoa_to_sheet(chartSheetData);
+        
+        // 設定欄寬
+        ws1['!cols'] = [
+          { wch: 20 },  // 活動類型
+          { wch: 10 },  // 數量
+          { wch: 10 }   // 佔比
+        ];
+        
+        // ⭐ 嘗試插入圖表圖片（SheetJS 原生不支援圖片，需要使用 xlsx-js-style）
+        // 這裡先添加圖表資料的註解，實際圖片需要用戶手動貼上或使用進階庫
+        if (chartImage) {
+          // 在檔案中記錄圖表的 base64 資料（供進階使用）
+          console.log('圖表圖片已生成，base64 長度：', chartImage.length);
+        }
+        
+        XLSX.utils.book_append_sheet(wb, ws1, '統計圖表');
+        
+        // === 工作表2：活動明細 ===
+        var detailData = [
+          ['月份', '活動名稱', '活動類型', '開始日期', '結束日期', '連結']
+        ];
+        
+        // 按月份排序
+        var sortedActivities = activities.slice().sort(function(a, b) {
+          return a.month.localeCompare(b.month);
+        });
+        
+        sortedActivities.forEach(function(activity) {
+          detailData.push([
+            activity.month || '',
+            activity.name || '',
+            activity.type || '',
+            activity.startDate || '',
+            activity.endDate || '',
+            activity.url || ''
+          ]);
+        });
+        
+        var ws2 = XLSX.utils.aoa_to_sheet(detailData);
+        
+        // 設定欄寬
+        ws2['!cols'] = [
+          { wch: 10 },  // 月份
+          { wch: 40 },  // 活動名稱
+          { wch: 15 },  // 活動類型
+          { wch: 12 },  // 開始日期
+          { wch: 12 },  // 結束日期
+          { wch: 50 }   // 連結
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, ws2, '活動明細');
+        
+        // ⭐ 步驟 6：生成檔案名稱
+        var date = new Date();
+        var dateStr = date.getFullYear() + 
+                      ('0' + (date.getMonth() + 1)).slice(-2) + 
+                      ('0' + date.getDate()).slice(-2) + '_' +
+                      ('0' + date.getHours()).slice(-2) +
+                      ('0' + date.getMinutes()).slice(-2);
+        var filename = competitorName + '_活動資料_' + dateStr + '.xlsx';
+        
+        // ⭐ 步驟 7：下載檔案
+        XLSX.writeFile(wb, filename);
+        
+        // ⭐ 步驟 8：如果有圖表，自動下載圖片
+        if (chartImage) {
+          setTimeout(function() {
+            // 直接下載圖片，不再詢問
+            var link = document.createElement('a');
+            link.download = competitorName + '_統計圖表_' + dateStr + '.png';
+            link.href = chartImage;
+            link.click();
+          }, 500);
+        }
+        
+        console.log('匯出成功：' + filename);
+        
+      } catch (e) {
+        console.error('匯出失敗：', e);
+        alert('匯出失敗：' + e.message);
+      } finally {
+        // 恢復按鈕狀態
+        if (exportBtn) {
+          exportBtn.textContent = originalText;
+          exportBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  /**
+   * 匯出單一競品時間軸資料到 Excel
+   * @param {string} competitorName - 競品名稱
+   */
+  function exportTimelineToExcel(competitorName) {
+    // ⭐ 步驟 1：檢查是否有資料
+    if (!allCompetitorData[competitorName] || !allCompetitorData[competitorName].activities) {
+      alert('無法匯出：找不到 ' + competitorName + ' 的資料');
+      return;
+    }
+    
+    // 顯示載入提示
+    var exportBtn = document.getElementById('exportTimelineBtn-' + competitorName);
+    var originalText = exportBtn ? exportBtn.textContent : '';
+    if (exportBtn) {
+      exportBtn.textContent = '⏳ 匯出中...';
+      exportBtn.disabled = true;
+    }
+    
+    // ⭐ 步驟 2：動態載入 SheetJS 庫
+    loadSheetJS(function() {
+      try {
+        // ⭐ 步驟 3：獲取活動資料並套用篩選
+        var activities = allCompetitorData[competitorName].activities || [];
+        
+        // 讀取起迄月份篩選條件
+        var startMonthEl = document.getElementById('startMonth-' + competitorName);
+        var endMonthEl = document.getElementById('endMonth-' + competitorName);
+        var startMonth = startMonthEl ? (startMonthEl.value || '').trim() : '';
+        var endMonth = endMonthEl ? (endMonthEl.value || '').trim() : '';
+        
+        // 讀取關鍵字篩選條件
+        var keywordEl = document.getElementById('searchKeyword-' + competitorName);
+        var keyword = keywordEl ? (keywordEl.value || '').trim() : '';
+        
+        // 如果有設定月份範圍，進行篩選
+        if (startMonth && endMonth) {
+          activities = activities.filter(function(activity) {
+            return activity.month >= startMonth && activity.month <= endMonth;
+          });
+          console.log('套用月份篩選：', startMonth, '~', endMonth, '，篩選後活動數：', activities.length);
+        }
+        
+        // 如果有設定關鍵字，進行篩選
+        if (keyword && typeof window.isActivityMatchKeyword === 'function') {
+          activities = activities.filter(function(activity) {
+            return window.isActivityMatchKeyword(activity, keyword);
+          });
+          console.log('套用關鍵字篩選：', keyword, '，篩選後活動數：', activities.length);
+        }
+        
+        // 檢查是否有資料可以匯出
+        if (activities.length === 0) {
+          alert('目前篩選條件下沒有活動資料可以匯出');
+          if (exportBtn) {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+          }
+          return;
+        }
+        
+        // ⭐ 步驟 4：生成 Excel
+        var wb = XLSX.utils.book_new();
+        
+        // === 按月份分組 ===
+        var monthGroups = {};
+        activities.forEach(function(activity) {
+          var month = activity.month;
+          if (!monthGroups[month]) {
+            monthGroups[month] = [];
+          }
+          monthGroups[month].push(activity);
+        });
+        
+        // 月份排序
+        var months = Object.keys(monthGroups).sort();
+        
+        // === 工作表：時間軸清單 ===
+        var timelineData = [
+          ['月份', '日期', '活動名稱', '活動類型', '開始日期', '結束日期', '連結']
+        ];
+        
+        months.forEach(function(month) {
+          var monthActivities = monthGroups[month];
+          
+          // 按開始日期排序
+          monthActivities.sort(function(a, b) {
+            var dateA = a.startDate || '';
+            var dateB = b.startDate || '';
+            return dateA.localeCompare(dateB);
+          });
+          
+          monthActivities.forEach(function(activity) {
+            timelineData.push([
+              activity.month || '',
+              activity.startDate || activity.month || '',
+              activity.name || '',
+              activity.type || '',
+              activity.startDate || '',
+              activity.endDate || '',
+              activity.url || ''
+            ]);
+          });
+        });
+        
+        var ws = XLSX.utils.aoa_to_sheet(timelineData);
+        
+        // 設定欄寬
+        ws['!cols'] = [
+          { wch: 10 },  // 月份
+          { wch: 12 },  // 日期
+          { wch: 40 },  // 活動名稱
+          { wch: 15 },  // 活動類型
+          { wch: 12 },  // 開始日期
+          { wch: 12 },  // 結束日期
+          { wch: 50 }   // 連結
+        ];
+        
+        XLSX.utils.book_append_sheet(wb, ws, '時間軸');
+        
+        // ⭐ 步驟 5：生成檔案名稱
+        var date = new Date();
+        var dateStr = date.getFullYear() + 
+                      ('0' + (date.getMonth() + 1)).slice(-2) + 
+                      ('0' + date.getDate()).slice(-2) + '_' +
+                      ('0' + date.getHours()).slice(-2) +
+                      ('0' + date.getMinutes()).slice(-2);
+        var filename = competitorName + '_時間軸_' + dateStr + '.xlsx';
+        
+        // ⭐ 步驟 6：下載檔案
+        XLSX.writeFile(wb, filename);
+        
+        console.log('匯出成功：' + filename);
+        
+        // ⭐ 步驟 7：擷取並下載時間軸圖片
+        loadHtml2Canvas(function() {
+          if (typeof html2canvas !== 'undefined') {
+            var timelineElement = document.getElementById('timeline-' + competitorName);
+            if (timelineElement) {
+              // 擷取時間軸圖片
+              html2canvas(timelineElement, {
+                backgroundColor: '#ffffff',
+                scale: 2,  // 2倍解析度
+                logging: false,
+                useCORS: true
+              }).then(function(canvas) {
+                // 轉換為圖片並下載
+                canvas.toBlob(function(blob) {
+                  var link = document.createElement('a');
+                  link.download = competitorName + '_時間軸_' + dateStr + '.png';
+                  link.href = URL.createObjectURL(blob);
+                  link.click();
+                  console.log('時間軸圖片匯出成功');
+                });
+              }).catch(function(error) {
+                console.warn('時間軸圖片擷取失敗：', error);
+              });
+            }
+          }
+        });
+        
+      } catch (e) {
+        console.error('匯出失敗：', e);
+        alert('匯出失敗：' + e.message);
+      } finally {
+        // 恢復按鈕狀態
+        if (exportBtn) {
+          exportBtn.textContent = originalText;
+          exportBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  /**
+   * 匯出跨產品搜尋結果到 Excel
+   * 功能：
+   * 1. 檢查是否有搜尋結果
+   * 2. 動態載入 SheetJS 庫
+   * 3. 根據檢視模式生成 Excel
+   * 4. 下載檔案
+   */
+  function exportCrossSearchToExcel() {
+    // ⭐ 步驟 1：檢查是否有搜尋結果
+    if (!window.__crossLastMatched || window.__crossLastMatched.length === 0) {
+      alert('請先執行搜尋，才能匯出結果');
+      return;
+    }
+    
+    // 顯示載入提示
+    var exportBtn = document.getElementById('crossExportBtn');
+    var originalText = exportBtn ? exportBtn.textContent : '';
+    if (exportBtn) {
+      exportBtn.textContent = '⏳ 匯出中...';
+      exportBtn.disabled = true;
+    }
+    
+    // ⭐ 步驟 2：動態載入 SheetJS 庫
+    loadSheetJS(function() {
+      try {
+        // ⭐ 步驟 3：獲取篩選後的資料
+        var matched = window.__crossLastMatched;
+        var filtered = matched;
+        
+        // 套用活動類型篩選
+        if (crossSelectedTypes && crossSelectedTypes.length > 0) {
+          var setTypes = new Set(crossSelectedTypes);
+          filtered = matched.filter(function(it) {
+            var t = (it.activity && it.activity.type) ? it.activity.type : '';
+            return setTypes.has(t);
+          });
+        }
+        
+        if (filtered.length === 0) {
+          alert('篩選後沒有資料可匯出');
+          if (exportBtn) {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+          }
+          return;
+        }
+        
+        // ⭐ 步驟 4：根據檢視模式生成 Excel
+        var wb;
+        if (crossViewMode === 'byTime') {
+          wb = generateExcelByTime(filtered);
+        } else {
+          wb = generateExcelByProduct(filtered);
+        }
+        
+        // ⭐ 步驟 5：生成檔案名稱
+        var date = new Date();
+        var dateStr = date.getFullYear() + 
+                      ('0' + (date.getMonth() + 1)).slice(-2) + 
+                      ('0' + date.getDate()).slice(-2) + '_' +
+                      ('0' + date.getHours()).slice(-2) +
+                      ('0' + date.getMinutes()).slice(-2);
+        var filename = '跨產品搜尋結果_' + dateStr + '.xlsx';
+        
+        // ⭐ 步驟 6：下載檔案
+        XLSX.writeFile(wb, filename);
+        
+        console.log('匯出成功：' + filename);
+        
+        // ⭐ 步驟 7：擷取並下載搜尋結果圖片
+        loadHtml2Canvas(function() {
+          if (typeof html2canvas !== 'undefined') {
+            var searchContent = document.getElementById('crossSearchContent');
+            if (searchContent) {
+              // 擷取搜尋結果圖片
+              html2canvas(searchContent, {
+                backgroundColor: '#ffffff',
+                scale: 2,  // 2倍解析度
+                logging: false,
+                useCORS: true,
+                windowWidth: searchContent.scrollWidth,
+                windowHeight: searchContent.scrollHeight
+              }).then(function(canvas) {
+                // 轉換為圖片並下載
+                canvas.toBlob(function(blob) {
+                  var link = document.createElement('a');
+                  link.download = '跨產品搜尋結果_' + dateStr + '.png';
+                  link.href = URL.createObjectURL(blob);
+                  link.click();
+                  console.log('搜尋結果圖片匯出成功');
+                });
+              }).catch(function(error) {
+                console.warn('搜尋結果圖片擷取失敗：', error);
+              });
+            }
+          }
+        });
+        
+      } catch (e) {
+        console.error('匯出失敗：', e);
+        alert('匯出失敗：' + e.message);
+      } finally {
+        // 恢復按鈕狀態
+        if (exportBtn) {
+          exportBtn.textContent = originalText;
+          exportBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  /**
+   * 動態載入 SheetJS 庫
+   * @param {Function} callback - 載入完成後的回調函數
+   */
+  function loadSheetJS(callback) {
+    // 檢查是否已載入
+    if (typeof XLSX !== 'undefined') {
+      callback();
+      return;
+    }
+    
+    // 動態載入 SheetJS
+    var script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
+    script.onload = function() {
+      console.log('SheetJS 載入成功');
+      callback();
+    };
+    script.onerror = function() {
+      alert('載入 Excel 匯出庫失敗，請檢查網路連線');
+    };
+    document.head.appendChild(script);
+  }
+
+  /**
+   * 動態載入 html2canvas 庫
+   * @param {Function} callback - 載入完成後的回調函數
+   */
+  function loadHtml2Canvas(callback) {
+    // 檢查是否已載入
+    if (typeof html2canvas !== 'undefined') {
+      callback();
+      return;
+    }
+    
+    // 動態載入 html2canvas
+    var script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = function() {
+      console.log('html2canvas 載入成功');
+      callback();
+    };
+    script.onerror = function() {
+      console.warn('載入 html2canvas 失敗');
+      callback(); // 即使失敗也繼續，只是不會有圖片
+    };
+    document.head.appendChild(script);
+  }
+
+  /**
+   * 生成依時間排序的 Excel
+   * @param {Array} filtered - 篩選後的活動資料
+   * @returns {Object} Excel workbook
+   */
+  function generateExcelByTime(filtered) {
+    var wb = XLSX.utils.book_new();
+    
+    // 建立資料陣列
+    var data = [
+      ['月份', '競品', '活動名稱', '活動類型', '開始日期', '結束日期', '連結']
+    ];
+    
+    // 按月份排序（由新到舊）
+    var sorted = filtered.slice().sort(function(a, b) {
+      return b.activity.month.localeCompare(a.activity.month);
+    });
+    
+    // 填充資料
+    sorted.forEach(function(item) {
+      var activity = item.activity;
+      data.push([
+        activity.month || '',
+        item.competitor || '',
+        activity.name || '',
+        activity.type || '',
+        activity.startDate || '',
+        activity.endDate || '',
+        activity.url || ''
+      ]);
+    });
+    
+    // 建立工作表
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // 設定欄寬
+    ws['!cols'] = [
+      { wch: 10 },  // 月份
+      { wch: 12 },  // 競品
+      { wch: 35 },  // 活動名稱
+      { wch: 12 },  // 活動類型
+      { wch: 12 },  // 開始日期
+      { wch: 12 },  // 結束日期
+      { wch: 50 }   // 連結
+    ];
+    
+    // 添加工作表
+    XLSX.utils.book_append_sheet(wb, ws, '跨產品搜尋結果');
+    
+    return wb;
+  }
+
+  /**
+   * 生成依產品分組的 Excel
+   * @param {Array} filtered - 篩選後的活動資料
+   * @returns {Object} Excel workbook
+   */
+  function generateExcelByProduct(filtered) {
+    var wb = XLSX.utils.book_new();
+    
+    // 按競品分組
+    var groups = {};
+    filtered.forEach(function(item) {
+      var competitor = item.competitor;
+      if (!groups[competitor]) {
+        groups[competitor] = [];
+      }
+      groups[competitor].push(item.activity);
+    });
+    
+    // 競品排序
+    var priorityOrder = { '星城': 0, '滿貫大亨': 1, '金好運': 2, '老子有錢': 3, '王牌': 4 };
+    var competitors = Object.keys(groups).sort(function(a, b) {
+      var pa = (priorityOrder.hasOwnProperty(a) ? priorityOrder[a] : 999);
+      var pb = (priorityOrder.hasOwnProperty(b) ? priorityOrder[b] : 999);
+      if (pa !== pb) return pa - pb;
+      return a.localeCompare(b);
+    });
+    
+    // 為每個競品建立工作表
+    competitors.forEach(function(competitor) {
+      var activities = groups[competitor];
+      
+      // 建立資料陣列
+      var data = [
+        ['月份', '活動名稱', '活動類型', '開始日期', '結束日期', '連結']
+      ];
+      
+      // 按月份排序
+      activities.sort(function(a, b) {
+        return a.month.localeCompare(b.month);
+      });
+      
+      // 填充資料
+      activities.forEach(function(activity) {
+        data.push([
+          activity.month || '',
+          activity.name || '',
+          activity.type || '',
+          activity.startDate || '',
+          activity.endDate || '',
+          activity.url || ''
+        ]);
+      });
+      
+      // 建立工作表
+      var ws = XLSX.utils.aoa_to_sheet(data);
+      
+      // 設定欄寬
+      ws['!cols'] = [
+        { wch: 10 },  // 月份
+        { wch: 35 },  // 活動名稱
+        { wch: 12 },  // 活動類型
+        { wch: 12 },  // 開始日期
+        { wch: 12 },  // 結束日期
+        { wch: 50 }   // 連結
+      ];
+      
+      // 添加工作表（工作表名稱限制 31 字元）
+      var sheetName = competitor.substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+    
+    return wb;
+  }
+
+  /**
+   * 初始化跨產品搜尋的競品篩選器
+   * 功能：
+   * 1. 讀取所有競品名稱
+   * 2. 在下拉選單中添加競品選項（帶複選框）
+   * 3. 綁定點擊事件（顯示/隱藏下拉選單、切換選中狀態）
+   */
+  function initializeCrossCompetitorFilter() {
+    var dropdown = document.getElementById('crossCompetitorDropdown');
+    var selectBtn = document.getElementById('crossCompetitorSelectBtn');
+    var selectText = document.getElementById('crossCompetitorSelectText');
+    
+    if (!dropdown || !selectBtn || !allCompetitorData) return;
+    
+    // ⭐ 步驟 1：獲取所有競品名稱
+    var competitorNames = Object.keys(allCompetitorData).filter(function(name) {
+      return allCompetitorData[name] && allCompetitorData[name].activities;
+    });
+    
+    if (competitorNames.length === 0) {
+      dropdown.innerHTML = '<div style="padding:10px;color:#888;">暫無競品資料</div>';
+      return;
+    }
+    
+    // ⭐ 步驟 2：建立下拉選單內容
+    var html = '';
+    
+    // 添加「全選」選項
+    html += '<label class="multi-select-option">';
+    html += '<input type="checkbox" value="__ALL__" id="crossCompetitor_ALL" checked>';
+    html += '<span>全部競品</span>';
+    html += '</label>';
+    
+    // 添加各競品選項
+    competitorNames.forEach(function(name) {
+      html += '<label class="multi-select-option">';
+      html += '<input type="checkbox" value="' + name + '" class="cross-competitor-checkbox">';
+      html += '<span>' + name + '</span>';
+      html += '</label>';
+    });
+    
+    dropdown.innerHTML = html;
+    
+    // ⭐ 步驟 3：綁定下拉選單切換事件
+    selectBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isVisible = dropdown.style.display === 'block';
+      dropdown.style.display = isVisible ? 'none' : 'block';
+    });
+    
+    // 點擊外部關閉下拉選單
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#crossCompetitorMultiSelect')) {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    // ⭐ 步驟 4：綁定複選框事件
+    var allCheckbox = document.getElementById('crossCompetitor_ALL');
+    var competitorCheckboxes = dropdown.querySelectorAll('.cross-competitor-checkbox');
+    
+    // 全選複選框事件
+    if (allCheckbox) {
+      allCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          // 全選：清空 crossSelectedCompetitors（表示選擇全部）
+          crossSelectedCompetitors = [];
+          competitorCheckboxes.forEach(function(cb) { cb.checked = false; });
+          selectText.textContent = '全部競品';
+        }
+      });
+    }
+    
+    // 各競品複選框事件
+    competitorCheckboxes.forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+        var competitorName = this.value;
+        
+        if (this.checked) {
+          // 選中某個競品
+          if (allCheckbox) allCheckbox.checked = false;
+          if (crossSelectedCompetitors.indexOf(competitorName) === -1) {
+            crossSelectedCompetitors.push(competitorName);
+          }
+        } else {
+          // 取消選中某個競品
+          var idx = crossSelectedCompetitors.indexOf(competitorName);
+          if (idx !== -1) {
+            crossSelectedCompetitors.splice(idx, 1);
+          }
+        }
+        
+        // 如果沒有選中任何競品，自動切換回「全部」
+        if (crossSelectedCompetitors.length === 0) {
+          if (allCheckbox) allCheckbox.checked = true;
+          selectText.textContent = '全部競品';
+        } else {
+          // 更新顯示文字
+          if (crossSelectedCompetitors.length === 1) {
+            selectText.textContent = crossSelectedCompetitors[0];
+          } else {
+            selectText.textContent = '已選 ' + crossSelectedCompetitors.length + ' 個競品';
+          }
+        }
+      });
+    });
+    
+    console.log('競品篩選器初始化完成，共 ' + competitorNames.length + ' 個競品');
+  }
+
+  function buildCrossSearchHTML() {
+    var html = '';
+    
+    // ⭐ 新增：產品篩選器
+    html += '<div class="filter-panel" style="margin-bottom: 15px;">';
+    html +=   '<div class="filter-group">';
+    html +=     '<label>競品篩選</label>';
+    html +=     '<div class="multi-select" id="crossCompetitorMultiSelect">';
+    html +=       '<div class="multi-select-button" id="crossCompetitorSelectBtn">';
+    html +=         '<span id="crossCompetitorSelectText">全部競品</span>';
+    html +=         '<span>▼</span>';
+    html +=       '</div>';
+    html +=       '<div class="multi-select-dropdown" id="crossCompetitorDropdown" style="display:none;"></div>';
+    html +=     '</div>';
+    html +=   '</div>';
+    html += '</div>';
+    
+    html += '<div class="filter-panel" style="grid-template-columns: 1fr 1fr 2fr; gap: 15px;">';
+    html +=   '<div class="filter-group">'
+            +   '<label>開始月份（選填）</label>'
+            // ⭐ 修改：改為 type="month"，移除 placeholder
+            +   '<input type="month" id="crossStartMonth" min="2020-01" max="2030-12" class="filter-input" style="height: 38px;">'
+            + '</div>';
+    html +=   '<div class="filter-group">'
+            +   '<label>結束月份（選填）</label>'
+            // ⭐ 修改：改為 type="month"，移除 placeholder
+            +   '<input type="month" id="crossEndMonth" min="2020-01" max="2030-12" class="filter-input" style="height: 38px;">'
+            + '</div>';
+    html +=   '<div class="filter-group">'
+            +   '<label>關鍵字搜尋（選填）</label>'
+            +   '<div style="display:flex;gap:8px;">'
+            // ⭐ 更新 placeholder：提示可使用多標籤搜尋
+            +     '<input type="text" id="crossSearchKeyword" class="filter-input" ' +
+                  'placeholder="支援多標籤：魚機,活動海皇,新遊戲" ' +
+                  'title="可使用逗號或空格分隔多個關鍵字，例如：魚機,活動海皇">'
+            +     '<button id="crossSearchBtn" class="search-btn" style="white-space:nowrap;">搜索</button>'
+            +     '<button id="crossClearBtn" class="clear-btn" style="white-space:nowrap;">清除</button>'
+            +   '</div>'
+            + '</div>';
+    html += '</div>';
+    html += '<div class="summary-table" style="margin-bottom: 10px;">'
+          +   '<div id="crossSearchResult" style="padding: 8px 12px; font-weight: 500; text-align: center;"></div>'
+          + '</div>';
+    
+    // ⭐ 活動類型按鈕 + 檢視模式切換按鈕 + 匯出按鈕
+    html += '<div class="summary-table" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+           +   '<div id="crossTypeBtns" style="display:flex;gap:8px;flex-wrap:wrap;">'
+           +     '<button class="filter-btn cross-type-btn active" data-type="ALL" aria-pressed="true">全部類型</button>'
+          +   '</div>'
+          +   '<div style="display:flex;gap:8px;align-items:center;">'
+          +     '<div style="display:flex;gap:0;background:#f8f9fa;border-radius:8px;padding:4px;">'
+          +       '<button id="crossViewByProduct" class="cross-view-mode-btn active" data-mode="byProduct">📦 依產品分組</button>'
+          +       '<button id="crossViewByTime" class="cross-view-mode-btn" data-mode="byTime">📅 依時間排序</button>'
+          +     '</div>'
+          +     '<button id="crossExportBtn" class="refresh-btn" style="background:#10B981;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.2s;" onmouseover="this.style.background=\'#059669\'" onmouseout="this.style.background=\'#10B981\'">匯出資料</button>'
+          +   '</div>'
+          + '</div>';
+    html += '<div class="summary-table">'
+          +   '<div id="crossSearchContent" style="min-height: 400px;">'
+          +     '<div class="no-data" style="padding: 100px 20px; text-align: center; color: #666;">'
+          +       '<h3 style="margin-bottom: 10px;">跨產品關鍵字搜索</h3>'
+          +       '<p>在上方輸入關鍵字，搜索所有競品時間軸中的活動</p>'
+          +       '<p style="font-size: 14px; color: #888;">支援多標籤搜尋：魚機,活動海皇,新遊戲</p>'
+          +     '</div>'
+          +   '</div>'
+          + '</div>';
+    return html;
+  }
+
+  function performCrossSearch() {
+    var input = document.getElementById('crossSearchKeyword');
+    var startEl = document.getElementById('crossStartMonth');
+    var endEl = document.getElementById('crossEndMonth');
+    var resultDiv = document.getElementById('crossSearchResult');
+    var contentDiv = document.getElementById('crossSearchContent');
+    if (!input || !contentDiv) return;
+    var keyword = (input.value||'').trim();
+    var startMonth = startEl ? (startEl.value||'').trim() : '';
+    var endMonth = endEl ? (endEl.value||'').trim() : '';
+    if (!keyword && (!startMonth || !endMonth)) {
+      if (resultDiv) { resultDiv.textContent = '請至少填入關鍵字，或同時輸入起訖月份'; resultDiv.style.color = '#dc3545'; }
+      return;
+    }
+    if (!allCompetitorData || Object.keys(allCompetitorData).length===0) {
+      if (resultDiv) { resultDiv.textContent = '資料未載入，請稍候'; resultDiv.style.color = '#dc3545'; }
+      return;
+    }
+    var allMatched = [];
+    Object.keys(allCompetitorData).forEach(function(name){
+      // ⭐ 新增：競品篩選邏輯
+      // 如果 crossSelectedCompetitors 不為空，只處理選中的競品
+      if (crossSelectedCompetitors.length > 0) {
+        if (crossSelectedCompetitors.indexOf(name) === -1) {
+          return; // 跳過未選中的競品
+        }
+      }
+      
+      var comp = allCompetitorData[name];
+      if (!comp || !Array.isArray(comp.activities)) return;
+      var list = comp.activities;
+      if (startMonth && endMonth) {
+        list = list.filter(function(a){ return a.month >= startMonth && a.month <= endMonth; });
+      }
+      var matched = list.filter(function(a){
+        var match = keyword ? isActivityMatchKeyword(a, keyword) : true;
+        if (!match) return false;
+        if (crossSelectedTypes && crossSelectedTypes.length > 0) {
+          var t = (a.type||'');
+          return crossSelectedTypes.indexOf(t) !== -1;
+        }
+        return true;
+      });
+      if (matched.length === 0 && crossSelectedTypes && crossSelectedTypes.length > 0) {
+        matched = list.filter(function(a){ return keyword ? isActivityMatchKeyword(a, keyword) : true; });
+      }
+      matched.forEach(function(a){ allMatched.push({ competitor: name, activity: a }); });
+    });
+    if (allMatched.length>0) {
+       crossSelectedTypes = [];
+      try {
+        var btns = document.getElementById('crossTypeBtns');
+        if (btns) {
+          Array.prototype.forEach.call(btns.querySelectorAll('.cross-type-btn'), function(x){ x.classList.remove('active'); });
+          var allBtn = btns.querySelector('[data-type="ALL"]');
+           if (allBtn) { allBtn.classList.add('active'); allBtn.setAttribute('aria-pressed','true'); }
+        }
+      } catch(e) {}
+      if (resultDiv) {
+        var setC = new Set(); var setM = new Set();
+        allMatched.forEach(function(it){ setC.add(it.competitor); setM.add(it.activity.month); });
+        resultDiv.textContent = '找到 ' + allMatched.length + ' 個活動，涵蓋 ' + setC.size + ' 個競品，' + setM.size + ' 個月份';
+        resultDiv.style.color = '#28a745';
+      }
+      renderCrossSearchResults(allMatched, keyword);
+    } else {
+      if (resultDiv) { resultDiv.textContent = '未找到匹配的活動'; resultDiv.style.color = '#dc3545'; }
+      contentDiv.innerHTML = '<div class="no-data">未找到包含「' + keyword + '」的活動</div>';
+    }
+  }
+
+  /**
+   * 依時間排序渲染跨產品搜尋結果
+   * @param {Array} filtered - 已篩選的活動清單
+   * @param {string} keyword - 搜尋關鍵字
+   * @returns {string} HTML 字串
+   */
+  function renderCrossSearchByTime(filtered, keyword) {
+    // ⭐ 步驟 1：按月份分組
+    var monthGroups = {};
+    filtered.forEach(function(item) {
+      var month = item.activity.month;
+      if (!monthGroups[month]) {
+        monthGroups[month] = [];
+      }
+      monthGroups[month].push(item);
+    });
+    
+    // ⭐ 步驟 2：取得所有月份並排序（由新到舊）
+    var months = Object.keys(monthGroups).sort().reverse();
+    
+    // ⭐ 步驟 3：建立 HTML
+    var html = '<div class="global-search-results">';
+    
+    months.forEach(function(month) {
+      var activities = monthGroups[month];
+      
+      // 月份標題卡片
+      html += '<div class="month-search-group" style="margin-bottom: 25px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06);">';
+      html += '<div class="month-search-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 20px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:12px;">';
+      html += '<h4 style="margin: 0; display:flex; align-items:center; gap: 10px; font-size: 20px;">';
+      html += '<span>📅</span>' + month.replace('-', ' 年 ') + ' 月 (' + activities.length + ' 個活動)';
+      html += '</h4>';
+      html += '<button class="cross-toggle-btn" data-state="expanded" onclick="crossToggle(this)" style="padding:6px 12px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;">收合</button>';
+      html += '</div>';
+      
+      // 活動列表
+      html += '<div class="activities-list cross-activities" style="padding: 15px; display:block;">';
+      html += '<div class="activity-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px;">';
+      
+      activities.forEach(function(item) {
+        var activity = item.activity;
+        var competitorName = item.competitor;
+        var displayName = activity.name;
+        
+        // 高亮關鍵字
+        if (keyword) {
+          displayName = highlightKeyword(activity.name, keyword);
+        }
+        
+        // 競品顏色標籤（使用更深的顏色以提高白色文字的可讀性）
+        var competitorColors = {
+          '星城': '#E63946',        // 深紅色（原 #FF6B6B）
+          '滿貫大亨': '#14B8A6',    // 深青綠色（原 #4ECDC4）
+          '金好運': '#F59E0B',      // 深橙黃色（原 #FFD93D）
+          '老子有錢': '#10B981',    // 深綠色（原 #95E1D3）
+          '王牌': '#8B5CF6'         // 紫色（原 #A8E6CF）
+        };
+        var competitorColor = competitorColors[competitorName] || '#64748b';
+        
+        // 活動卡片
+        html += '<div class="activity-search-item" style="padding: 14px 16px; background: #ffffff; border-radius: 10px; border-left: 4px solid ' + competitorColor + '; box-shadow: 0 6px 18px rgba(0,0,0,0.06);">';
+        
+        // 競品標籤
+        html += '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">';
+        html += '<span style="font-size:11px; color:#fff; background:' + competitorColor + '; padding:3px 8px; border-radius:999px; white-space:nowrap; font-weight:600;">' + competitorName + '</span>';
+        html += '<span style="font-size:12px; color:#fff; background:#64748b; padding:4px 10px; border-radius:999px; white-space:nowrap;">' + (activity.type || '') + '</span>';
+        html += '</div>';
+        
+        // 活動名稱
+        html += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">';
+        if (activity.url) {
+          html += '<a href="' + activity.url + '" target="_blank" style="flex:1; min-width:0; text-decoration:none; color:#1f2937; font-weight:600; font-size:15px;">' + displayName + '</a>';
+        } else {
+          html += '<span style="flex:1; min-width:0; color:#1f2937; font-weight:600; font-size:15px;">' + displayName + '</span>';
+        }
+        html += '</div>';
+        
+        // 日期資訊
+        html += '<div style="display:flex; align-items:center; gap:8px; color:#6b7280; font-size:12px;">';
+        html += '<span>📅</span>';
+        if (activity.startDate && activity.endDate) {
+          html += '<span>' + activity.startDate + ' ~ ' + activity.endDate + '</span>';
+        } else {
+          html += '<span>' + (activity.month || '') + '</span>';
+        }
+        html += '</div>';
+        
+        html += '</div>'; // 結束活動卡片
+      });
+      
+      html += '</div>'; // 結束 activity-grid
+      html += '</div>'; // 結束 activities-list
+      html += '</div>'; // 結束 month-search-group
+    });
+    
+    html += '</div>'; // 結束 global-search-results
+    return html;
+  }
+
+  function renderCrossSearchResults(matched, keyword) {
+    var container = document.getElementById('crossSearchContent');
+    if (!container) return;
+    window.__crossLastMatched = matched;
+    window.__crossLastKeyword = keyword;
+    var filtered = matched;
+    if (crossSelectedTypes && crossSelectedTypes.length > 0) {
+      var setTypes = new Set(crossSelectedTypes);
+      filtered = matched.filter(function(it){
+        var t = (it.activity && it.activity.type) ? it.activity.type : '';
+        return setTypes.has(t);
+      });
+    }
+    if (!filtered || filtered.length === 0) {
+      container.innerHTML = '<div class="no-data">未找到包含「' + (keyword||'') + '」的活動</div>';
+      try {
+        var btnsEmpty = document.getElementById('crossTypeBtns');
+        if (btnsEmpty) {
+          var setEmpty = new Set();
+          matched.forEach(function(it){ if (it.activity && it.activity.type) setEmpty.add(it.activity.type); });
+          var currentTypeEmpty = crossFilterType || 'ALL';
+          var htmlBtnsEmpty = '<button class="filter-btn cross-type-btn' + (currentTypeEmpty==='ALL'?' active':'') + '" data-type="ALL">全部類型</button>';
+          Array.from(setEmpty).sort().forEach(function(t){
+            htmlBtnsEmpty += '<button class="filter-btn cross-type-btn' + (currentTypeEmpty===t?' active':'') + '" data-type="' + t + '">' + t + '</button>';
+          });
+          btnsEmpty.innerHTML = htmlBtnsEmpty;
+        }
+      } catch(e) { console.warn('更新類型按鈕失敗(空結果)', e); }
+      return;
+    }
+    
+    // ⭐ 新增：根據檢視模式選擇渲染方式
+    var html;
+    if (crossViewMode === 'byTime') {
+      // 依時間排序
+      html = renderCrossSearchByTime(filtered, keyword);
+      container.innerHTML = html;
+    } else {
+      // 依產品分組（預設）
+      var groups = {};
+      filtered.forEach(function(it){ if(!groups[it.competitor]) groups[it.competitor]=[]; groups[it.competitor].push(it.activity); });
+    
+    // ⭐ 新增：生成統計圖表
+    var html = '<div class="global-search-results">';
+    
+    // ⭐ 統計圖表區域
+    html += '<div class="cross-stats-container" style="margin-bottom: 25px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06);">';
+    html += '<div class="cross-stats-header" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 16px 20px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:12px;">';
+    html += '<h4 style="margin: 0; display:flex; align-items:center; gap: 10px; font-size: 20px;">';
+    html += '<span>📊</span>競品活動趨勢統計';
+    html += '</h4>';
+    html += '<button class="cross-toggle-btn" data-state="expanded" onclick="crossToggle(this)" style="padding:6px 12px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;">收合</button>';
+    html += '</div>';
+    html += '<div class="cross-activities" style="padding: 20px; display:block; background:#fff;">';
+    html += '<div id="crossStatsChart" style="width:100%; height:400px;"></div>';
+    html += '<div id="crossStatsTable" style="margin-top: 20px;"></div>';
+    html += '</div>';
+    html += '</div>';
+    
+    // ⭐ 活動清單
+    var priorityOrder = { '星城': 0, '滿貫大亨': 1, '金好運': 2, '老子有錢': 3, '王牌': 4 };
+    var competitors = Object.keys(groups).sort(function(a, b){
+      var pa = (priorityOrder.hasOwnProperty(a) ? priorityOrder[a] : 999);
+      var pb = (priorityOrder.hasOwnProperty(b) ? priorityOrder[b] : 999);
+      if (pa !== pb) return pa - pb;
+      var ca = (groups[a] || []).length;
+      var cb = (groups[b] || []).length;
+      if (cb !== ca) return cb - ca;
+      return a.localeCompare(b);
+    });
+    competitors.forEach(function(name){
+      var acts = groups[name];
+      html += '<div class="competitor-search-group" style="margin-bottom: 25px; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.06);">';
+      html += '<div class="competitor-search-header" style="background: #5a67d8; padding: 16px 20px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:12px;">';
+      html += '<h4 style="margin: 0; display:flex; align-items:center; gap: 10px; font-size: 20px;">';
+      html += '<span>🎯</span>' + name + ' (' + acts.length + ' 個活動)';
+      html += '</h4>';
+      html += '<button class="cross-toggle-btn" data-state="expanded" onclick="crossToggle(this)" style="padding:6px 12px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;">收合</button>';
+      html += '</div>';
+      html += '<div class="activities-list cross-activities" style="padding: 15px; display:block;">';
+      var monthGroups = {};
+      acts.forEach(function(a){ if(!monthGroups[a.month]) monthGroups[a.month]=[]; monthGroups[a.month].push(a); });
+      Object.keys(monthGroups).sort().forEach(function(m){
+        html += '<div class="month-group" style="margin-bottom: 18px;">';
+        html += '<h6 style="margin: 0 0 10px 0; color: #666; font-size: 14px;">📅 ' + m.replace('-', '/') + '</h6>';
+        html += '<div class="activity-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px;">';
+        monthGroups[m].forEach(function(a){
+          var displayName = a.name;
+          if (keyword) { displayName = highlightKeyword(a.name, keyword); }
+          html += '<div class="activity-search-item" style="padding: 14px 16px; background: #ffffff; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 6px 18px rgba(0,0,0,0.06);">';
+          html += '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;">';
+          html += '<div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">';
+          if (a.url) {
+            html += '<a href="' + a.url + '" target="_blank" style="flex:1; min-width:0; text-decoration:none; color:#1f2937; font-weight:600;">' + displayName + '</a>';
+          } else {
+            html += '<span style="flex:1; min-width:0; color:#1f2937; font-weight:600;">' + displayName + '</span>';
+          }
+          html += '</div>';
+          html += '<span style="font-size:12px; color:#fff; background:#64748b; padding:4px 10px; border-radius:999px; white-space:nowrap;">' + (a.type||'') + '</span>';
+          html += '</div>';
+          html += '<div style="display:flex; align-items:center; gap:8px; color:#6b7280; font-size:12px;">';
+          html += '<span>📅</span>';
+          if (a.startDate && a.endDate) {
+            html += '<span>' + a.startDate + ' ~ ' + a.endDate + '</span>';
+          } else {
+            html += '<span>' + (a.month||'') + '</span>';
+          }
+          html += '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+    
+    // ⭐ 渲染統計圖表
+    setTimeout(function() {
+      renderCrossStatsChart(filtered);
+    }, 100);
+    
+    } // ⭐ 結束 else (依產品分組)
+    
+    // ⭐ 更新活動類型按鈕（兩種模式都需要）
+    try {
+      var btns = document.getElementById('crossTypeBtns');
+      if (btns) {
+        var set = new Set();
+        matched.forEach(function(it){ if (it.activity && it.activity.type) set.add(it.activity.type); });
+        var htmlBtns = '<button class="filter-btn cross-type-btn' + ((crossSelectedTypes.length===0)?' active':'') + '" data-type="ALL" aria-pressed="' + ((crossSelectedTypes.length===0)?'true':'false') + '">全部類型</button>';
+        Array.from(set).sort().forEach(function(t){
+          var isActive = crossSelectedTypes.indexOf(t) !== -1;
+          htmlBtns += '<button class="filter-btn cross-type-btn' + (isActive?' active':'') + '" data-type="' + t + '" aria-pressed="' + (isActive?'true':'false') + '">' + t + '</button>';
+        });
+        btns.innerHTML = htmlBtns;
+      }
+    } catch(e) { console.warn('動態產生類型按鈕失敗', e); }
+  }
+
+  /**
+   * 渲染跨產品搜尋統計圖表
+   * @param {Array} filtered - 已篩選的活動清單
+   */
+  function renderCrossStatsChart(filtered) {
+    var chartDom = document.getElementById('crossStatsChart');
+    var tableDom = document.getElementById('crossStatsTable');
+    if (!chartDom) return;
+    
+    // ⭐ 步驟 1：按競品和月份統計
+    var competitorMonthStats = {};  // { 競品: { 月份: 數量 } }
+    var allMonths = new Set();
+    
+    filtered.forEach(function(item) {
+      var competitor = item.competitor;
+      var month = item.activity.month;
+      
+      if (!competitorMonthStats[competitor]) {
+        competitorMonthStats[competitor] = {};
+      }
+      
+      if (!competitorMonthStats[competitor][month]) {
+        competitorMonthStats[competitor][month] = 0;
+      }
+      
+      competitorMonthStats[competitor][month]++;
+      allMonths.add(month);
+    });
+    
+    // ⭐ 步驟 2：準備圖表數據
+    var months = Array.from(allMonths).sort();
+    var competitors = Object.keys(competitorMonthStats).sort();
+    
+    // 競品顏色
+    var competitorColors = {
+      '星城': '#E63946',
+      '滿貫大亨': '#14B8A6',
+      '金好運': '#F59E0B',
+      '老子有錢': '#10B981',
+      '王牌': '#8B5CF6'
+    };
+    
+    // ⭐ 步驟 3：生成 ECharts 配置
+    var series = competitors.map(function(competitor) {
+      var data = months.map(function(month) {
+        return competitorMonthStats[competitor][month] || 0;
+      });
+      
+      return {
+        name: competitor,
+        type: 'line',
+        data: data,
+        smooth: true,
+        symbolSize: 8,
+        itemStyle: {
+          color: competitorColors[competitor] || '#64748b'
+        },
+        lineStyle: {
+          width: 3
+        },
+        emphasis: {
+          focus: 'series',
+          blurScope: 'coordinateSystem'
+        }
+      };
+    });
+    
+    var option = {
+      title: {
+        text: '各競品活動數量趨勢',
+        left: 'center',
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 600
+        }
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross'
+        },
+        formatter: function(params) {
+          var result = params[0].axisValue + '<br/>';
+          params.forEach(function(item) {
+            if (item.value > 0) {
+              result += item.marker + ' ' + item.seriesName + '：' + item.value + ' 個活動<br/>';
+            }
+          });
+          return result;
+        }
+      },
+      legend: {
+        data: competitors,
+        top: 35,
+        left: 'center'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: 80,
+        containLabel: true
+      },
+      toolbox: {
+        feature: {
+          dataZoom: {
+            yAxisIndex: 'none',
+            title: {
+              zoom: '區域縮放',
+              back: '還原'
+            }
+          },
+          restore: {
+            title: '還原'
+          },
+          saveAsImage: {
+            title: '儲存為圖片',
+            pixelRatio: 2
+          }
+        },
+        right: 20,
+        top: 10
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          start: 0,
+          end: 100
+        },
+        {
+          start: 0,
+          end: 100,
+          height: 20,
+          bottom: 20
+        }
+      ],
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: months,
+        axisLabel: {
+          formatter: function(value) {
+            return value.replace('-', '/');
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: '活動數量',
+        minInterval: 1,
+        axisLabel: {
+          formatter: '{value} 個'
+        }
+      },
+      series: series
+    };
+    
+    // ⭐ 步驟 4：渲染圖表
+    var chart = echarts.init(chartDom);
+    chart.setOption(option);
+    
+    // 響應式
+    window.addEventListener('resize', function() {
+      chart.resize();
+    });
+    
+    // ⭐ 步驟 5：生成統計表格
+    if (tableDom) {
+      var tableHtml = '<div style="overflow-x:auto;">';
+      tableHtml += '<table style="width:100%; border-collapse:collapse; font-size:14px;">';
+      tableHtml += '<thead>';
+      tableHtml += '<tr style="background:#f8f9fa;">';
+      tableHtml += '<th style="padding:12px; text-align:left; border:1px solid #dee2e6; font-weight:600;">競品</th>';
+      
+      months.forEach(function(month) {
+        tableHtml += '<th style="padding:12px; text-align:center; border:1px solid #dee2e6; font-weight:600;">' + month.replace('-', '/') + '</th>';
+      });
+      
+      tableHtml += '<th style="padding:12px; text-align:center; border:1px solid #dee2e6; font-weight:600; background:#fff3cd;">總計</th>';
+      tableHtml += '</tr>';
+      tableHtml += '</thead>';
+      tableHtml += '<tbody>';
+      
+      competitors.forEach(function(competitor) {
+        var total = 0;
+        tableHtml += '<tr>';
+        tableHtml += '<td style="padding:12px; border:1px solid #dee2e6; font-weight:600;">';
+        tableHtml += '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:' + (competitorColors[competitor] || '#64748b') + '; margin-right:8px;"></span>';
+        tableHtml += competitor;
+        tableHtml += '</td>';
+        
+        months.forEach(function(month) {
+          var count = competitorMonthStats[competitor][month] || 0;
+          total += count;
+          var cellStyle = count > 0 ? 'background:#f0f9ff;' : '';
+          tableHtml += '<td style="padding:12px; text-align:center; border:1px solid #dee2e6; ' + cellStyle + '">' + (count > 0 ? count : '-') + '</td>';
+        });
+        
+        tableHtml += '<td style="padding:12px; text-align:center; border:1px solid #dee2e6; font-weight:600; background:#fff3cd;">' + total + '</td>';
+        tableHtml += '</tr>';
+      });
+      
+      tableHtml += '</tbody>';
+      tableHtml += '</table>';
+      tableHtml += '</div>';
+      
+      // ⭐ 趨勢分析
+      var maxCompetitor = '';
+      var maxCount = 0;
+      competitors.forEach(function(competitor) {
+        var total = months.reduce(function(sum, month) {
+          return sum + (competitorMonthStats[competitor][month] || 0);
+        }, 0);
+        if (total > maxCount) {
+          maxCount = total;
+          maxCompetitor = competitor;
+        }
+      });
+      
+      tableHtml += '<div style="margin-top:16px; padding:12px; background:#f0f9ff; border-left:4px solid #3b82f6; border-radius:4px;">';
+      tableHtml += '<strong>💡 趨勢分析：</strong><br/>';
+      tableHtml += '• <strong>' + maxCompetitor + '</strong> 在搜尋結果中最活躍，共 ' + maxCount + ' 個相關活動<br/>';
+      
+      // 找出最活躍的月份
+      var monthTotals = {};
+      months.forEach(function(month) {
+        monthTotals[month] = competitors.reduce(function(sum, competitor) {
+          return sum + (competitorMonthStats[competitor][month] || 0);
+        }, 0);
+      });
+      var maxMonth = '';
+      var maxMonthCount = 0;
+      Object.keys(monthTotals).forEach(function(month) {
+        if (monthTotals[month] > maxMonthCount) {
+          maxMonthCount = monthTotals[month];
+          maxMonth = month;
+        }
+      });
+      
+      tableHtml += '• <strong>' + maxMonth.replace('-', ' 年 ') + ' 月</strong> 是各競品最活躍的月份，共 ' + maxMonthCount + ' 個活動';
+      tableHtml += '</div>';
+      
+      tableDom.innerHTML = tableHtml;
+    }
+  }
+
+  function clearCrossSearch() {
+    var input = document.getElementById('crossSearchKeyword');
+    var startEl = document.getElementById('crossStartMonth');
+    var endEl = document.getElementById('crossEndMonth');
+    var resultDiv = document.getElementById('crossSearchResult');
+    var contentDiv = document.getElementById('crossSearchContent');
+    if (input) input.value = '';
+    if (startEl) startEl.value = '';
+    if (endEl) endEl.value = '';
+    if (resultDiv) resultDiv.textContent = '';
+    if (contentDiv) {
+      contentDiv.innerHTML = '<div class="no-data" style="padding: 100px 20px; text-align: center; color: #666;">' +
+                             '<h3 style="margin-bottom: 10px;">跨產品關鍵字搜索</h3>' +
+                             '<p>在上方輸入關鍵字，搜索所有競品時間軸中的活動</p>' +
+                             '<p style="font-size: 14px; color: #888;">支援搜索活動名稱、活動類型、活動內容</p>' +
+                             '</div>';
+    }
+  }
+
+  function crossToggle(button) {
+    try {
+      // ⭐ 修正：同時支援「依產品分組」和「依時間排序」兩種模式
+      var group = button.closest('div.competitor-search-group') || button.closest('div.month-search-group');
+      if (!group) {
+        console.warn('crossToggle: 找不到容器元素');
+        return;
+      }
+      
+      var section = group.querySelector('.cross-activities');
+      if (!section) {
+        console.warn('crossToggle: 找不到活動列表元素');
+        return;
+      }
+      
+      var isExpanded = (button.getAttribute('data-state') === 'expanded');
+      if (isExpanded) {
+        section.style.display = 'none';
+        button.setAttribute('data-state', 'collapsed');
+        button.textContent = '展開';
+      } else {
+        section.style.display = 'block';
+        button.setAttribute('data-state', 'expanded');
+        button.textContent = '收合';
+      }
+    } catch(e) { console.warn('crossToggle 失敗', e); }
+  }
+
+  function crossExpandAll() {
+    try {
+      var btn = document.getElementById('crossExpandAllBtn');
+      var toExpand = (btn.getAttribute('data-state') !== 'expanded');
+      var groups = document.querySelectorAll('.competitor-search-group');
+      groups.forEach(function(g){
+        var section = g.querySelector('.cross-activities');
+        var t = g.querySelector('.cross-toggle-btn');
+        if (section && t) {
+          section.style.display = toExpand ? 'block' : 'none';
+          t.setAttribute('data-state', toExpand ? 'expanded' : 'collapsed');
+          t.textContent = toExpand ? '收合' : '展開';
+        }
+      });
+      btn.setAttribute('data-state', toExpand ? 'expanded' : 'collapsed');
+      btn.textContent = toExpand ? '收合全部' : '展開全部';
+    } catch(e) { console.warn('crossExpandAll 失敗', e); }
+  }
+
+  // ===== HTML 模板生成函數 =====
+  function createCompetitorHTML(name) {
+    var html = '';
+    
+    // ⭐ 修改：簡化篩選條件結構，移除獨立收合功能
+    html += '<div class="control-panel-wrapper">';
+    html += '<div class="control-panel-header">';
+    html += '<span class="control-panel-title">📋 篩選條件</span>';
+    html += '</div>';
+    html += '<div class="control-panel" id="controlPanel-' + name + '">';
+    html += '<div class="control-group">';
+    html += '<label for="startMonth-' + name + '">起始月份：</label>';
+    html += '<input id="startMonth-' + name + '" type="month" min="2020-01" max="2030-12">';
+    html += '<label for="endMonth-' + name + '" style="margin-left: 20px;">結束月份：</label>';
+    html += '<input id="endMonth-' + name + '" type="month" min="2020-01" max="2030-12">';
+    html += '</div>';
+    html += '<div class="control-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;">';
+    html += '<label for="searchKeyword-' + name + '">關鍵字搜尋：</label>';
+    html += '<input id="searchKeyword-' + name + '" placeholder="支援多標籤：魚機,活動海皇,新遊戲" type="text" class="search-input" ' +
+            'title="可使用逗號或空格分隔多個關鍵字，例如：魚機,活動海皇">';
+    html += '<button id="searchBtn-' + name + '" class="search-btn">搜尋</button>';
+    html += '<button id="clearSearchBtn-' + name + '" class="clear-btn">清除</button>';
+    html += '<span id="searchResult-' + name + '" class="search-result"></span>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div class="timeline-container" style="max-width:100%; overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch;">';
+    // ⭐ 修改：時間軸標題和匯出按鈕
+    html += '<div class="timeline-header" style="display:flex;justify-content:space-between;align-items:center;padding:15px 20px;">';
+    html += '<span>' + name + ' 活動時間軸</span>';
+    html += '<button id="exportTimelineBtn-' + name + '" class="refresh-btn" style="background:#10B981;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.2s;margin-right:40px;" onmouseover="this.style.background=\'#059669\'" onmouseout="this.style.background=\'#10B981\'">匯出資料</button>';
+    html += '</div>';
+    html += '<div class="timeline-content" style="max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;">';
+    html += '<div id="timeline-' + name + '">載入中...</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div class="chart-container">';
+    // ⭐ 修改：圖表標題獨立一行
+    html += '<div class="chart-header">' + name + ' 活動數量統計</div>';
+    // ⭐ 增加時間維度選擇器 + 匯出按鈕
+    html += '<div style="display:flex;justify-content:flex-end;align-items:center;padding:8px 20px;gap:12px;">';
+    html += '<label for="timeGranularity-' + name + '" style="color:#333;font-weight:500;">資料顯示單位</label>';
+    html += '<select id="timeGranularity-' + name + '" class="granularity-select" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;min-width:100px;">';
+    html += '<option value="month" selected>按月份</option>';
+    html += '<option value="year">按年份</option>';
+    html += '</select>';
+    html += '<button id="exportBtn-' + name + '" class="refresh-btn" style="background:#10B981;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.2s;" onmouseover="this.style.background=\'#059669\'" onmouseout="this.style.background=\'#10B981\'">匯出資料</button>';
+    html += '</div>';
+    html += '<div id="chart-' + name + '" class="chart-main"></div>';
+    html += '</div>';
+    
+    html += '<div class="summary-table">';
+    html += '<div id="summaryTable-' + name + '">載入中...</div>';
+    html += '</div>';
+    
+    return html;
+  }
+
+  function createActivityTypesHTML() {
+    var html = '';
+    
+    html += '<div class="filter-panel">';
+    html += '<div class="filter-group">';
+    html += '<label>競品篩選</label>';
+    html += '<div class="multi-select" id="competitorMultiSelect">';
+    html += '<div class="multi-select-button" onclick="toggleCompetitorDropdown(event)">';
+    html += '<span id="competitorSelectText">選擇競品</span>';
+    html += '<span>▼</span>';
+    html += '</div>';
+    html += '<div class="multi-select-dropdown" id="competitorDropdown"></div>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="filter-group">';
+    html += '<label>關鍵字搜尋</label>';
+    html += '<input type="text" id="typeFilterInput" class="filter-input" placeholder="輸入類型關鍵字（如：老虎機、魚機）">';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div class="summary-table">';
+    html += '<div id="activityTypesTableContent">載入中...</div>';
+    html += '</div>';
+    
+    return html;
+  }
+
+  function createOtherDataHTML() {
+    var html = '';
+    
+    html += '<div class="summary-table" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">';
+    html += '<div>';
+    html += '<div class="chart-header">其他資料</div>';
+    html += '<div id="otherCatalogList" style="padding:12px; min-height:120px;">載入中...</div>';
+    html += '</div>';
+    html += '<div>';
+    html += '<div class="chart-header">營運正式週報</div>';
+    html += '<div id="biweeklyList" style="padding:12px; min-height:120px;">載入中...</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    return html;
+  }
+
+  function loadOtherData() {
+    var conf = {
+      spreadsheetId: '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI',
+      sheetName: '目錄',
+      catalogHeader: '其他項目連結🎃(需手動更新)',
+      biweeklyHeader: '營運正式簡報連結(需手動更新)🎃'
+    };
+    google.script.run
+      .withSuccessHandler(function(data) {
+        console.log('✅ 其他資料載入成功');
+        
+        if (data.catalog && data.catalog.length > 0) {
+          renderCatalogList(data.catalog);
+        } else {
+          document.getElementById('otherCatalogList').innerHTML = 
+            '<div class="no-data">暫無目錄資料</div>';
+        }
+        
+        if (data.biweekly && data.biweekly.length > 0) {
+          renderBiweeklyList(data.biweekly);
+        } else {
+          document.getElementById('biweeklyList').innerHTML = 
+            '<div class="no-data">暫無雙週報資料</div>';
+        }
+      })
+      .withFailureHandler(function(error) {
+        console.error('❌ 載入其他資料失敗：', error);
+        document.getElementById('otherCatalogList').innerHTML = 
+          '<div class="no-data" style="color: #dc3545;">載入失敗</div>';
+        document.getElementById('biweeklyList').innerHTML = 
+          '<div class="no-data" style="color: #dc3545;">載入失敗</div>';
+      })
+      .getOtherData(conf);
+  }
+
+  function renderCatalogList(catalogData) {
+    var container = document.getElementById('otherCatalogList');
+    if (!container) return;
+    
+    var html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+    
+    catalogData.forEach(function(item) {
+      html += '<div class="catalog-item">';
+      if (item.url) {
+        html += '<a href="#" data-url="' + escapeHtml(item.url) + '" data-name="' + escapeHtml(item.name) + '" onclick="openDocument(this.dataset.url, this.dataset.name); return false;">';
+        html += escapeHtml(item.name) + '</a>';
+      } else {
+        html += '<span>' + escapeHtml(item.name) + '</span>';
+      }
+      html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function renderBiweeklyList(biweeklyData) {
+    var container = document.getElementById('biweeklyList');
+    if (!container) return;
+    
+    var groupedByYear = {};
+    var currentYear = new Date().getFullYear();
+    
+    biweeklyData.forEach(function(item) {
+      var year = extractYearFromName(item.name);
+      
+      if (!year) {
+        year = 'unknown';
+      }
+      
+      if (!groupedByYear[year]) {
+        groupedByYear[year] = [];
+      }
+      
+      groupedByYear[year].push(item);
+    });
+    
+    var years = Object.keys(groupedByYear).sort(function(a, b) {
+      if (a === 'unknown') return 1;
+      if (b === 'unknown') return -1;
+      return parseInt(b) - parseInt(a);
+    });
+    
+    var html = '';
+    
+    years.forEach(function(year) {
+      var items = groupedByYear[year];
+      var isCurrentYear = (parseInt(year) === currentYear);
+      var yearDisplay = year === 'unknown' ? '其他' : year + ' 年';
+      
+      html += '<div class="year-group">';
+      
+      html += '<div class="year-header' + (isCurrentYear ? '' : ' collapsed') + '" ';
+      html += 'onclick="toggleYearGroup(this)">';
+      html += '<span>' + yearDisplay + '</span>';
+      html += '<div style="display: flex; align-items: center; gap: 12px;">';
+      html += '<span class="year-count">' + items.length + ' 份</span>';
+      html += '<span class="year-toggle' + (isCurrentYear ? '' : ' collapsed') + '">▼</span>';
+      html += '</div>';
+      html += '</div>';
+      
+      html += '<div class="year-content' + (isCurrentYear ? '' : ' collapsed') + '">';
+      
+      items.forEach(function(item) {
+        html += '<div class="biweekly-item">';
+        if (item.url) {
+          html += '<a href="#" data-url="' + escapeHtml(item.url) + '" data-name="' + escapeHtml(item.name) + '" onclick="openDocument(this.dataset.url, this.dataset.name); return false;">';
+          html += escapeHtml(item.name) + '</a>';
+        } else {
+          html += '<span>' + escapeHtml(item.name) + '</span>';
+        }
+        html += '</div>';
+      });
+      
+      html += '</div>';
+      html += '</div>';
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function extractYearFromName(name) {
+    if (!name) return null;
+    
+    var match = name.match(/20[2-9][0-9]/);
+    
+    if (match) {
+      return match[0];
+    }
+    
+    return null;
+  }
+
+  function toggleYearGroup(header) {
+    var content = header.nextElementSibling;
+    var toggle = header.querySelector('.year-toggle');
+    if (!content || !toggle) return;
+    
+    if (header.classList.contains('collapsed')) {
+      header.classList.remove('collapsed');
+      content.classList.remove('collapsed');
+      toggle.classList.remove('collapsed');
+    } else {
+      header.classList.add('collapsed');
+      content.classList.add('collapsed');
+      toggle.classList.add('collapsed');
+    }
+  }
+
+  function checkUserPermissionsAndInitialize() {
+    google.script.run
+      .withSuccessHandler(function(res){
+        try {
+          if (res && res.userPermissions) {
+            userPermissions = res.userPermissions;
+            currentUser = res.userEmail || '';
+          } else {
+            userPermissions = { allowedTabs: [] };
+          }
+        } catch(e) { console.warn('解析權限資料失敗', e); }
+        initializeAfterPermissions();
+      })
+      .withFailureHandler(function(err){
+        console.warn('取得權限失敗，使用顯示全部策略', err);
+        userPermissions = { allowedTabs: [] };
+        initializeAfterPermissions();
+      })
+      .getAllCategoriesData();
+  }
+
+  function initializeAfterPermissions() {
+  console.log('🚀 開始載入數據（從快取）');
+  
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('✅ 競品資料載入完成，競品數：' + Object.keys(data).length);
+      
+      // ⭐ 空的競品資料不代表錯誤（可能只有營收分析、行銷等非競品 tab 權限）
+      allCompetitorData = data || {};
+      
+      // 🆕 同時載入數學資料
+      google.script.run
+        .withSuccessHandler(function(mathData) {
+          console.log('✅ 數學資料載入完成，共 ' + (mathData ? mathData.length : 0) + ' 筆');
+          window.mathGamesData = mathData || [];
+
+          // 🆕 接著載入行銷資料
+          google.script.run
+            .withSuccessHandler(function(marketingData) {
+              console.log('✅ 行銷資料載入完成，共 ' + (marketingData ? marketingData.length : 0) + ' 筆');
+              window.marketingData = marketingData || [];
+
+              if (typeof window.finishLoading === 'function') {
+                window.finishLoading();
+              } else {
+                var _ld = document.getElementById('loading'); if (_ld) _ld.style.display = 'none';
+              }
+              initializeTabs(data);
+              setupActivityTypeFilters();
+              updateTabsVisibility();
+              showToast('✅ 資料載入完成！', 'success');
+            })
+            .withFailureHandler(function(error) {
+              console.error('❌ 行銷資料載入失敗：', error);
+              window.marketingData = [];
+
+              if (typeof window.finishLoading === 'function') {
+                window.finishLoading();
+              } else {
+                var _ld = document.getElementById('loading'); if (_ld) _ld.style.display = 'none';
+              }
+              initializeTabs(data);
+              setupActivityTypeFilters();
+              updateTabsVisibility();
+              showToast('⚠️ 部分資料載入失敗', 'warning');
+            })
+            .getMarketingDatabaseData();
+        })
+        .withFailureHandler(function(error) {
+          console.error('❌ 數學資料載入失敗：', error);
+          window.mathGamesData = [];
+          window.marketingData = [];
+
+          if (typeof window.finishLoading === 'function') {
+            window.finishLoading();
+          } else {
+            var _ld = document.getElementById('loading'); if (_ld) _ld.style.display = 'none';
+          }
+          initializeTabs(data);
+          setupActivityTypeFilters();
+          updateTabsVisibility();
+          showToast('⚠️ 部分資料載入失敗', 'warning');
+        })
+        .getMathDatabaseData();  // 🔑 呼叫後端函數載入數學資料
+    })
+    .withFailureHandler(function(error) {
+      document.getElementById('loading').innerHTML = 
+        '<div style="color: red; padding: 20px;">載入失敗：' + error.message + '</div>';
+      console.error('❌ 載入失敗：', error);
+    })
+    .getAllCompetitorStats();
+}
+
+  function showToast(message, type) {
+    var oldToasts = document.querySelectorAll('.custom-toast');
+    oldToasts.forEach(function(old) {
+      if (old && old.parentNode) {
+        old.parentNode.removeChild(old);
+      }
+    });
+    
+    var colors = {
+      success: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      warning: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      info: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    };
+    
+    var toastWrapper = document.createElement('div');
+    toastWrapper.className = 'custom-toast';
+    toastWrapper.innerHTML = 
+      '<div class="toast-inner" style="' +
+      'position: fixed;' +
+      'top: 20px;' +
+      'right: 20px;' +
+      'background: ' + (colors[type] || colors.info) + ';' +
+      'color: white;' +
+      'padding: 16px 24px;' +
+      'border-radius: 8px;' +
+      'box-shadow: 0 4px 12px rgba(0,0,0,0.15);' +
+      'font-size: 14px;' +
+      'font-weight: 500;' +
+      'z-index: 10001;' +
+      'animation: slideInRight 0.3s ease-out forwards;' +
+      '">' +
+      message +
+      '</div>' +
+      '<style>' +
+      '@keyframes slideInRight {' +
+      '  from { transform: translateX(100%); opacity: 0; }' +
+      '  to { transform: translateX(0); opacity: 1; }' +
+      '}' +
+      '@keyframes slideOutRight {' +
+      '  from { transform: translateX(0); opacity: 1; }' +
+      '  to { transform: translateX(100%); opacity: 0; }' +
+      '}' +
+      '</style>';
+    
+    document.body.appendChild(toastWrapper);
+    
+    setTimeout(function() {
+      var toastInner = toastWrapper.querySelector('.toast-inner');
+      if (toastInner) {
+        toastInner.style.animation = 'slideOutRight 0.3s ease-out forwards';
+      }
+      
+      setTimeout(function() {
+        if (toastWrapper && toastWrapper.parentNode) {
+          toastWrapper.parentNode.removeChild(toastWrapper);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    console.log('頁面載入完成，開始檢查權限並初始化...');
+    checkUserPermissionsAndInitialize();
+    
+    // ⭐ 新增：在頁面載入後添加頁籤收合按鈕
+    setTimeout(function() {
+      var tabContainer = document.querySelector('.tab-container');
+      if (tabContainer && !document.getElementById('tabNavToggleBtn')) {
+        var toggleBtn = document.createElement('button');
+        toggleBtn.id = 'tabNavToggleBtn';
+        toggleBtn.className = 'tab-nav-toggle-btn';
+        toggleBtn.innerHTML = '▲';
+        toggleBtn.setAttribute('title', '收合頁籤列');
+        toggleBtn.onclick = toggleTabNav;
+        tabContainer.appendChild(toggleBtn);
+      }
+    }, 500);
+  });
+
+  // ⭐ 新增：統一收合功能（頁籤列 + 篩選條件）
+  function toggleTabNav() {
+    var tabContainer = document.querySelector('.tab-container');
+    var tabNav = document.querySelector('.tab-nav');
+    var toggleBtn = document.getElementById('tabNavToggleBtn');
+    var allControlPanels = document.querySelectorAll('.control-panel-wrapper');
+    
+    if (!tabNav || !toggleBtn) return;
+    
+    var isCollapsed = tabNav.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+      // 展開：顯示頁籤列和篩選條件
+      tabNav.classList.remove('collapsed');
+      tabContainer.classList.remove('collapsed');
+      toggleBtn.classList.remove('collapsed');
+      toggleBtn.innerHTML = '▲';
+      toggleBtn.setAttribute('title', '收合');
+      
+      // ⭐ 將按鈕移回容器內
+      if (toggleBtn.parentNode !== tabContainer) {
+        tabContainer.appendChild(toggleBtn);
+      }
+      
+      // 顯示所有篩選條件
+      allControlPanels.forEach(function(panel) {
+        panel.style.display = 'block';
+      });
+    } else {
+      // 收合：隱藏頁籤列和篩選條件
+      tabNav.classList.add('collapsed');
+      tabContainer.classList.add('collapsed');
+      toggleBtn.classList.add('collapsed');
+      toggleBtn.innerHTML = '▼';
+      toggleBtn.setAttribute('title', '展開');
+      
+      // ⭐ 將按鈕移到 body 下，避免隨容器消失
+      if (toggleBtn.parentNode === tabContainer) {
+        document.body.appendChild(toggleBtn);
+      }
+      
+      // 隱藏所有篩選條件
+      allControlPanels.forEach(function(panel) {
+        panel.style.display = 'none';
+      });
+    }
+  }
+
+ function openDocument(url, title) {
+  if (!url) {
+    showToast('❌ 無效的文件連結', 'warning');
+    return;
+  }
+  
+  var isDriveFolder = url.indexOf('drive.google.com/drive/folders/') !== -1 ||
+                      url.indexOf('drive.google.com/drive/u/') !== -1;
+  
+  if (isDriveFolder) {
+    console.log('🔗 雲端硬碟資料夾連結，直接開新分頁:', title);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  
+  if (url.indexOf('docs.google.com') !== -1 || 
+      url.indexOf('spreadsheets') !== -1 ||
+      url.indexOf('presentation') !== -1 ||
+      url.indexOf('document') !== -1) {
+    console.log('📄 Google Docs 文件，使用 iframe:', title);
+    openGoogleDoc(url, title);
+    return;
+  }
+  
+  console.log('🔗 其他連結，直接開新分頁:', title);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+ function openGoogleDoc(url, title) {
+  var overlay = document.createElement('div');
+  overlay.id = 'docViewerOverlay';
+  overlay.style.cssText = 
+    'position: fixed;' +
+    'top: 0;' +
+    'left: 0;' +
+    'right: 0;' +
+    'bottom: 0;' +
+    'background: rgba(0, 0, 0, 0.8);' +
+    'z-index: 10000;' +
+    'display: flex;' +
+    'flex-direction: column;' +
+    'padding: 20px;' +
+    'animation: fadeIn 0.3s ease;';
+  
+  var header = document.createElement('div');
+  header.style.cssText = 
+    'background: white;' +
+    'padding: 15px 20px;' +
+    'border-radius: 8px 8px 0 0;' +
+    'display: flex;' +
+    'justify-content: space-between;' +
+    'align-items: center;' +
+    'box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+  
+  var titleDiv = document.createElement('div');
+  titleDiv.style.cssText = 'font-weight: 600; font-size: 18px; color: #333;';
+  titleDiv.textContent = title || '文件檢視器';
+  
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 關閉';
+  closeBtn.style.cssText = 
+    'padding: 8px 16px;' +
+    'background: #dc3545;' +
+    'color: white;' +
+    'border: none;' +
+    'border-radius: 4px;' +
+    'cursor: pointer;' +
+    'font-size: 14px;' +
+    'font-weight: 500;' +
+    'transition: background 0.2s;';
+  closeBtn.onmouseover = function() { this.style.background = '#c82333'; };
+  closeBtn.onmouseout = function() { this.style.background = '#dc3545'; };
+  closeBtn.onclick = function() {
+    document.body.removeChild(overlay);
+  };
+  
+  header.appendChild(titleDiv);
+  header.appendChild(closeBtn);
+  
+  var iframeContainer = document.createElement('div');
+  iframeContainer.style.cssText = 
+    'flex: 1;' +
+    'background: white;' +
+    'border-radius: 0 0 8px 8px;' +
+    'overflow: hidden;' +
+    'box-shadow: 0 4px 16px rgba(0,0,0,0.2);';
+  
+  var previewUrl = url;
+  
+  if (url.indexOf('spreadsheets') !== -1) {
+    if (url.indexOf('/preview') !== -1) {
+      previewUrl = url.replace('/preview', '/edit');
+    } else if (url.indexOf('/view') === -1 && url.indexOf('/edit') === -1) {
+      if (url.indexOf('?') !== -1) {
+        previewUrl = url.replace('?', '/edit?');
+      } else if (url.indexOf('#') !== -1) {
+        previewUrl = url.replace('#', '/edit#');
+      } else {
+        previewUrl = url + '/edit';
+      }
+    }
+  } else {
+    if (url.indexOf('/view') !== -1 || url.indexOf('/edit') !== -1) {
+      previewUrl = url.replace(/\/(edit|view).*/, '/preview');
+    } else if (url.indexOf('drive.google.com/file/d/') !== -1) {
+      var fileId = url.match(/\/d\/([^\/]+)/);
+      if (fileId) {
+        previewUrl = 'https://drive.google.com/file/d/' + fileId[1] + '/preview';
+      }
+    }
+  }
+  
+  var iframe = document.createElement('iframe');
+  iframe.src = previewUrl;
+  iframe.style.cssText = 
+    'width: 100%;' +
+    'height: 100%;' +
+    'border: none;';
+  
+  iframeContainer.appendChild(iframe);
+  
+  overlay.appendChild(header);
+  overlay.appendChild(iframeContainer);
+  
+  document.body.appendChild(overlay);
+  
+  var escHandler = function(e) {
+    if (e.key === 'Escape') {
+      if (document.getElementById('docViewerOverlay')) {
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', escHandler);
+      }
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+}
+
+  if (!document.getElementById('docViewerStyle')) {
+    var style = document.createElement('style');
+    style.id = 'docViewerStyle';
+    style.textContent = 
+      '@keyframes fadeIn {' +
+      '  from { opacity: 0; }' +
+      '  to { opacity: 1; }' +
+      '}';
+    document.head.appendChild(style);
+  }
+</script>

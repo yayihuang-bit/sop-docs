@@ -1,0 +1,1246 @@
+<script>
+  // ===== 時間軸核心功能 =====
+  function initializeCompetitorData(competitorName) {
+    console.log('初始化競品數據：', competitorName);
+    
+    var competitorData = allCompetitorData[competitorName];
+    if (!competitorData) {
+      console.log('沒有找到競品數據：', competitorName);
+      var tableElement = document.getElementById('summaryTable-' + competitorName);
+      var timelineElement = document.getElementById('timeline-' + competitorName);
+      
+      if (tableElement) {
+        tableElement.innerHTML = '<span style="color:#888">（無資料）</span>';
+      }
+      if (timelineElement) {
+        timelineElement.innerHTML = '<div class="no-data">暫無活動資料</div>';
+      }
+      return;
+    }
+    
+    var statsData = competitorData.stats || [];
+    var activitiesData = competitorData.activities || [];
+    
+    console.log('競品數據統計 - 活動數：', activitiesData.length, '統計數：', statsData.length);
+    
+    if (statsData.length === 0 && activitiesData.length === 0) {
+      console.log('競品數據為空：', competitorName);
+      var tableElement = document.getElementById('summaryTable-' + competitorName);
+      var timelineElement = document.getElementById('timeline-' + competitorName);
+      
+      if (tableElement) {
+        tableElement.innerHTML = '<span style="color:#888">（無資料）</span>';
+      }
+      if (timelineElement) {
+        timelineElement.innerHTML = '<div class="no-data">暫無活動資料</div>';
+      }
+      return;
+    }
+    
+    var allMonths = [];
+    if (statsData.length > 0) {
+      allMonths = allMonths.concat(statsData.map(function(d) { return d.month; }));
+    }
+    if (activitiesData.length > 0) {
+      allMonths = allMonths.concat(activitiesData.map(function(d) { return d.month; }));
+    }
+    
+    if (allMonths.length > 0) {
+      var months = Array.from(new Set(allMonths)).sort();
+      var startMonth = months[0];
+      var endMonth = months[months.length - 1];
+      
+      console.log('設定時間範圍：', startMonth, '到', endMonth);
+      
+      var startInput = document.getElementById('startMonth-' + competitorName);
+      var endInput = document.getElementById('endMonth-' + competitorName);
+      
+      if (startInput && endInput) {
+        startInput.value = startMonth;
+        endInput.value = endMonth;
+      }
+    }
+    
+    renderTimeline(competitorName, activitiesData);
+    
+    if (statsData && statsData.length > 0) {
+      renderChart(competitorName, statsData);
+      renderSummaryTable(competitorName, statsData);
+    } else if (activitiesData && activitiesData.length > 0) {
+      var generatedStats = generateStatsFromActivities(activitiesData);
+      renderChart(competitorName, generatedStats);
+      renderSummaryTable(competitorName, generatedStats);
+    }
+  }
+
+  // ===== 跨月份輔助函數 =====
+  function getActivityAllMonths(activity) {
+    var baseMonth = activity.month; // "2024-12"
+    if (!activity.startDate || !activity.endDate) return [baseMonth];
+
+    var startParts = activity.startDate.split('/');
+    var endParts = activity.endDate.split('/');
+    var startMonthNum = parseInt(startParts[0]);
+    var endMonthNum = parseInt(endParts[0]);
+
+    var baseYear = parseInt(baseMonth.split('-')[0]);
+    var startYear = baseYear;
+    var endYear = (endMonthNum < startMonthNum) ? baseYear + 1 : baseYear;
+
+    // 若名稱含完整日期，優先使用
+    var nameMatch = activity.name && activity.name.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s*~\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if (nameMatch) {
+      startYear = parseInt(nameMatch[1]);
+      startMonthNum = parseInt(nameMatch[2]);
+      endYear = parseInt(nameMatch[4]);
+      endMonthNum = parseInt(nameMatch[5]);
+    }
+
+    var result = [];
+    var y = startYear, m = startMonthNum;
+    while (y < endYear || (y === endYear && m <= endMonthNum)) {
+      var monthStr = y + '-' + (m < 10 ? '0' + m : '' + m);
+      result.push(monthStr);
+      m++;
+      if (m > 12) { m = 1; y++; }
+    }
+
+    return result.length > 0 ? result : [baseMonth];
+  }
+
+  // ===== 時間軸渲染 =====
+  function renderTimeline(competitorName, filteredActivities, startMonth, endMonth) {
+    renderTimelineWithSearch(competitorName, filteredActivities, startMonth, endMonth, '');
+  }
+
+  function renderTimelineWithSearch(competitorName, filteredActivities, startMonth, endMonth, searchKeyword) {
+    var timelineId = 'timeline-' + competitorName;
+    var timelineElement = document.getElementById(timelineId);
+    
+    if (!timelineElement) {
+      return;
+    }
+    
+    if (!filteredActivities || filteredActivities.length === 0) {
+      timelineElement.innerHTML = '<div class="no-data">暫無活動資料</div>';
+      return;
+    }
+    
+    var searchFilteredActivities = filteredActivities;
+    if (searchKeyword && searchKeyword.trim() !== '') {
+      searchFilteredActivities = filteredActivities.filter(function(activity) {
+        return isActivityMatchKeyword(activity, searchKeyword);
+      });
+    }
+    
+    var monthlyActivities = {};
+    searchFilteredActivities.forEach(function(activity) {
+      var allMonths = getActivityAllMonths(activity);
+      allMonths.forEach(function(month) {
+        if (!monthlyActivities[month]) {
+          monthlyActivities[month] = {};
+        }
+        if (!monthlyActivities[month][activity.type]) {
+          monthlyActivities[month][activity.type] = [];
+        }
+        monthlyActivities[month][activity.type].push(activity);
+      });
+    });
+    
+    var months = Object.keys(monthlyActivities).sort().reverse();
+    
+    if (startMonth && endMonth) {
+      months = months.filter(function(month) {
+        return month >= startMonth && month <= endMonth;
+      });
+    }
+    
+    if (months.length === 0) {
+      if (searchKeyword && searchKeyword.trim() !== '') {
+        timelineElement.innerHTML = '<div class="no-data">搜尋範圍內無匹配活動</div>';
+      } else {
+        timelineElement.innerHTML = '<div class="no-data">篩選範圍內無活動資料</div>';
+      }
+      return;
+    }
+    
+    var html = '';
+    
+    months.forEach(function(month) {
+      var monthData = monthlyActivities[month];
+      var yearMonth = month.split('-');
+      var year = parseInt(yearMonth[0]);
+      var monthNum = parseInt(yearMonth[1]);
+      
+      var daysInMonth = new Date(year, monthNum, 0).getDate();
+      
+      html += '<div class="month-section">';
+      html += '<div class="month-header">' + year + '年' + monthNum + '月</div>';
+      var calcMinWidth = (daysInMonth * 46) + 200;
+      html += '<table class="timeline-table" style="min-width:' + calcMinWidth + 'px !important; width:auto;">';
+      
+      html += buildTimelineDateHeader(daysInMonth);
+      html += buildTimelineWeekdayHeader(year, monthNum, daysInMonth);
+      
+      var typeOrder = [
+        '新遊戲', '抽獎活動', '主題活動', '老虎機', '柏青',
+        '魚機-活動海皇', '魚機-新海皇/魚種', '魚機-主特色改版', '魚機-活動', '魚機-優化',
+        '牌桌', '新系統功能', '儲值', '每登', 'CCU', '其他-優化', '其他'
+      ];
+      
+      var availableTypes = typeOrder.filter(function(type) {
+        return monthData[type] && monthData[type].length > 0;
+      });
+      
+      availableTypes.forEach(function(type) {
+        var activities = monthData[type];
+        var typeClass = getActivityTypeClass(type);
+        
+        var rows = calculateActivityRowsIntelligent(activities, daysInMonth, year, monthNum);
+        
+        rows.forEach(function(rowActivities, rowIndex) {
+          html += '<tr>';
+          
+          if (rowIndex === 0) {
+            html += '<td class="category-cell ' + typeClass + '" rowspan="' + rows.length + '">';
+            html += type;
+            html += '</td>';
+          }
+          
+          for (var day = 1; day <= daysInMonth; day++) {
+            var dayActivity = rowActivities[day - 1];
+            
+            if (dayActivity) {
+              if (dayActivity.isStart) {
+                var colspan = dayActivity.duration;
+                var activity = dayActivity.activity;
+                
+                var isMatch = searchKeyword && isActivityMatchKeyword(activity, searchKeyword);
+                
+                var cellClass = 'activity-cell ' + typeClass;
+                
+                html += '<td class="' + cellClass + '" colspan="' + colspan + '"';
+                html += ' title="' + activity.originalContent + '">';
+                
+                var displayName = activity.name;
+                if (isMatch && searchKeyword) {
+                  displayName = highlightKeyword(activity.name, searchKeyword);
+                }
+                
+                if (activity.url) {
+                  html += '<a href="' + activity.url + '" target="_blank" class="activity-link" ';
+                  html += 'style="color: inherit; text-decoration: none; font-weight: bold;">';
+                  html += displayName;
+                  html += '</a>';
+                } else {
+                  html += displayName;
+                }
+                
+                html += '</td>';
+                
+                day += colspan - 1;
+              }
+            } else {
+              html += '<td></td>';
+            }
+          }
+          
+          html += '</tr>';
+        });
+      });
+      
+      html += '</table>';
+      html += '</div>';
+    });
+    
+    timelineElement.innerHTML = html;
+  }
+
+  // ===== 活動排列處理 =====
+  function calculateActivityRowsIntelligent(activities, daysInMonth, renderYear, renderMonth) {
+  if (!activities || activities.length === 0) {
+    return [[]];
+  }
+  
+  var sortedActivities = activities.slice().sort(function(a, b) {
+    return parseActivityDateForSort(a.startDate, a.month) - parseActivityDateForSort(b.startDate, b.month);
+  });
+  
+  var rows = [];
+  
+  sortedActivities.forEach(function(activity) {
+    var startDay = null;
+    var endDay = null;
+    var currentMonth = renderMonth !== undefined ? renderMonth : parseInt(activity.month.split('-')[1]);
+    var currentYear = renderYear !== undefined ? renderYear : parseInt(activity.month.split('-')[0]);
+    
+    if (activity.startDate && activity.endDate) {
+      var startParts = activity.startDate.split('/');
+      var endParts = activity.endDate.split('/');
+      var startMonth = parseInt(startParts[0]);
+      var startDayNum = parseInt(startParts[1]);
+      var endMonth = parseInt(endParts[0]);
+      var endDayNum = parseInt(endParts[1]);
+      
+      // 🆕 從活動名稱中提取完整日期資訊（用於跨年判斷）
+      var nameMatch = activity.name.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s*~\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      var isMultiYear = false;
+      var activityStartYear = currentYear;
+      var activityEndYear = currentYear;
+      
+      if (nameMatch) {
+        var fullStartYear = parseInt(nameMatch[1]);
+        var fullStartMonth = parseInt(nameMatch[2]);
+        var fullEndYear = parseInt(nameMatch[4]);
+        var fullEndMonth = parseInt(nameMatch[5]);
+        
+        if (fullStartYear !== fullEndYear) {
+          // 🔑 檢測到跨年活動
+          isMultiYear = true;
+          activityStartYear = fullStartYear;
+          activityEndYear = fullEndYear;
+          
+          console.log('🎯 檢測到跨年活動:', activity.name);
+          console.log('   開始:', fullStartYear + '/' + fullStartMonth);
+          console.log('   結束:', fullEndYear + '/' + fullEndMonth);
+          console.log('   當前月份:', currentYear + '-' + currentMonth);
+        }
+      } else if (activity.isMultiYear || endMonth < startMonth) {
+        // 如果名稱中沒有完整日期，但有 isMultiYear 標記或月份倒序
+        isMultiYear = true;
+        activityEndYear = currentYear + 1;
+        console.log('⚠️ 可能的跨年活動（月份倒序）:', activity.name);
+      }
+      
+      // 🆕 計算在當前月份中的顯示範圍
+      if (isMultiYear) {
+        if (currentMonth === startMonth && currentYear === activityStartYear) {
+          // 活動開始月份
+          startDay = startDayNum;
+          endDay = daysInMonth;
+          console.log('   → 顯示範圍（開始月）:', startDay + '~' + endDay);
+        } else if (currentMonth === endMonth && currentYear === activityEndYear) {
+          // 活動結束月份
+          startDay = 1;
+          endDay = endDayNum;
+          console.log('   → 顯示範圍（結束月）:', startDay + '~' + endDay);
+        } else if ((currentYear === activityStartYear && currentMonth > startMonth) || 
+                   (currentYear === activityEndYear && currentMonth < endMonth) ||
+                   (currentYear > activityStartYear && currentYear < activityEndYear)) {
+          // 活動中間月份
+          startDay = 1;
+          endDay = daysInMonth;
+          console.log('   → 顯示範圍（中間月）:', startDay + '~' + endDay);
+        } else {
+          // 不在活動範圍內
+          console.log('   → 不在範圍內，跳過');
+          return;
+        }
+      } else {
+        // 非跨年活動
+        if (startMonth === currentMonth && endMonth === currentMonth) {
+          startDay = startDayNum;
+          endDay = endDayNum;
+        } else if (startMonth === currentMonth && endMonth !== currentMonth) {
+          startDay = startDayNum;
+          endDay = daysInMonth;
+        } else if (startMonth !== currentMonth && endMonth === currentMonth) {
+          startDay = 1;
+          endDay = endDayNum;
+        } else if (startMonth < currentMonth && endMonth > currentMonth) {
+          startDay = 1;
+          endDay = daysInMonth;
+        } else {
+          return;
+        }
+      }
+    } else {
+      startDay = Math.floor(daysInMonth / 2);
+      endDay = startDay;
+    }
+    
+    // 🆕 驗證日期有效性
+    if (startDay && endDay && startDay <= daysInMonth && endDay <= daysInMonth && startDay > 0 && endDay > 0) {
+      var placed = false;
+      
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        var row = rows[rowIndex];
+        var canPlace = true;
+        
+        for (var day = startDay; day <= endDay; day++) {
+          if (row[day - 1]) {
+            canPlace = false;
+            break;
+          }
+        }
+        
+        if (canPlace) {
+          for (var day = startDay; day <= endDay; day++) {
+            if (day === startDay) {
+              row[day - 1] = {
+                activity: activity,
+                isStart: true,
+                duration: endDay - startDay + 1
+              };
+            } else {
+              row[day - 1] = {
+                activity: activity,
+                isContinue: true
+              };
+            }
+          }
+          placed = true;
+          break;
+        }
+      }
+      
+      if (!placed) {
+        var newRow = new Array(daysInMonth);
+        for (var day = startDay; day <= endDay; day++) {
+          if (day === startDay) {
+            newRow[day - 1] = {
+              activity: activity,
+              isStart: true,
+              duration: endDay - startDay + 1
+            };
+          } else {
+            newRow[day - 1] = {
+              activity: activity,
+              isContinue: true
+            };
+          }
+        }
+        rows.push(newRow);
+      }
+      
+      console.log('✅ 活動將顯示:', activity.name, '→', startDay + '~' + endDay + '日');
+    } else {
+      console.warn('❌ 活動日期範圍無效:', activity.name);
+      console.warn('   startDay:', startDay, 'endDay:', endDay, 'daysInMonth:', daysInMonth);
+    }
+  });
+  
+  return rows.length > 0 ? rows : [[]];
+}
+
+  // ===== 圖表渲染功能（修復圖例遮擋）=====
+  function renderChart(competitorName, filteredData) {
+    var chartId = 'chart-' + competitorName;
+    var chartElement = document.getElementById(chartId);
+    
+    if (!chartElement) {
+      console.log('renderChart: 找不到圖表元素', chartId);
+      return;
+    }
+    
+    console.log('renderChart: 開始渲染', competitorName, '數據量:', filteredData ? filteredData.length : 0);
+    
+    if (!filteredData || filteredData.length === 0) {
+      if (charts[competitorName]) {
+        charts[competitorName].clear();
+        charts[competitorName].setOption({
+          title: {
+            text: '暫無資料',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+              fontSize: 16,
+              color: '#888'
+            }
+          }
+        });
+      } else {
+        chartElement.innerHTML = '<div class="no-data">暫無資料</div>';
+      }
+      return;
+    }
+    
+    if (!charts[competitorName]) {
+      charts[competitorName] = echarts.init(chartElement);
+    }
+    
+    var chart = charts[competitorName];
+    
+    // ⭐ 步驟 1：讀取時間維度選擇器的值
+    var granularitySelector = document.getElementById('timeGranularity-' + competitorName);
+    var granularity = granularitySelector ? granularitySelector.value : 'month'; // 預設為 'month'
+    
+    // ⭐ 步驟 2：根據時間維度處理數據
+    var processedData;
+    var timeLabels; // X 軸標籤（月份或年份）
+    var timeLabelName; // X 軸名稱
+    
+    if (granularity === 'year') {
+      // ========== 按年份聚合 ==========
+      // 將 filteredData 中的月份數據（如 2024-01, 2024-02）聚合成年份數據（2024）
+      
+      var yearTypeMap = {}; // { "2024": { "新遊戲": 5, "老虎機": 3 } }
+      
+      filteredData.forEach(function(d) {
+        var year = d.month.substring(0, 4); // 從 "2024-01" 取得 "2024"
+        
+        if (!yearTypeMap[year]) {
+          yearTypeMap[year] = {};
+        }
+        
+        if (!yearTypeMap[year][d.type]) {
+          yearTypeMap[year][d.type] = 0;
+        }
+        
+        yearTypeMap[year][d.type] += d.count;
+      });
+      
+      // 將 yearTypeMap 轉換為陣列格式
+      processedData = [];
+      Object.keys(yearTypeMap).forEach(function(year) {
+        Object.keys(yearTypeMap[year]).forEach(function(type) {
+          processedData.push({
+            month: year, // 這裡 'month' 欄位實際上存的是年份
+            type: type,
+            count: yearTypeMap[year][type]
+          });
+        });
+      });
+      
+      timeLabels = Array.from(new Set(processedData.map(function(d) { return d.month; }))).sort();
+      timeLabelName = '年份';
+      
+    } else {
+      // ========== 按月份（預設） ==========
+      processedData = filteredData;
+      timeLabels = Array.from(new Set(filteredData.map(function(d) { return d.month; }))).sort();
+      timeLabelName = '月份';
+    }
+    
+    var types = Array.from(new Set(processedData.map(function(d) { return d.type; })));
+    
+    var mainTypeColors = {
+      '新遊戲': '#F4D03F',
+      '抽獎活動': '#FF6B6B',
+      '主題活動': '#4ECDC4',
+      '老虎機': '#FF8A65',
+      '柏青': '#D4A574',
+      '牌桌': '#B19CD9',
+      '新系統功能': '#56C596',
+      '儲值': '#777777',
+      '每登': '#999999',
+      'CCU': '#9966CC',
+      '其他-優化': '#E67E22',
+      '其他': '#7FB069'
+    };
+    
+    var fishColors = {
+      '魚機': '#74A9FF',
+      '魚機-主特色改版': '#5B9BD5',
+      '魚機-活動海皇': '#4472C4',
+      '魚機-新海皇/魚種': '#2F5597',
+      '魚機-活動': '#8DB4E2',
+      '魚機-優化': '#B4C6E7'
+    };
+    
+    var defaultColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F39C12', '#9B59B6', '#E74C3C'];
+    
+    var colorMap = {};
+    var defIdx = 0;
+    
+    types.forEach(function(type) {
+      if (type in mainTypeColors) {
+        colorMap[type] = mainTypeColors[type];
+      } else if (type in fishColors) {
+        colorMap[type] = fishColors[type];
+      } else if (type.includes('魚機')) {
+        colorMap[type] = '#D9E1F2';
+      } else {
+        colorMap[type] = defaultColors[defIdx % defaultColors.length];
+        defIdx++;
+      }
+    });
+    
+    var series = types.map(function(type) {
+      var data = timeLabels.map(function(timeLabel) {
+        var found = processedData.find(function(d) { return d.type === type && d.month === timeLabel; });
+        return found ? found.count : 0;
+      });
+      
+      return {
+        name: type,
+        type: 'bar',
+        stack: 'total',
+        itemStyle: { color: colorMap[type] },
+        data: data
+      };
+    });
+    
+    chart.clear();
+    chart.setOption({
+      color: types.map(function(type) { return colorMap[type]; }),
+      tooltip: { 
+        trigger: 'axis',
+        appendToBody: true,
+        confine: false,
+        formatter: function(params) {
+          var timeValue = params[0].axisValue; // 可能是月份（2024-01）或年份（2024）
+          var displayLabel;
+          
+          // 根據當前維度決定顯示格式
+          if (granularity === 'year') {
+            displayLabel = timeValue + ' 年活動清單';
+          } else {
+            displayLabel = timeValue.replace('-', '/') + ' 活動清單';
+          }
+          
+          var html = '<div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">' + 
+                     displayLabel + '</div>';
+          
+          var competitorData = allCompetitorData[competitorName];
+          if (competitorData && competitorData.activities) {
+            // 篩選活動：根據維度篩選
+            var filteredActivities = competitorData.activities.filter(function(activity) {
+              var match;
+              
+              if (granularity === 'year') {
+                // 按年份篩選：activity.month 的前 4 個字元等於 timeValue
+                match = (activity.month.substring(0, 4) === timeValue);
+              } else {
+                // 按月份篩選：activity.month 完全等於 timeValue
+                match = (activity.month === timeValue);
+              }
+              
+              if (!match) return false;
+              
+              // 套用關鍵字篩選
+              var currentKeyword = currentSearchKeyword[competitorName] || '';
+              if (currentKeyword) {
+                return isActivityMatchKeyword(activity, currentKeyword);
+              }
+              return true;
+            });
+            
+            if (filteredActivities.length > 0) {
+              var typeGroups = {};
+              filteredActivities.forEach(function(activity) {
+                if (!typeGroups[activity.type]) {
+                  typeGroups[activity.type] = [];
+                }
+                typeGroups[activity.type].push(activity);
+              });
+              
+              params.forEach(function(param) {
+                if (param.value > 0 && typeGroups[param.seriesName]) {
+                  var activities = typeGroups[param.seriesName];
+                  var typeColor = param.color;
+                  
+                  html += '<div style="margin: 6px 0; padding: 4px; border-left: 3px solid ' + typeColor + ';">';
+                  html += '<div style="font-weight: bold; color: ' + typeColor + '; margin-bottom: 4px;">';
+                  html += param.seriesName + ' (' + param.value + '個活動)';
+                  html += '</div>';
+                  
+                  activities.forEach(function(activity, index) {
+                    if (index < 5) {
+                      html += '<div style="margin: 2px 0; padding: 2px 0; font-size: 12px; color: #666;">';
+                      if (activity.url) {
+                        html += '🔗 ' + activity.name;
+                      } else {
+                        html += '📄 ' + activity.name;
+                      }
+                      html += '</div>';
+                    }
+                  });
+                  
+                  if (activities.length > 5) {
+                    html += '<div style="font-size: 11px; color: #888; margin-top: 4px;">... 還有 ' + 
+                           (activities.length - 5) + ' 個活動</div>';
+                  }
+                  
+                  html += '</div>';
+                }
+              });
+              
+              html += '<div style="font-size: 11px; color: #888; margin-top: 8px; border-top: 1px solid #eee; padding-top: 4px;">';
+              html += '💡 查看詳細資訊請點擊下方時間軸';
+              html += '</div>';
+            } else {
+              html += '<div style="color: #888; font-size: 12px;">此月份無活動資料</div>';
+            }
+          }
+          
+          return html;
+        },
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        textStyle: {
+          color: '#333'
+        },
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 6px; max-width: 350px; z-index: 2147483647;'
+      },
+      legend: { 
+        data: types, 
+        top: 10,
+        type: 'scroll',
+        orient: 'horizontal',
+        pageButtonPosition: 'end',
+        pageIconSize: 12,
+        pageTextStyle: {
+          fontSize: 12
+        },
+        itemGap: 10,
+        itemWidth: 25,
+        itemHeight: 14,
+        textStyle: {
+          fontSize: 13
+        }
+      },
+      grid: { 
+        left: 80, 
+        right: 40, 
+        top: 90, 
+        bottom: 60 
+      },
+      xAxis: { 
+        type: 'category', 
+        data: timeLabels, 
+        name: timeLabelName,
+        axisLabel: { rotate: 45, fontSize: 12 }
+      },
+      yAxis: { type: 'value', name: '活動數量' },
+      series: series
+    });
+    
+    chart.off('click');
+    chart.on('click', function(params) {
+      var month = params.name;
+      var type = params.seriesName;
+      
+      var timelineElement = document.getElementById('timeline-' + competitorName);
+      if (timelineElement) {
+        timelineElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  function renderSummaryTable(competitorName, filteredData) {
+    var tableId = 'summaryTable-' + competitorName;
+    var tableElement = document.getElementById(tableId);
+    
+    if (!filteredData || filteredData.length === 0) {
+      if (tableElement) tableElement.innerHTML = '<span style="color:#888">（無資料）</span>';
+      return;
+    }
+    
+    var typeCount = {};
+    filteredData.forEach(function(d) {
+      if (!typeCount[d.type]) typeCount[d.type] = 0;
+      typeCount[d.type] += d.count;
+    });
+    
+    var minMonth = filteredData[0].month;
+    var maxMonth = filteredData[0].month;
+    filteredData.forEach(function(d) {
+      if (d.month < minMonth) minMonth = d.month;
+      if (d.month > maxMonth) maxMonth = d.month;
+    });
+    
+    // ⭐ 檢查當前時間維度，決定顯示格式
+    var granularitySelector = document.getElementById('timeGranularity-' + competitorName);
+    var granularity = granularitySelector ? granularitySelector.value : 'month';
+    
+    var minLabel, maxLabel;
+    if (granularity === 'year') {
+      // 年份格式：2024 年
+      minLabel = minMonth + ' 年';
+      maxLabel = maxMonth + ' 年';
+    } else {
+      // 月份格式：2024/01
+      minLabel = minMonth.replace('-', '/');
+      maxLabel = maxMonth.replace('-', '/');
+    }
+    
+    var html = '<b>統計區間：</b>' + minLabel + ' ~ ' + maxLabel + '<br><table style="border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 8px; overflow: hidden; min-width: 320px; margin-top: 10px; width: 100%; max-width: 600px;"><tr><th style="padding: 12px 18px; font-size: 16px; background: #f8f9fa; font-weight: 600; color: #333; border-bottom: 2px solid #e9ecef; text-align: left;">活動類型</th><th style="padding: 12px 18px; font-size: 16px; background: #f8f9fa; font-weight: 600; color: #333; border-bottom: 2px solid #e9ecef; text-align: right;">數量</th></tr>';
+    Object.keys(typeCount).forEach(function(type) {
+      html += '<tr style="cursor: pointer;" onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'\'"><td style="padding: 12px 18px; font-size: 16px; border-bottom: 1px solid #f0f0f0; color: #555;">' + type + '</td><td style="padding: 12px 18px; font-size: 16px; border-bottom: 1px solid #f0f0f0; color: #555; text-align: right; font-weight: 500;">' + typeCount[type] + '</td></tr>';
+    });
+    html += '</table>';
+    
+    if (tableElement) tableElement.innerHTML = html;
+  }
+
+  // ===== 輸入控制設置 =====
+  function setupDateInputs(competitorName) {
+    var startInput = document.getElementById('startMonth-' + competitorName);
+    var endInput = document.getElementById('endMonth-' + competitorName);
+    if (!startInput || !endInput) return;
+    
+    // ⭐ type="month" 會自動處理格式驗證，只需處理範圍邏輯
+    startInput.addEventListener('change', function() {
+      if (this.value.trim()) {
+        var endVal = endInput.value.trim();
+        if (endVal && this.value > endVal) {
+          endInput.value = this.value;
+        }
+        // 觸發資料更新
+        filterAndRender(competitorName);
+      }
+    });
+    
+    endInput.addEventListener('change', function() {
+      if (this.value.trim()) {
+        var startVal = startInput.value.trim();
+        if (startVal && startVal > this.value) {
+          startInput.value = this.value;
+        }
+        // 觸發資料更新
+        filterAndRender(competitorName);
+      }
+    });
+  }
+
+  function setupSearchInputs(competitorName) {
+    var searchInput = document.getElementById('searchKeyword-' + competitorName);
+    var searchBtn = document.getElementById('searchBtn-' + competitorName);
+    var clearBtn = document.getElementById('clearSearchBtn-' + competitorName);
+    
+    if (!searchInput || !searchBtn || !clearBtn) return;
+    
+    searchBtn.addEventListener('click', function() {
+      performSearch(competitorName);
+    });
+    
+    clearBtn.addEventListener('click', function() {
+      clearSearch(competitorName);
+    });
+    
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        performSearch(competitorName);
+      }
+    });
+    
+    console.log('搜尋功能已設定完成：', competitorName);
+  }
+
+  /**
+   * 設定時間維度選擇器
+   * 功能：綁定時間維度選擇器的 change 事件，當用戶切換「按月份」或「按年份」時重新渲染圖表
+   * 
+   * @param {string} competitorName - 競品名稱
+   */
+  function setupTimeGranularitySelector(competitorName) {
+    var selector = document.getElementById('timeGranularity-' + competitorName);
+    
+    if (!selector) {
+      console.warn('找不到時間維度選擇器：timeGranularity-' + competitorName);
+      return;
+    }
+    
+    // 綁定 change 事件：當用戶切換維度時重新渲染
+    selector.addEventListener('change', function() {
+      console.log('時間維度切換為：' + this.value + ' (競品：' + competitorName + ')');
+      filterAndRender(competitorName);
+    });
+    
+    console.log('時間維度選擇器已設定完成：', competitorName);
+  }
+
+  function filterAndRender(competitorName) {
+    var startInput = document.getElementById('startMonth-' + competitorName);
+    var endInput = document.getElementById('endMonth-' + competitorName);
+    var startVal = startInput ? startInput.value.trim() : '';
+    var endVal = endInput ? endInput.value.trim() : '';
+    var competitorData = allCompetitorData[competitorName];
+    
+    if (!competitorData) return;
+    
+    var statsData = competitorData.stats || [];
+    var activitiesData = competitorData.activities || [];
+    
+    if (startVal && endVal && startVal > endVal) {
+      if (endInput) {
+        endInput.value = startVal;
+        endVal = startVal;
+      }
+    }
+    
+    var filteredStats = statsData;
+    var filteredActivities = activitiesData;
+    
+    if (startVal && endVal) {
+      filteredStats = statsData.filter(function(d) {
+        return d.month >= startVal && d.month <= endVal;
+      });
+      filteredActivities = activitiesData.filter(function(d) {
+        return d.month >= startVal && d.month <= endVal;
+      });
+    }
+    
+    var currentKeyword = currentSearchKeyword[competitorName] || '';
+    if (currentKeyword) {
+      var searchResult = document.getElementById('searchResult-' + competitorName);
+      
+      var matchedActivities = filteredActivities.filter(function(activity) {
+        return isActivityMatchKeyword(activity, currentKeyword);
+      });
+      
+      var matchedMonths = new Set();
+      matchedActivities.forEach(function(activity) {
+        matchedMonths.add(activity.month);
+      });
+      var monthCount = matchedMonths.size;
+      
+      if (searchResult) {
+        if (matchedActivities.length > 0) {
+          searchResult.textContent = '找到 ' + matchedActivities.length + ' 個活動，涵蓋 ' + monthCount + ' 個月份';
+          searchResult.style.color = '#28a745';
+        } else {
+          searchResult.textContent = '時間範圍內無匹配活動';
+          searchResult.style.color = '#dc3545';
+        }
+      }
+      
+      var filteredStatsFromSearch = generateStatsFromActivities(matchedActivities);
+      
+      renderTimelineWithSearch(competitorName, filteredActivities, startVal, endVal, currentKeyword);
+      
+      if (filteredStatsFromSearch && filteredStatsFromSearch.length > 0) {
+        try {
+          var chartElementOk2 = document.getElementById('chart-' + competitorName);
+          if (charts[competitorName]) { charts[competitorName].dispose(); delete charts[competitorName]; }
+          if (chartElementOk2) chartElementOk2.innerHTML = '';
+        } catch(e) {}
+        renderChart(competitorName, filteredStatsFromSearch);
+        renderSummaryTable(competitorName, filteredStatsFromSearch);
+      } else {
+        var chartElement = document.getElementById('chart-' + competitorName);
+        if (chartElement) {
+          chartElement.innerHTML = '<div class="no-data">此搜尋條件下無統計數據</div>';
+        }
+        renderSummaryTable(competitorName, []);
+      }
+    } else {
+      renderTimeline(competitorName, filteredActivities, startVal, endVal);
+      renderChart(competitorName, filteredStats);
+      renderSummaryTable(competitorName, filteredStats);
+    }
+  }
+
+  // ===== 搜尋功能 =====
+  function performSearch(competitorName) {
+    var searchInput = document.getElementById('searchKeyword-' + competitorName);
+    var searchResult = document.getElementById('searchResult-' + competitorName);
+    
+    if (!searchInput || !searchResult) {
+      return;
+    }
+    
+    var keyword = searchInput.value.trim();
+    currentSearchKeyword[competitorName] = keyword;
+    
+    if (!keyword) {
+      searchResult.textContent = '';
+      filterAndRender(competitorName);
+      return;
+    }
+    
+    var competitorData = allCompetitorData[competitorName];
+    if (!competitorData || !competitorData.activities) {
+      searchResult.textContent = '無資料可搜尋';
+      searchResult.style.color = '#dc3545';
+      return;
+    }
+    
+    var startInput = document.getElementById('startMonth-' + competitorName);
+    var endInput = document.getElementById('endMonth-' + competitorName);
+    var startVal = startInput ? startInput.value.trim() : '';
+    var endVal = endInput ? endInput.value.trim() : '';
+    
+    var activitiesData = competitorData.activities;
+    
+    if (startVal && endVal) {
+      activitiesData = activitiesData.filter(function(activity) {
+        return activity.month >= startVal && activity.month <= endVal;
+      });
+    }
+    
+    var matchedActivities = activitiesData.filter(function(activity) {
+      return isActivityMatchKeyword(activity, keyword);
+    });
+    
+    var matchedMonths = new Set();
+    matchedActivities.forEach(function(activity) {
+      matchedMonths.add(activity.month);
+    });
+    var monthCount = matchedMonths.size;
+    
+    if (matchedActivities.length > 0) {
+      searchResult.textContent = '找到 ' + matchedActivities.length + ' 個活動，涵蓋 ' + monthCount + ' 個月份';
+      searchResult.style.color = '#28a745';
+      
+      renderTimelineWithSearch(competitorName, activitiesData, startVal, endVal, keyword);
+      
+      var filteredStats = generateStatsFromActivities(matchedActivities);
+      
+      if (filteredStats && filteredStats.length > 0) {
+        try {
+          var chartElementOK = document.getElementById('chart-' + competitorName);
+          if (charts[competitorName]) { charts[competitorName].dispose(); delete charts[competitorName]; }
+          if (chartElementOK) chartElementOK.innerHTML = '';
+        } catch(e) {}
+        renderChart(competitorName, filteredStats);
+        renderSummaryTable(competitorName, filteredStats);
+      } else {
+        var chartElement = document.getElementById('chart-' + competitorName);
+        if (chartElement) {
+          chartElement.innerHTML = '<div class="no-data">此搜尋條件下無統計數據</div>';
+        }
+        renderSummaryTable(competitorName, []);
+      }
+      
+      scrollToFirstMatch(competitorName, matchedActivities[0]);
+    } else {
+      searchResult.textContent = '未找到匹配的活動';
+      searchResult.style.color = '#dc3545';
+      
+      var timelineElement = document.getElementById('timeline-' + competitorName);
+      if (timelineElement) {
+        timelineElement.innerHTML = '<div class="no-data">搜尋範圍內無匹配活動</div>';
+      }
+      
+      var chartElement = document.getElementById('chart-' + competitorName);
+      if (chartElement) {
+        chartElement.innerHTML = '<div class="no-data">搜尋條件下無匹配活動</div>';
+      }
+      
+      renderSummaryTable(competitorName, []);
+    }
+  }
+
+  function clearSearch(competitorName) {
+    var searchInput = document.getElementById('searchKeyword-' + competitorName);
+    var searchResult = document.getElementById('searchResult-' + competitorName);
+    
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    
+    if (searchResult) {
+      searchResult.textContent = '';
+    }
+    
+    currentSearchKeyword[competitorName] = '';
+    
+    var competitorData = allCompetitorData[competitorName];
+    if (competitorData) {
+      var startInput = document.getElementById('startMonth-' + competitorName);
+      var endInput = document.getElementById('endMonth-' + competitorName);
+      var startVal = startInput ? startInput.value.trim() : '';
+      var endVal = endInput ? endInput.value.trim() : '';
+      
+      var activitiesData = competitorData.activities || [];
+      var statsData = competitorData.stats || [];
+      
+      if (startVal && endVal) {
+        activitiesData = activitiesData.filter(function(activity) {
+          return activity.month >= startVal && activity.month <= endVal;
+        });
+        
+        statsData = statsData.filter(function(stat) {
+          return stat.month >= startVal && stat.month <= endVal;
+        });
+      }
+      
+      renderTimeline(competitorName, activitiesData, startVal, endVal);
+      
+      var chartElement = document.getElementById('chart-' + competitorName);
+      if (chartElement) {
+        chartElement.innerHTML = '';
+        
+        if (charts[competitorName]) {
+          charts[competitorName].dispose();
+          delete charts[competitorName];
+        }
+        
+        if (statsData && statsData.length > 0) {
+          renderChart(competitorName, statsData);
+        } else if (activitiesData && activitiesData.length > 0) {
+          var generatedStats = generateStatsFromActivities(activitiesData);
+          if (generatedStats.length > 0) {
+            renderChart(competitorName, generatedStats);
+          } else {
+            chartElement.innerHTML = '<div class="no-data">暫無資料</div>';
+          }
+        } else {
+          chartElement.innerHTML = '<div class="no-data">暫無資料</div>';
+        }
+      }
+      
+      if (statsData && statsData.length > 0) {
+        renderSummaryTable(competitorName, statsData);
+      } else if (activitiesData && activitiesData.length > 0) {
+        var generatedStats = generateStatsFromActivities(activitiesData);
+        renderSummaryTable(competitorName, generatedStats);
+      } else {
+        renderSummaryTable(competitorName, []);
+      }
+    }
+  }
+
+  function scrollToFirstMatch(competitorName, firstMatchActivity) {
+    if (!firstMatchActivity) return;
+    
+    setTimeout(function() {
+      var timelineElement = document.getElementById('timeline-' + competitorName);
+      if (timelineElement) {
+        var highlightedElements = timelineElement.querySelectorAll('.search-match-text');
+        if (highlightedElements.length > 0) {
+          var firstElement = highlightedElements[0];
+          
+          var activityCell = firstElement.closest('.activity-cell');
+          if (activityCell) {
+            activityCell.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }
+      }
+    }, 500);
+  }
+
+  // ===== 搜尋功能 =====
+  /**
+   * 多標籤關鍵字匹配函數
+   * 
+   * 使用方式：
+   * 1. 單一關鍵字：「魚機」
+   * 2. 多個關鍵字（逗號分隔）：「魚機,活動海皇,老虎機」
+   * 3. 多個關鍵字（空格分隔）：「魚機 活動海皇 老虎機」
+   * 4. 混合使用：「魚機, 活動海皇」（逗號後可有空格）
+   * 
+   * 匹配邏輯：
+   * - 只要活動名稱、類型或內容包含任一個關鍵字，就算匹配成功
+   * - 例如：搜尋「魚機,新遊戲」會找出所有包含「魚機」或「新遊戲」的活動
+   * 
+   * @param {Object} activity - 活動物件
+   * @param {string} keyword - 關鍵字字串（可包含多個關鍵字，用逗號或空格分隔）
+   * @returns {boolean} - 是否匹配
+   */
+  function isActivityMatchKeyword(activity, keyword) {
+    if (!keyword || keyword.trim() === '') {
+      return false;
+    }
+    
+    // ⭐ 步驟 1：將關鍵字字串拆分成多個標籤
+    // 支援逗號和空格作為分隔符
+    var keywords = keyword
+      .toLowerCase()
+      .split(/[,\s]+/)  // 用逗號或空格分隔
+      .map(function(k) { return k.trim(); })  // 去除每個關鍵字的空格
+      .filter(function(k) { return k.length > 0; });  // 移除空字串
+    
+    // ⭐ 步驟 2：準備活動的搜尋目標文字（全部轉小寫）
+    var activityName = (activity.name || '').toLowerCase();
+    var activityType = (activity.type || '').toLowerCase();
+    var originalContent = (activity.originalContent || '').toLowerCase();
+    
+    // ⭐ 步驟 3：檢查是否有任一個關鍵字匹配（OR 邏輯）
+    // 只要有一個關鍵字匹配，就返回 true
+    for (var i = 0; i < keywords.length; i++) {
+      var k = keywords[i];
+      
+      // 檢查活動名稱、類型、原始內容是否包含此關鍵字
+      if (activityName.includes(k) || 
+          activityType.includes(k) || 
+          originalContent.includes(k)) {
+        return true;  // 找到匹配，立即返回
+      }
+    }
+    
+    // ⭐ 步驟 4：所有關鍵字都不匹配，返回 false
+    return false;
+  }
+
+  /**
+   * 多標籤關鍵字高亮函數
+   * 
+   * 功能：將文字中所有匹配的關鍵字標記為高亮
+   * 
+   * 使用方式：
+   * - 單一關鍵字：highlightKeyword("魚機活動", "魚機") → <span>魚機</span>活動
+   * - 多個關鍵字：highlightKeyword("魚機活動海皇", "魚機,海皇") → <span>魚機</span>活動<span>海皇</span>
+   * 
+   * @param {string} text - 原始文字
+   * @param {string} keyword - 關鍵字字串（可包含多個關鍵字）
+   * @returns {string} - 高亮後的 HTML 字串
+   */
+  function highlightKeyword(text, keyword) {
+    if (!keyword || keyword.trim() === '' || !text) {
+      return text;
+    }
+    
+    // ⭐ 步驟 1：拆分多個關鍵字
+    var keywords = keyword
+      .split(/[,\s]+/)  // 用逗號或空格分隔
+      .map(function(k) { return k.trim(); })
+      .filter(function(k) { return k.length > 0; });
+    
+    // ⭐ 步驟 2：依序將每個關鍵字標記為高亮
+    var result = text;
+    
+    keywords.forEach(function(k) {
+      // 轉義特殊字符，避免正則表達式錯誤
+      var escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // 建立全局不分大小寫的正則表達式
+      var regex = new RegExp('(' + escaped + ')', 'gi');
+      
+      // 替換為高亮標記
+      result = result.replace(regex, '<span class="search-match-text">$1</span>');
+    });
+    
+    return result;
+  }
+
+  function generateStatsFromActivities(activities) {
+    if (!activities || activities.length === 0) {
+      return [];
+    }
+    
+    var monthTypeCount = {};
+    
+    activities.forEach(function(activity) {
+      if (!activity || !activity.month || !activity.type) {
+        return;
+      }
+      
+      var key = activity.month + '|' + activity.type;
+      if (!monthTypeCount[key]) {
+        monthTypeCount[key] = 0;
+      }
+      monthTypeCount[key]++;
+    });
+    
+    var stats = [];
+    Object.keys(monthTypeCount).forEach(function(key) {
+      var parts = key.split('|');
+      if (parts.length >= 2) {
+        var month = parts[0];
+        var type = parts[1];
+        var count = monthTypeCount[key];
+        
+        stats.push({
+          month: month,
+          type: type,
+          count: count
+        });
+      }
+    });
+    
+    return stats;
+  }
+
+  // ⭐ 簡化驗證函數（type="month" 自動驗證）
+  function validateDateInput(inputElement, competitorName) {
+    // type="month" 會自動驗證格式，直接返回 true
+    return true;
+  }
+</script>

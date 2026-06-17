@@ -1,0 +1,1040 @@
+<script>
+// 依賴（需先載入）：util.html（escapeHtml, getProductColor）
+// ========================================
+// 🎮 數學資料庫模組 v3.0（含趨勢圖表）
+// ========================================
+
+console.log('📦 math.js 開始載入...');
+
+// ===== 全域變數初始化 =====
+if (typeof window.mathGamesData === 'undefined') {
+  window.mathGamesData = [];
+  console.log('✅ 初始化 window.mathGamesData = []');
+}
+
+if (typeof window.currentMathFilters === 'undefined') {
+  window.currentMathFilters = {
+    product: 'all',
+    gameplay: 'all',
+    year: 'all',
+    startDate: '',
+    endDate: '',
+    keywords: []
+  };
+  console.log('✅ 初始化 window.currentMathFilters');
+}
+
+if (typeof window.mathChart === 'undefined') {
+  window.mathChart = null;
+  console.log('✅ 初始化 window.mathChart = null');
+}
+
+// ========================================
+// 🆕 競品顏色管理（動態自動分配）
+// ========================================
+window.productColorMap = {};
+
+window.getProductColor = function(productName) {
+  // 固定顏色（已知競品）
+  var fixedColors = {
+    '星城': '#E63946',
+    '滿貫大亨': '#14B8A6',
+    '金好運': '#F59E0B',
+    '老子有錢': '#10B981',
+    '王牌': '#8B5CF6',
+    '大頭家': '#64748b',
+    'HUGA': '#3B82F6',
+    '豪神': '#EC4899',
+    '錢街': '#FF6B35',
+    '寶島': '#06D6A0',
+    '嚦咕麻將': '#A855F7'
+  };
+
+  if (fixedColors[productName]) return fixedColors[productName];
+
+  // 新競品：從色票池自動分配（每次 session 固定）
+  if (window.productColorMap[productName]) {
+    return window.productColorMap[productName];
+  }
+
+  var colorPool = [
+    '#E91E63', '#009688', '#FF5722', '#2196F3', '#9C27B0',
+    '#FF9800', '#4CAF50', '#00BCD4', '#795548', '#607D8B',
+    '#F44336', '#3F51B5', '#CDDC39', '#FFC107', '#8BC34A'
+  ];
+
+  var usedCount = Object.keys(window.productColorMap).length;
+  var assignedColor = colorPool[usedCount % colorPool.length];
+  window.productColorMap[productName] = assignedColor;
+  console.log('🎨 新競品自動分配顏色：' + productName + ' → ' + assignedColor);
+
+  return assignedColor;
+};
+
+// ========================================
+// ========================================
+// 🆕 標準玩法類型清單（正確顯示名稱）
+// 比對方式：移除空格 + 小寫，兩邊都正規化後比對
+// ========================================
+window.GAMEPLAY_CANONICAL_LIST = [
+  'Way Game', 'Megaways', 'Cluster Pays', 'Scatter Pays',
+  '百搭', 'Free Spins', 'Jackpot', '連線', 'Cascading',
+  'Hold & Spin', 'Sticky Wild', 'Multiplier', 'Expanding Wild',
+  'Walking Wild', 'Respin', 'Buy Feature', 'Extra Bet', '一般相消',
+  'Stage Game'
+];
+
+// ========================================
+// 🆕 單一玩法類型正規化：移除空格 + 小寫比對
+// ========================================
+window.normalizeGameplayType = function(typeStr) {
+  if (!typeStr) return typeStr;
+  var raw = typeStr.trim();
+  var inputKey = raw.replace(/\s/g, '').toLowerCase();
+
+  for (var i = 0; i < window.GAMEPLAY_CANONICAL_LIST.length; i++) {
+    var canonical = window.GAMEPLAY_CANONICAL_LIST[i];
+    var canonKey = canonical.replace(/\s/g, '').toLowerCase();
+    if (inputKey === canonKey) {
+      return canonical;  // 命中 → 回傳標準名稱
+    }
+  }
+
+  return raw;  // 找不到 → 原樣保留
+};
+
+// ========================================
+// 🆕 解析玩法類型（拆分 [Way Game][百搭] → ["Way Game", "百搭"]）
+// 同時做模糊正規化，waygame → Way Game
+// ========================================
+window.parseGameplayTypes = function(gameplayStr) {
+  if (!gameplayStr) return [];
+  var matches = gameplayStr.match(/\[([^\]]+)\]/g);
+  var types;
+  if (!matches) {
+    // 沒有括號：整個字串當一個類型
+    types = gameplayStr.trim() ? [gameplayStr.trim()] : [];
+  } else {
+    types = matches.map(function(match) {
+      return match.replace(/[\[\]]/g, '');
+    });
+  }
+  // 每個類型都做正規化
+  return types.map(function(t) {
+    return window.normalizeGameplayType(t);
+  });
+};
+
+// ========================================
+// 初始化數學資料庫頁籤 HTML
+// ========================================
+window.initMathTab = function() {
+  console.log('📊 initMathTab() 被呼叫');
+
+  var html = '';
+
+  // ===== 篩選器區域（紫色標題樣式）=====
+  html += '<div class="control-panel-wrapper" style="margin:0 20px 20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden;">';
+  html += '<div class="control-panel-header" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:12px 20px; color:#fff; font-weight:600; font-size:16px;">';
+  html += '<span class="control-panel-title">📋 篩選條件</span>';
+  html += '</div>';
+  html += '<div class="control-panel" style="background:#fff; padding:20px;">';
+  html += '<div style="display:flex; flex-wrap:wrap; gap:15px; align-items:flex-end;">';
+
+  // 關鍵字搜尋
+  html += '<div style="flex:1 1 250px; min-width:200px;">';
+  html += '<label style="display:block; margin-bottom:8px; font-weight:600; color:#333; font-size:14px;">🔍 關鍵字搜尋</label>';
+  html += '<input type="text" id="mathKeywordSearch" placeholder="支援多標籤：星城,Way Game,3x3" style="width:100%; height:42px; padding:0 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; background:#fff;">';
+  html += '</div>';
+
+  // 競品
+  html += '<div style="flex:0 1 150px; min-width:120px;">';
+  html += '<label style="display:block; margin-bottom:8px; font-weight:600; color:#333; font-size:14px;">競品</label>';
+  html += '<select id="mathProductFilter" style="width:100%; height:42px; padding:0 32px 0 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; background:#fff;">';
+  html += '<option value="all">全部競品</option>';
+  html += '</select>';
+  html += '</div>';
+
+  // 玩法類型
+  html += '<div style="flex:0 1 150px; min-width:120px;">';
+  html += '<label style="display:block; margin-bottom:8px; font-weight:600; color:#333; font-size:14px;">玩法類型</label>';
+  html += '<select id="mathGameplayFilter" style="width:100%; height:42px; padding:0 32px 0 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; background:#fff;">';
+  html += '<option value="all">全部類型</option>';
+  html += '</select>';
+  html += '</div>';
+
+  // 開始日期
+  html += '<div style="flex:0 1 180px; min-width:150px;">';
+  html += '<label style="display:block; margin-bottom:8px; font-weight:600; color:#333; font-size:14px;">📅 開始日期</label>';
+  html += '<input type="date" id="mathStartDate" style="width:100%; height:42px; padding:0 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; background:#fff; color:#333;">';
+  html += '</div>';
+
+  // 結束日期
+  html += '<div style="flex:0 1 180px; min-width:150px;">';
+  html += '<label style="display:block; margin-bottom:8px; font-weight:600; color:#333; font-size:14px;">📅 結束日期</label>';
+  html += '<input type="date" id="mathEndDate" style="width:100%; height:42px; padding:0 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box; background:#fff; color:#333;">';
+  html += '</div>';
+
+  // 重置按鈕
+  html += '<div style="flex:0 0 auto;">';
+  html += '<button onclick="window.resetMathFilters()" style="height:42px; padding:0 20px; background:#6c757d; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:500; font-size:14px; white-space:nowrap; transition:background 0.2s; margin-top:28px;" onmouseover="this.style.background=\'#5a6268\'" onmouseout="this.style.background=\'#6c757d\'">🔄 重置</button>';
+  html += '</div>';
+
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // ===== 圖表區域 =====
+  html += '<div class="chart-container" style="background:#fff; margin:0 20px 20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); overflow:hidden;">';
+  html += '<div class="chart-header" style="background:#f8f9fa; padding:15px 20px; border-bottom:2px solid #e9ecef; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">';
+  html += '<span style="font-size:18px; font-weight:600; color:#333;">📊 遊戲發布趨勢分析</span>';
+
+  html += '<div style="display:flex; gap:8px; background:#fff; padding:4px; border-radius:8px; border:1px solid #e0e0e0;">';
+  html += '<button class="math-chart-view-btn active" data-view="monthly" onclick="window.switchMathChartView(\'monthly\')" style="padding:6px 16px; border:none; border-radius:6px; background:#667eea; color:#fff; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s;">📈 按月趨勢</button>';
+  html += '<button class="math-chart-view-btn" data-view="yearly" onclick="window.switchMathChartView(\'yearly\')" style="padding:6px 16px; border:none; border-radius:6px; background:transparent; color:#666; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s;">📊 年度趨勢</button>';
+  html += '<div style="width:1px; height:30px; background:#e0e0e0; margin:0 4px;"></div>';
+  html += '<button class="math-chart-view-btn" data-view="product" onclick="window.switchMathChartView(\'product\')" style="padding:6px 16px; border:none; border-radius:6px; background:transparent; color:#666; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s;">🏢 競品分布</button>';
+  html += '<button class="math-chart-view-btn" data-view="gameplay" onclick="window.switchMathChartView(\'gameplay\')" style="padding:6px 16px; border:none; border-radius:6px; background:transparent; color:#666; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s;">🎮 玩法分布</button>';
+  html += '</div>';
+
+  html += '</div>';
+  html += '<div id="mathChart" style="width:100%; height:400px; padding:20px;"></div>';
+  html += '</div>';
+
+  // ===== 時間軸容器 =====
+  html += '<div id="mathTimelineContainer" style="background:#fff; margin:0 20px 30px; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); min-height:400px;">';
+  html += '<div class="loading-message" style="text-align:center; padding:100px 20px; color:#666;">';
+  html += '<div style="font-size:48px; margin-bottom:20px;">⏳</div>';
+  html += '<div style="font-size:18px; font-weight:500;">點擊數學資料庫頁籤後將自動載入...</div>';
+  html += '</div>';
+  html += '</div>';
+
+  console.log('✅ initMathTab() HTML 生成完成');
+  return html;
+};
+
+// ========================================
+// 載入數學資料庫資料
+// ========================================
+window.loadMathDatabase = function() {
+  console.log('📖 loadMathDatabase() 開始執行');
+  console.log('   時間:', new Date().toLocaleTimeString());
+
+  if (window.mathChart) {
+    console.log('🗑️ 銷毀舊的圖表實例');
+    try {
+      window.mathChart.dispose();
+      window.mathChart = null;
+    } catch (e) {
+      console.warn('銷毀圖表時出錯:', e);
+      window.mathChart = null;
+    }
+  }
+
+  var container = document.getElementById('mathTimelineContainer');
+  if (!container) {
+    console.error('❌ 找不到 mathTimelineContainer');
+    return;
+  }
+
+  if (window.mathGamesData && Array.isArray(window.mathGamesData) && window.mathGamesData.length > 0) {
+    console.log('✅ 使用快取資料（已載入 ' + window.mathGamesData.length + ' 筆）');
+    window.initializeMathFilters();
+    window.setDefaultDateRange();
+    window.renderMathChart('monthly');
+    setTimeout(function() {
+      if (window.mathChart) window.mathChart.resize();
+    }, 300);
+    window.renderMathTimeline();
+    console.log('✅ 使用快取完成！');
+    return;
+  }
+
+  console.log('✓ 容器已找到，開始從後端載入...');
+  container.innerHTML = '<div class="loading-message" style="text-align:center; padding:100px 20px; color:#666;">' +
+    '<div style="font-size:48px; margin-bottom:20px;">⏳</div>' +
+    '<div style="font-size:18px; font-weight:500;">正在載入數學資料庫...</div>' +
+    '</div>';
+
+  console.log('📡 呼叫 google.script.run.getMathDatabaseData()');
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      console.log('✅✅✅ 成功接收資料！');
+      console.log('   資料長度:', data ? data.length : 'null');
+
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('⚠️ 資料為空');
+        container.innerHTML = '<div class="empty-state" style="text-align:center; padding:100px 20px; color:#666;">' +
+          '<div style="font-size:48px; margin-bottom:20px;">📭</div>' +
+          '<h3 style="margin-bottom:10px; color:#333;">暫無數學資料</h3>' +
+          '<p>後端返回了空陣列，請檢查「數學html資料快取」工作表</p>' +
+          '</div>';
+        return;
+      }
+
+      window.mathGamesData = data;
+      window.initializeMathFilters();
+      window.setDefaultDateRange();
+      window.renderMathChart('monthly');
+      setTimeout(function() {
+        if (window.mathChart) window.mathChart.resize();
+      }, 300);
+      window.renderMathTimeline();
+      console.log('✅ 全部完成！');
+    })
+    .withFailureHandler(function(error) {
+      console.error('❌❌❌ 載入失敗！', error);
+      container.innerHTML = '<div class="error-message" style="text-align:center; padding:100px 20px; color:#dc3545;">' +
+        '<div style="font-size:48px; margin-bottom:20px;">❌</div>' +
+        '<h3 style="margin-bottom:10px;">資料載入失敗</h3>' +
+        '<p style="font-size:14px; color:#999;">' + (error.message || '未知錯誤') + '</p>' +
+        '<button onclick="window.loadMathDatabase()" style="margin-top:20px; padding:10px 20px; background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer;">🔄 重新載入</button>' +
+        '</div>';
+    })
+    .getMathDatabaseData();
+};
+
+// ========================================
+// 初始化篩選器
+// ========================================
+window.initializeMathFilters = function() {
+  console.log('🎛️ 初始化篩選器');
+
+  var data = window.mathGamesData || [];
+  if (data.length === 0) {
+    console.warn('⚠️ mathGamesData 為空，無法初始化篩選器');
+    return;
+  }
+
+  // 競品篩選
+  var products = [];
+  var productsSet = {};
+  for (var i = 0; i < data.length; i++) {
+    var p = data[i].product;
+    if (p && !productsSet[p]) {
+      products.push(p);
+      productsSet[p] = true;
+    }
+  }
+  products.sort();
+
+  var productFilter = document.getElementById('mathProductFilter');
+  if (productFilter) {
+    productFilter.innerHTML = '<option value="all">全部競品</option>';
+    for (var i = 0; i < products.length; i++) {
+      var option = document.createElement('option');
+      option.value = products[i];
+      option.textContent = products[i];
+      productFilter.appendChild(option);
+    }
+    productFilter.addEventListener('change', function(e) {
+      window.currentMathFilters.product = e.target.value;
+      window.updateMathView();
+    });
+    console.log('✓ 競品篩選器初始化完成，選項數:', products.length);
+  }
+
+  // 玩法類型篩選
+  var gameplayTypes = [];
+  var gameplaySet = {};
+  for (var i = 0; i < data.length; i++) {
+    var g = data[i].gameplayTypes;
+    if (g) {
+      var parsedTypes = window.parseGameplayTypes(g);
+      for (var j = 0; j < parsedTypes.length; j++) {
+        var type = parsedTypes[j];
+        if (type && !gameplaySet[type]) {
+          gameplayTypes.push(type);
+          gameplaySet[type] = true;
+        }
+      }
+    }
+  }
+  gameplayTypes.sort();
+
+  var gameplayFilter = document.getElementById('mathGameplayFilter');
+  if (gameplayFilter) {
+    gameplayFilter.innerHTML = '<option value="all">全部類型</option>';
+    for (var i = 0; i < gameplayTypes.length; i++) {
+      var option = document.createElement('option');
+      option.value = gameplayTypes[i];
+      option.textContent = gameplayTypes[i];
+      gameplayFilter.appendChild(option);
+    }
+    gameplayFilter.addEventListener('change', function(e) {
+      window.currentMathFilters.gameplay = e.target.value;
+      window.updateMathView();
+    });
+    console.log('✓ 玩法篩選器初始化完成，選項數:', gameplayTypes.length);
+  }
+
+  // 年份篩選
+  var years = [];
+  var yearsSet = {};
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].releaseDate) {
+      var year = parseInt(data[i].releaseDate.split('/')[0]);
+      if (!isNaN(year) && !yearsSet[year]) {
+        years.push(year);
+        yearsSet[year] = true;
+      }
+    }
+  }
+  years.sort(function(a, b) { return b - a; });
+
+  var yearFilter = document.getElementById('mathYearFilter');
+  if (yearFilter) {
+    yearFilter.innerHTML = '<option value="all">全部年份</option>';
+    for (var i = 0; i < years.length; i++) {
+      var option = document.createElement('option');
+      option.value = years[i];
+      option.textContent = years[i] + ' 年';
+      yearFilter.appendChild(option);
+    }
+    yearFilter.addEventListener('change', function(e) {
+      window.currentMathFilters.year = e.target.value;
+      window.updateMathView();
+    });
+    console.log('✓ 年份篩選器初始化完成，選項數:', years.length);
+  }
+
+  // 關鍵字搜尋
+  var keywordSearch = document.getElementById('mathKeywordSearch');
+  if (keywordSearch) {
+    keywordSearch.addEventListener('input', function(e) {
+      var input = e.target.value.trim();
+      window.currentMathFilters.keywords = input === '' ? [] :
+        input.split(',').map(function(k) { return k.trim(); }).filter(function(k) { return k !== ''; });
+      window.updateMathView();
+    });
+    console.log('✓ 關鍵字搜尋初始化完成');
+  }
+
+  // 開始日期篩選
+  var startDateInput = document.getElementById('mathStartDate');
+  if (startDateInput) {
+    startDateInput.addEventListener('change', function(e) {
+      window.currentMathFilters.startDate = e.target.value;
+      window.updateMathView();
+    });
+    console.log('✓ 開始日期篩選初始化完成');
+  }
+
+  // 結束日期篩選
+  var endDateInput = document.getElementById('mathEndDate');
+  if (endDateInput) {
+    endDateInput.addEventListener('change', function(e) {
+      window.currentMathFilters.endDate = e.target.value;
+      window.updateMathView();
+    });
+    console.log('✓ 結束日期篩選初始化完成');
+  }
+
+  console.log('✅ 所有篩選器初始化完成');
+};
+
+// ========================================
+// 設定預設日期範圍（最舊到最新）
+// ========================================
+window.setDefaultDateRange = function() {
+  var data = window.mathGamesData || [];
+  if (data.length === 0) return;
+
+  var minDate = null;
+  var maxDate = null;
+
+  for (var i = 0; i < data.length; i++) {
+    var game = data[i];
+    if (!game.releaseDate) continue;
+    var parts = game.releaseDate.split('/');
+    if (parts.length !== 3) continue;
+    var date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    if (!minDate || date < minDate) minDate = date;
+    if (!maxDate || date > maxDate) maxDate = date;
+  }
+
+  if (minDate) {
+    var minDateStr = minDate.getFullYear() + '-' +
+      String(minDate.getMonth() + 1).padStart(2, '0') + '-' +
+      String(minDate.getDate()).padStart(2, '0');
+    var startDateInput = document.getElementById('mathStartDate');
+    if (startDateInput) {
+      startDateInput.value = minDateStr;
+      window.currentMathFilters.startDate = minDateStr;
+      console.log('✓ 設定開始日期:', minDateStr);
+    }
+  }
+
+  if (maxDate) {
+    var maxDateStr = maxDate.getFullYear() + '-' +
+      String(maxDate.getMonth() + 1).padStart(2, '0') + '-' +
+      String(maxDate.getDate()).padStart(2, '0');
+    var endDateInput = document.getElementById('mathEndDate');
+    if (endDateInput) {
+      endDateInput.value = maxDateStr;
+      window.currentMathFilters.endDate = maxDateStr;
+      console.log('✓ 設定結束日期:', maxDateStr);
+    }
+  }
+};
+
+// ========================================
+// 重置篩選器
+// ========================================
+window.resetMathFilters = function() {
+  console.log('🔄 重置篩選器');
+
+  window.currentMathFilters = {
+    product: 'all',
+    gameplay: 'all',
+    year: 'all',
+    startDate: '',
+    endDate: '',
+    keywords: []
+  };
+
+  var productFilter = document.getElementById('mathProductFilter');
+  var gameplayFilter = document.getElementById('mathGameplayFilter');
+  var yearFilter = document.getElementById('mathYearFilter');
+  var keywordSearch = document.getElementById('mathKeywordSearch');
+
+  if (productFilter) productFilter.value = 'all';
+  if (gameplayFilter) gameplayFilter.value = 'all';
+  if (yearFilter) yearFilter.value = 'all';
+  if (keywordSearch) keywordSearch.value = '';
+
+  window.setDefaultDateRange();
+  window.updateMathView();
+};
+
+// ========================================
+// 更新視圖（圖表 + 時間軸）
+// ========================================
+window.updateMathView = function() {
+  console.log('🔄 更新視圖');
+  var currentView = 'monthly';
+  var activeBtn = document.querySelector('.math-chart-view-btn.active');
+  if (activeBtn) currentView = activeBtn.getAttribute('data-view');
+  window.renderMathChart(currentView);
+  window.renderMathTimeline();
+};
+
+// ========================================
+// 切換圖表視圖
+// ========================================
+window.switchMathChartView = function(view) {
+  console.log('🔄 切換圖表視圖:', view);
+  var buttons = document.querySelectorAll('.math-chart-view-btn');
+  for (var i = 0; i < buttons.length; i++) {
+    var btn = buttons[i];
+    if (btn.getAttribute('data-view') === view) {
+      btn.classList.add('active');
+      btn.style.background = '#667eea';
+      btn.style.color = '#fff';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = 'transparent';
+      btn.style.color = '#666';
+    }
+  }
+  window.renderMathChart(view);
+};
+
+// ========================================
+// 渲染圖表（核心函數）
+// ========================================
+window.renderMathChart = function(view) {
+  console.log('📊 渲染圖表，視圖:', view);
+
+  var chartDom = document.getElementById('mathChart');
+  if (!chartDom) {
+    console.error('❌ 找不到圖表容器');
+    return;
+  }
+
+  if (window.mathChart) {
+    try { window.mathChart.dispose(); } catch (e) { console.warn('dispose 失敗:', e); }
+    window.mathChart = null;
+  }
+
+  try {
+    window.mathChart = echarts.init(chartDom);
+    console.log('✓ ECharts 實例已重新初始化');
+  } catch (e) {
+    console.error('❌ 初始化圖表失敗:', e);
+    return;
+  }
+
+  if (!window.mathChartResizeHandlerBound) {
+    window.addEventListener('resize', function() {
+      if (window.mathChart) window.mathChart.resize();
+    });
+    window.mathChartResizeHandlerBound = true;
+    console.log('✓ Resize 事件已綁定');
+  }
+
+  var filteredGames = window.filterMathGames();
+  console.log('   篩選後遊戲數:', filteredGames.length);
+
+  if (filteredGames.length === 0) {
+    window.mathChart.clear();
+    window.mathChart.setOption({
+      title: { text: '暫無資料', left: 'center', top: 'center', textStyle: { fontSize: 16, color: '#888' } }
+    });
+    setTimeout(function() { if (window.mathChart) window.mathChart.resize(); }, 100);
+    return;
+  }
+
+  var option;
+  switch(view) {
+    case 'monthly':  option = window.generateMonthlyChartOption(filteredGames);  break;
+    case 'product':  option = window.generateProductChartOption(filteredGames);  break;
+    case 'gameplay': option = window.generateGameplayChartOption(filteredGames); break;
+    case 'yearly':   option = window.generateYearlyChartOption(filteredGames);   break;
+    default:         option = window.generateMonthlyChartOption(filteredGames);
+  }
+
+  window.mathChart.clear();
+  window.mathChart.setOption(option);
+
+  setTimeout(function() { if (window.mathChart) window.mathChart.resize(); }, 100);
+  setTimeout(function() {
+    if (window.mathChart) {
+      window.mathChart.resize();
+      console.log('✅ 圖表渲染並 resize 完成');
+    }
+  }, 500);
+};
+
+// ========================================
+// 圖表選項生成函數
+// ========================================
+
+// 1️⃣ 按月趨勢圖
+window.generateMonthlyChartOption = function(games) {
+  var monthlyCount = {};
+  for (var i = 0; i < games.length; i++) {
+    if (!games[i].releaseDate) continue;
+    var parts = games[i].releaseDate.split('/');
+    var year = parts[0];
+    var month = parts[1];
+    if (month.length === 1) month = '0' + month;
+    var key = year + '-' + month;
+    monthlyCount[key] = (monthlyCount[key] || 0) + 1;
+  }
+  var months = Object.keys(monthlyCount).sort();
+  var counts = months.map(function(m) { return monthlyCount[m]; });
+
+  return {
+    title: { text: '遊戲發布月度趨勢', left: 'center', textStyle: { fontSize: 16, fontWeight: 600 } },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        var parts = params[0].axisValue.split('-');
+        return parts[0] + ' 年 ' + parseInt(parts[1]) + ' 月<br/>發布 <strong>' + params[0].value + '</strong> 款遊戲';
+      }
+    },
+    grid: { left: 60, right: 40, top: 80, bottom: 60 },
+    xAxis: {
+      type: 'category', data: months,
+      axisLabel: { rotate: 45, formatter: function(value) { return value.replace('-', '/'); } }
+    },
+    yAxis: { type: 'value', name: '遊戲數量', minInterval: 1 },
+    series: [{
+      type: 'line', data: counts, smooth: true, symbolSize: 8,
+      itemStyle: { color: '#667eea' }, lineStyle: { width: 3 },
+      areaStyle: {
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [{ offset: 0, color: 'rgba(102, 126, 234, 0.3)' }, { offset: 1, color: 'rgba(102, 126, 234, 0.05)' }] }
+      }
+    }]
+  };
+};
+
+// 2️⃣ 競品分布圖（✅ 改用 getProductColor 動態取色）
+window.generateProductChartOption = function(games) {
+  var productCount = {};
+  for (var i = 0; i < games.length; i++) {
+    var product = games[i].product;
+    productCount[product] = (productCount[product] || 0) + 1;
+  }
+  var products = Object.keys(productCount).sort(function(a, b) {
+    return productCount[a] - productCount[b];
+  });
+
+  return {
+    title: { text: '各競品遊戲數量', left: 'center', textStyle: { fontSize: 16, fontWeight: 600 } },
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'shadow' },
+      formatter: function(params) {
+        return params[0].axisValueLabel + '<br/>遊戲數量：<strong>' + params[0].value + '</strong> 款';
+      }
+    },
+    grid: { left: 60, right: 40, top: 80, bottom: 100 },
+    xAxis: { type: 'category', data: products, axisLabel: { rotate: 45, interval: 0 } },
+    yAxis: { type: 'value', name: '遊戲數量', minInterval: 1 },
+    series: [{
+      type: 'bar',
+      data: products.map(function(p) {
+        return {
+          value: productCount[p],
+          itemStyle: { color: window.getProductColor(p) }  // ✅ 動態取色
+        };
+      }),
+      label: { show: true, position: 'top', formatter: '{c} 款' }
+    }]
+  };
+};
+
+// 3️⃣ 玩法類型分布圖
+window.generateGameplayChartOption = function(games) {
+  var gameplayCount = {};
+  for (var i = 0; i < games.length; i++) {
+    var parsedTypes = window.parseGameplayTypes(games[i].gameplayTypes || '未分類');
+    if (parsedTypes.length === 0) parsedTypes = ['未分類'];
+    for (var j = 0; j < parsedTypes.length; j++) {
+      var gameplay = parsedTypes[j];
+      gameplayCount[gameplay] = (gameplayCount[gameplay] || 0) + 1;
+    }
+  }
+  var gameplayTypes = Object.keys(gameplayCount).sort(function(a, b) {
+    return gameplayCount[a] - gameplayCount[b];
+  });
+  var counts = gameplayTypes.map(function(g) { return gameplayCount[g]; });
+
+  return {
+    title: { text: '玩法類型分布', left: 'center', textStyle: { fontSize: 16, fontWeight: 600 } },
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'shadow' },
+      formatter: function(params) {
+        return params[0].axisValueLabel + '<br/>遊戲數量：<strong>' + params[0].value + '</strong> 款';
+      }
+    },
+    grid: { left: 60, right: 40, top: 80, bottom: 120 },
+    xAxis: {
+      type: 'category', data: gameplayTypes,
+      axisLabel: { rotate: 45, interval: 0, formatter: function(value) { return value.length > 15 ? value.substring(0, 13) + '...' : value; } }
+    },
+    yAxis: { type: 'value', name: '遊戲數量', minInterval: 1 },
+    series: [{
+      type: 'bar', data: counts,
+      itemStyle: { color: '#4ECDC4' },
+      label: { show: true, position: 'top', formatter: '{c} 款' }
+    }]
+  };
+};
+
+// 4️⃣ 年度趨勢圖
+window.generateYearlyChartOption = function(games) {
+  var yearlyCount = {};
+  for (var i = 0; i < games.length; i++) {
+    if (!games[i].releaseDate) continue;
+    var year = games[i].releaseDate.split('/')[0];
+    yearlyCount[year] = (yearlyCount[year] || 0) + 1;
+  }
+  var years = Object.keys(yearlyCount).sort();
+  var counts = years.map(function(y) { return yearlyCount[y]; });
+
+  return {
+    title: { text: '年度遊戲發布趨勢', left: 'center', textStyle: { fontSize: 16, fontWeight: 600 } },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        return params[0].axisValue + ' 年<br/>發布 <strong>' + params[0].value + '</strong> 款遊戲';
+      }
+    },
+    grid: { left: 60, right: 40, top: 80, bottom: 60 },
+    xAxis: {
+      type: 'category', data: years,
+      axisLabel: { formatter: function(value) { return value + ' 年'; } }
+    },
+    yAxis: { type: 'value', name: '遊戲數量', minInterval: 1 },
+    series: [{
+      type: 'line', data: counts, smooth: true, symbolSize: 10,
+      itemStyle: { color: '#F59E0B' }, lineStyle: { width: 3 },
+      areaStyle: {
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [{ offset: 0, color: 'rgba(245, 158, 11, 0.3)' }, { offset: 1, color: 'rgba(245, 158, 11, 0.05)' }] }
+      },
+      label: { show: true, position: 'top', formatter: '{c} 款', color: '#F59E0B', fontWeight: 600 }
+    }]
+  };
+};
+
+// ========================================
+// 篩選遊戲
+// ========================================
+window.filterMathGames = function() {
+  var data = window.mathGamesData || [];
+  var filters = window.currentMathFilters;
+  var filtered = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var game = data[i];
+
+    var productMatch = filters.product === 'all' || game.product === filters.product;
+
+    var gameplayMatch = true;
+    if (filters.gameplay !== 'all') {
+      var parsedTypes = window.parseGameplayTypes(game.gameplayTypes || '');
+      gameplayMatch = parsedTypes.indexOf(filters.gameplay) !== -1;
+    }
+
+    var dateMatch = true;
+    if (filters.startDate || filters.endDate) {
+      var gameDate = game.releaseDate;
+      if (gameDate) {
+        var parts = gameDate.split('/');
+        if (parts.length === 3) {
+          var gameDateStr = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+          if (filters.startDate && gameDateStr < filters.startDate) dateMatch = false;
+          if (filters.endDate && gameDateStr > filters.endDate) dateMatch = false;
+        }
+      } else {
+        dateMatch = false;
+      }
+    }
+
+    var keywordMatch = true;
+    if (filters.keywords.length > 0) {
+      var searchText = [
+        game.product || '', game.name || '', game.releaseDate || '',
+        game.gameplayTypes || '', game.gridSize || '', game.referenceGames || ''
+      ].join(' ').toLowerCase();
+      for (var j = 0; j < filters.keywords.length; j++) {
+        if (searchText.indexOf(filters.keywords[j].toLowerCase()) === -1) {
+          keywordMatch = false;
+          break;
+        }
+      }
+    }
+
+    if (productMatch && gameplayMatch && dateMatch && keywordMatch) {
+      filtered.push(game);
+    }
+  }
+
+  return filtered;
+};
+
+// ========================================
+// 渲染時間軸
+// ========================================
+window.renderMathTimeline = function() {
+  console.log('🎨 開始渲染時間軸');
+
+  var container = document.getElementById('mathTimelineContainer');
+  if (!container) {
+    console.error('❌ 找不到容器');
+    return;
+  }
+
+  var filteredGames = window.filterMathGames();
+  console.log('   篩選後遊戲數:', filteredGames.length);
+
+  if (filteredGames.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="text-align:center; padding:100px 20px; color:#666;">' +
+      '<div style="font-size:48px; margin-bottom:20px;">🔍</div>' +
+      '<h3 style="margin-bottom:10px; color:#333;">找不到符合條件的遊戲</h3>' +
+      '<p>請調整篩選條件</p>' +
+      '</div>';
+    return;
+  }
+
+  var gamesByMonth = {};
+  for (var i = 0; i < filteredGames.length; i++) {
+    var game = filteredGames[i];
+    if (!game.releaseDate) continue;
+    var parts = game.releaseDate.split('/');
+    var year = parts[0];
+    var month = parts[1];
+    if (month.length === 1) month = '0' + month;
+    var key = year + '-' + month;
+    if (!gamesByMonth[key]) gamesByMonth[key] = { year: year, month: month, games: [] };
+    gamesByMonth[key].games.push(game);
+  }
+
+  var months = Object.keys(gamesByMonth).sort().reverse();
+  container.innerHTML = '';
+  var currentYear = null;
+
+  for (var i = 0; i < months.length; i++) {
+    var monthKey = months[i];
+    var monthData = gamesByMonth[monthKey];
+    var year = monthData.year;
+
+    if (currentYear !== year) {
+      currentYear = year;
+      var yearDiv = document.createElement('div');
+      yearDiv.innerHTML = '<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; padding:16px 20px; border-radius:8px; margin-bottom:20px; font-size:24px; font-weight:700; box-shadow:0 4px 12px rgba(102, 126, 234, 0.4);">📅 ' + year + ' 年</div>';
+      container.appendChild(yearDiv);
+    }
+
+    var monthDiv = document.createElement('div');
+    monthDiv.style.cssText = 'margin-bottom:30px;';
+
+    var monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    var monthName = monthNames[parseInt(monthData.month) - 1];
+
+    var games = monthData.games;
+    games.sort(function(a, b) {
+      var partsA = (a.releaseDate || '').split('/');
+      var partsB = (b.releaseDate || '').split('/');
+      if (partsA.length === 3 && partsB.length === 3) {
+        var numA = parseInt(partsA[0]) * 10000 + parseInt(partsA[1]) * 100 + parseInt(partsA[2]);
+        var numB = parseInt(partsB[0]) * 10000 + parseInt(partsB[1]) * 100 + parseInt(partsB[2]);
+        return numB - numA;
+      }
+      return 0;
+    });
+
+    var gamesHtml = '';
+    for (var j = 0; j < games.length; j++) {
+      gamesHtml += window.createMathGameCard(games[j]);
+    }
+
+    monthDiv.innerHTML =
+      '<div style="background:#f8f9fa; padding:12px 20px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #667eea;">' +
+        '<span style="font-size:18px; font-weight:600; color:#333;">' + monthName + '</span>' +
+        '<span style="background:#667eea; color:#fff; padding:4px 12px; border-radius:12px; font-size:14px; font-weight:600;">' + games.length + ' 款</span>' +
+      '</div>' +
+      '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:16px;">' + gamesHtml + '</div>';
+
+    container.appendChild(monthDiv);
+  }
+
+  console.log('✅ 渲染完成');
+};
+
+// ========================================
+// 創建遊戲卡片（✅ 改用 getProductColor 動態取色）
+// ========================================
+window.createMathGameCard = function(game) {
+  var color = window.getProductColor(game.product);  // ✅ 動態取色，支援任何新競品
+
+  var html = '<div class="game-card" onclick="window.toggleMathCard(this)" style="background:#fff; border-radius:12px; padding:16px; cursor:pointer; border:2px solid #f0f0f0; box-shadow:0 2px 8px rgba(0,0,0,0.08); transition:all 0.3s;">';
+
+  html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">';
+  html += '<div style="background:' + color + '; color:#fff; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600;">' + escapeHtml(game.product) + '</div>';
+  html += '<div style="color:#666; font-size:13px; font-weight:500;">📅 ' + escapeHtml(game.releaseDate) + '</div>';
+  html += '</div>';
+
+  html += '<div style="font-size:16px; font-weight:700; color:#333; margin-bottom:10px; line-height:1.4;">' + escapeHtml(game.name) + '</div>';
+
+  var parsedTypes = window.parseGameplayTypes(game.gameplayTypes || '');
+  if (parsedTypes.length > 0) {
+    html += '<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;">';
+    for (var i = 0; i < parsedTypes.length; i++) {
+      html += '<div style="background:#e3f2fd; color:#1976d2; padding:6px 12px; border-radius:12px; font-size:13px;">🎮 ' + parsedTypes[i] + '</div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="background:#e3f2fd; color:#1976d2; padding:6px 12px; border-radius:12px; font-size:13px; display:inline-block;">🎮 -</div>';
+  }
+
+  // 玩法簡述 & 美術簡述（最多顯示 20 字）
+  var gameplayDesc = game.gameplayDescription || '';
+  var artDesc = game.artDescription || '';
+  if (gameplayDesc || artDesc) {
+    html += '<div style="margin-top:8px; margin-bottom:4px; display:flex; flex-direction:column; gap:5px;">';
+    if (gameplayDesc) {
+      var truncGameplay = gameplayDesc.length > 30 ? gameplayDesc.substring(0, 30) + '...' : gameplayDesc;
+      html += '<div style="display:flex; align-items:flex-start; gap:6px; font-size:14px;">';
+      html += '<span style="color:#999; white-space:nowrap; font-weight:600;">🐰玩法簡述</span>';
+      html += '<span title="' + escapeHtml(gameplayDesc) + '" style="color:#444; line-height:1.5; cursor:default;">' + escapeHtml(truncGameplay) + '</span>';
+      html += '</div>';
+    }
+    if (artDesc) {
+      var truncArt = artDesc.length > 30 ? artDesc.substring(0, 30) + '...' : artDesc;
+      html += '<div style="display:flex; align-items:flex-start; gap:6px; font-size:14px;">';
+      html += '<span style="color:#999; white-space:nowrap; font-weight:600;">🐰美術簡述</span>';
+      html += '<span title="' + escapeHtml(artDesc) + '" style="color:#444; line-height:1.5; cursor:default;">' + escapeHtml(truncArt) + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '<div class="game-details" style="max-height:0; overflow:hidden; transition:max-height 0.3s; opacity:0;">';
+  html += '<div style="background:#f8f9fa; padding:10px 12px; border-radius:6px; font-size:13px; color:#666; margin-top:12px;">📊 參考：' + escapeHtml(game.referenceGames || '無') + '</div>';
+  html += '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:16px 0; padding-top:16px; border-top:1px solid #e9ecef;">';
+  html += '<div style="text-align:center;"><div style="font-size:13px; color:#999; margin-bottom:6px; font-weight:600;">盤面大小</div><div style="font-size:18px; font-weight:700; color:#333;">' + escapeHtml(game.gridSize || '-') + '</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:13px; color:#999; margin-bottom:6px; font-weight:600;">Feature Buy</div><div style="font-size:18px; font-weight:700; color:#333;">' + escapeHtml(game.featureBuy || '-') + '</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:13px; color:#999; margin-bottom:6px; font-weight:600;">Extra Bet</div><div style="font-size:18px; font-weight:700; color:#333;">' + escapeHtml(game.extraBet || '-') + '</div></div>';
+  html += '</div>';
+
+  if (game.slideUrl) {
+    html += '<a href="' + game.slideUrl + '" target="_blank" onclick="event.stopPropagation()" style="display:block; background:#667eea; color:#fff; padding:12px 16px; border-radius:8px; text-align:center; text-decoration:none; font-weight:500; font-size:14px; transition:background 0.2s; box-shadow:0 2px 6px rgba(102, 126, 234, 0.3);" onmouseover="this.style.background=\'#5568d3\'" onmouseout="this.style.background=\'#667eea\'">🔗 查看完整簡報</a>';
+  }
+
+  html += '</div>';
+  html += '</div>';
+
+  return html;
+};
+
+// ========================================
+// 切換卡片展開/收合
+// ========================================
+window.toggleMathCard = function(card) {
+  console.log('🔘 toggleMathCard 被觸發');
+
+  var details = card.querySelector('.game-details');
+  if (!details) {
+    console.error('❌ 找不到 .game-details');
+    return;
+  }
+
+  var isExpanded = card.classList.contains('expanded');
+
+  var allCards = document.querySelectorAll('.game-card.expanded');
+  for (var i = 0; i < allCards.length; i++) {
+    if (allCards[i] !== card) {
+      allCards[i].classList.remove('expanded');
+      var d = allCards[i].querySelector('.game-details');
+      if (d) { d.style.maxHeight = '0'; d.style.opacity = '0'; }
+    }
+  }
+
+  if (isExpanded) {
+    card.classList.remove('expanded');
+    details.style.maxHeight = '0';
+    details.style.opacity = '0';
+  } else {
+    card.classList.add('expanded');
+    details.style.maxHeight = 'none';
+    details.style.opacity = '1';
+    var height = details.scrollHeight;
+    details.style.maxHeight = '0';
+    void details.offsetHeight;
+    requestAnimationFrame(function() {
+      details.style.maxHeight = height + 'px';
+      details.style.opacity = '1';
+    });
+  }
+};
+
+// ========================================
+// 頁籤切換時清理圖表（供 main.js 呼叫）
+// ========================================
+window.cleanupMathChart = function() {
+  console.log('🧹 清理數學資料庫圖表');
+  if (window.mathChart) {
+    try {
+      window.mathChart.dispose();
+      window.mathChart = null;
+      console.log('✅ 圖表實例已清理');
+    } catch (e) {
+      console.warn('清理圖表時出錯:', e);
+      window.mathChart = null;
+    }
+  }
+};
+
+console.log('✅ math.js v3.1 載入完成（動態競品顏色）！');
+console.log('   - window.initMathTab:', typeof window.initMathTab);
+console.log('   - window.loadMathDatabase:', typeof window.loadMathDatabase);
+console.log('   - window.renderMathChart:', typeof window.renderMathChart);
+console.log('   - window.getProductColor:', typeof window.getProductColor);
+console.log('   - window.mathGamesData:', window.mathGamesData);
+</script>

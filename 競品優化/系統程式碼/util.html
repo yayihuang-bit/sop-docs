@@ -1,0 +1,237 @@
+<script>
+  // ===== 全域函數（必須最先定義）=====
+
+  // HTML 特殊字元跳脫，防止 XSS
+  window.escapeHtml = function(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  window.toggleCompetitorDropdown = function(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var dropdown = document.getElementById('competitorDropdown');
+    var wrapper = document.getElementById('competitorMultiSelect');
+    if (!dropdown || !wrapper) return;
+    var willShow = dropdown.style.display !== 'block';
+    dropdown.style.display = willShow ? 'block' : 'none';
+    if (willShow) {
+      wrapper.classList.add('open');
+    } else {
+      wrapper.classList.remove('open');
+    }
+  };
+
+  window.onCompetitorCheckboxChange = function(checkbox, competitorName) {
+    try {
+      if (!window.selectedCompetitors) window.selectedCompetitors = [];
+      var idx = window.selectedCompetitors.indexOf(competitorName);
+      if (checkbox.checked) {
+        if (idx === -1) window.selectedCompetitors.push(competitorName);
+      } else {
+        if (idx !== -1) window.selectedCompetitors.splice(idx, 1);
+      }
+      if (window.updateCompetitorSelectText) window.updateCompetitorSelectText();
+      if (window.filterAndRenderTable) window.filterAndRenderTable();
+    } catch (e) { console.warn('onCompetitorCheckboxChange 失敗', e); }
+  };
+
+  // 繼續您原有的代碼...
+  console.log('utils.html loaded successfully');
+  // ===== 全域變數 =====
+  var allCompetitorData = {};
+  var currentCompetitor = '';
+  var charts = {};
+  var currentSearchKeyword = {};
+  var revenueData = {};
+  var lastAdvancedProducts = [];
+  var dashboardProduct = 'ALL';
+  var revenueGranularity = 'day';
+  var downloadsGranularity = 'day';
+  var originalActivityTypesData = null;
+  var selectedCompetitors = [];
+  var userPermissions = { allowedTabs: [] };
+  var currentUser = '';
+
+  // SensorTower API 設定（API_TOKEN 已移至後端，請勿在前端放置）
+  var SENSOR_TOWER_CONFIG = {
+    COUNTRY: 'TW',
+    PRODUCT_NAMES: ['包你發', '星城', '金好運', '滿貫', '老子', '豪神', '錢街']
+  };
+
+  // 關閉一般訊息的 console.log
+  try { if (console && console.log) { console.log = function(){}; } } catch(e) {}
+
+  // ===== 工具函數 =====
+  function getProductColor(name) {
+    var productColors = {
+      '星城': '#FF6B6B',
+      '金好運': '#4ECDC4', 
+      '滿貫': '#45B7D1',
+      '老子': '#F39C12',
+      '豪神': '#9B59B6',
+      '錢街': '#E74C3C',
+      '包你發': '#2ECC71'
+    };
+    return productColors[name] || '#95A5A6';
+  }
+
+  function formatMoneyUSD(n) {
+    return '$' + (n || 0).toLocaleString();
+  }
+
+  function buildTimelineDateHeader(daysInMonth) {
+    var html = '<tr class="date-header">';
+    html += '<td style="background: #D9D9D9; width: 120px;">分類</td>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      html += '<td class="day-cell" style="min-width: 32px; white-space: nowrap;">' + day + '</td>';
+    }
+    html += '</tr>';
+    return html;
+  }
+
+  function buildTimelineWeekdayHeader(year, monthNum, daysInMonth) {
+    var weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    var html = '<tr class="weekday-header">';
+    html += '<td style="background: #D9D9D9;">星期</td>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var date = new Date(year, monthNum - 1, day);
+      html += '<td>' + weekdays[date.getDay()] + '</td>';
+    }
+    html += '</tr>';
+    return html;
+  }
+
+  function getActivityTypeClass(type) {
+    var typeClassMap = {
+      '新遊戲': 'new-game',
+      '抽獎活動': 'lottery', 
+      '主題活動': 'theme',
+      '老虎機': 'slot',
+      '柏青': 'pachinko',
+      '魚機': 'fish',
+      '魚機-主特色改版': 'fish-main',
+      '魚機-活動海皇': 'fish-event-emperor',
+      '魚機-新海皇/魚種': 'fish-new-emperor',
+      '魚機-活動': 'fish-activity',
+      '魚機-優化': 'fish-optimize',
+      '牌桌': 'card',
+      '新系統功能': 'system',
+      '儲值': 'recharge',
+      '每登': 'daily',
+      'CCU': 'ccu',
+      '其他-優化': 'other-optimize',
+      '其他': 'other'
+    };
+    
+    return typeClassMap[type] || 'other';
+  }
+
+  function parseActivityDateForSort(dateStr, monthStr) {
+    if (!dateStr || typeof dateStr !== 'string') {
+      return new Date();
+    }
+    
+    var parts = dateStr.split('/');
+    if (parts.length === 2) {
+      var month = parseInt(parts[0]);
+      var day = parseInt(parts[1]);
+      
+      var currentYear = new Date().getFullYear();
+      if (monthStr) {
+        currentYear = parseInt(monthStr.split('-')[0]);
+      }
+      
+      return new Date(currentYear, month - 1, day);
+    }
+    
+    return new Date();
+  }
+
+  function validateDateInput(inputElement, competitorName) {
+    var value = inputElement.value.trim();
+    
+    if (!value) return true;
+    
+    var datePattern = /^\d{4}-\d{2}$/;
+    if (!datePattern.test(value)) {
+      inputElement.style.borderColor = '#dc3545';
+      inputElement.style.backgroundColor = '#fff5f5';
+      return false;
+    }
+    
+    var parts = value.split('-');
+    var year = parseInt(parts[0]);
+    var month = parseInt(parts[1]);
+    
+    if (year < 2020 || year > 2030 || month < 1 || month > 12) {
+      inputElement.style.borderColor = '#dc3545';
+      inputElement.style.backgroundColor = '#fff5f5';
+      return false;
+    }
+    
+    inputElement.style.borderColor = '#28a745';
+    inputElement.style.backgroundColor = '#f8fff8';
+    return true;
+  }
+
+  // 窗口調整大小處理
+  window.onresize = function() {
+    Object.keys(charts).forEach(function(competitorName) {
+      if (charts[competitorName]) {
+        charts[competitorName].resize();
+      }
+    });
+    
+    if (charts.revenueChart) {
+      charts.revenueChart.resize();
+    }
+    if (charts.downloadsChart) {
+      charts.downloadsChart.resize();
+    }
+  };
+
+  // 手機版觸控滑動支援
+  function setupTouchScrolling() {
+    var chartContainers = document.querySelectorAll('.chart-main, .timeline-container');
+    chartContainers.forEach(function(container) {
+      if (container.scrollWidth > container.clientWidth) {
+        container.style.cursor = 'grab';
+        
+        var isScrolling = false;
+        var startX = 0;
+        var scrollLeft = 0;
+        
+        container.addEventListener('touchstart', function(e) {
+          isScrolling = true;
+          startX = e.touches[0].pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
+          container.style.cursor = 'grabbing';
+        });
+        
+        container.addEventListener('touchmove', function(e) {
+          if (!isScrolling) return;
+          e.preventDefault();
+          var x = e.touches[0].pageX - container.offsetLeft;
+          var walk = (x - startX) * 2;
+          container.scrollLeft = scrollLeft - walk;
+        });
+        
+        container.addEventListener('touchend', function() {
+          isScrolling = false;
+          container.style.cursor = 'grab';
+        });
+      }
+    });
+  }
+
+  // 頁面載入完成後設定觸控滑動
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(setupTouchScrolling, 1000);
+  });
+// loadOtherData 和 renderOtherData 已移至 main.js 統一管理
+
+</script>

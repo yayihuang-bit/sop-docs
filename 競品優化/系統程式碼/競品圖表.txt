@@ -1,0 +1,1739 @@
+// ===== Google Apps Script 後端程式碼 - 營收分析整合版 =====
+
+/*
+=== 競品活動分析系統 - 營收分析整合版 ===
+包含原有活動時間軸功能 + SensorTower 營收分析功能 + 活動類型總表獨立頁籤
+*/
+// ========== 開啟獨立網頁（若要調整需更動下方網址） ==========
+function openWebApp() {
+  var url = 'https://script.google.com/a/macros/yile.com.tw/s/AKfycbx2MMu6jTOlF1VdlPrHgaI4uigbH_Oz6bp5505Y-JCPMuY6xeC8WywkgXB2vlYWBp73/exec';
+  var html = '<script>window.open("' + url + '", "_blank");google.script.host.close();</script>';
+  var userInterface = HtmlService.createHtmlOutput(html);
+  SpreadsheetApp.getUi().showModalDialog(userInterface, '🦆開啟中...');
+}
+
+// ========== 原有活動時間軸功能（保留） ==========
+function showCompetitorTimelineDialog() {
+  var html = HtmlService.createTemplateFromFile('圖表').evaluate()
+    .setWidth(3000)
+    .setHeight(1500);
+  SpreadsheetApp.getUi().showModalDialog(html, '競品活動動態圖表');
+}
+
+function doGet() {
+  return HtmlService.createTemplateFromFile('圖表').evaluate()
+    .setTitle('競品活動分析')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// 用於在 index.html 內動態引入其他檔案內容
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// 前端公開呼叫包裝：避免有些部署狀況下找不到原函數
+function getAllCompetitorStatsPublic() {
+  return getAllCompetitorStats();
+}
+
+// 修正主要數據讀取函數
+function getAllCompetitorStats() {
+  var callerEmail = getCallerEmail_();
+  var allowedTabs = [];
+  if (callerEmail) {
+    var perms = getUserPermissions(callerEmail);
+    allowedTabs = (perms && perms.allowedTabs) ? perms.allowedTabs : [];
+  }
+  if (!callerEmail) return {};
+
+  try {
+    var spreadsheetId = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var cacheSheet = spreadsheet.getSheetByName('企劃資料快取');
+    var allData;
+    if (cacheSheet && cacheSheet.getLastRow() > 1) {
+      allData = readFromCache(cacheSheet);
+    } else {
+      allData = getAllCompetitorStatsRealtime(spreadsheet);
+    }
+    var filtered = {};
+    Object.keys(allData).forEach(function(name) {
+      if (allowedTabs.indexOf(name) !== -1) filtered[name] = allData[name];
+    });
+    return filtered;
+  } catch (error) {
+    console.error('讀取資料失敗:', error.toString());
+    return {};
+  }
+}
+
+// ===== 即時處理 (當快取不存在時的備用方案) =====
+function getAllCompetitorStatsRealtime(spreadsheet) {
+  try {
+    console.log('開始即時處理競品資料...');
+    
+    var allResults = {};
+    
+    var potentialCompetitors = [
+      '星城', '滿貫大亨', '金好運', '豪神', 'HUGA', '錢街', 
+      '老子有錢', '寶島', '嚦咕麻將', '王牌', '大頭家'
+    ];
+    
+    for (var i = 0; i < potentialCompetitors.length; i++) {
+      var competitorName = potentialCompetitors[i];
+      var sheetName = competitorName + '時間軸';
+      
+      try {
+        var sheet = spreadsheet.getSheetByName(sheetName);
+        if (sheet) {
+          console.log('處理: ' + sheetName);
+          var sheetData = processCompetitorSheetEnhanced(sheet);
+          
+          if (sheetData.stats.length > 0 || sheetData.activities.length > 0) {
+            allResults[competitorName] = sheetData;
+          }
+        }
+      } catch (e) {
+        console.log('無法處理 ' + sheetName + ': ' + e.toString());
+      }
+    }
+    
+    console.log('即時處理完成，競品數: ' + Object.keys(allResults).length);
+    return allResults;
+    
+  } catch (error) {
+    console.error('即時處理失敗:', error.toString());
+    return {};
+  }
+}
+
+// ===== 从快取读取资料（含去重逻辑）=====
+function readFromCache(cacheSheet) {
+  try {
+    var data = cacheSheet.getDataRange().getValues();
+    var allResults = {};
+    
+    console.log('开始读取快取资料，总行数：' + data.length);
+    
+    // 从第2行开始读取（第1行是标题）
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      
+      var competitorName = row[0]; // A栏：竞品名称
+      var quarter = row[1];        // B栏：季度
+      var type = row[2];           // C栏：类型
+      var jsonStr = row[3];        // D栏：JSON资料
+      var timestamp = row[4];      // E栏：时间戳记
+      
+      // 跳过空行
+      if (!competitorName || !jsonStr) continue;
+      
+      try {
+        // 解析 JSON
+        var jsonData = JSON.parse(jsonStr);
+        
+        // 初始化竞品资料结构
+        if (!allResults[competitorName]) {
+          allResults[competitorName] = {
+            stats: [],
+            activities: []
+          };
+        }
+        
+        // 合并 stats 和 activities
+        if (jsonData.stats && jsonData.stats.length > 0) {
+          allResults[competitorName].stats = allResults[competitorName].stats.concat(jsonData.stats);
+        }
+        if (jsonData.activities && jsonData.activities.length > 0) {
+          allResults[competitorName].activities = allResults[competitorName].activities.concat(jsonData.activities);
+        }
+        
+      } catch (e) {
+        console.error('解析 JSON 失败：' + competitorName + ' - ' + e.toString());
+      }
+    }
+    
+    // ⭐⭐⭐ 最终去重：防止快取中有重复的行导致活动重复显示 ⭐⭐⭐
+    console.log('');
+    console.log('========== 开始最终去重 ==========');
+    for (var competitorName in allResults) {
+      if (allResults[competitorName].activities && allResults[competitorName].activities.length > 0) {
+        var beforeCount = allResults[competitorName].activities.length;
+        allResults[competitorName].activities = removeDuplicateActivities(allResults[competitorName].activities);
+        var afterCount = allResults[competitorName].activities.length;
+        
+        if (beforeCount !== afterCount) {
+          console.log('⭐ ' + competitorName + ' 最终去重：' + beforeCount + ' → ' + afterCount + ' （移除 ' + (beforeCount - afterCount) + ' 笔重复）');
+        } else {
+          console.log('✓ ' + competitorName + '：' + afterCount + ' 笔活动（无重复）');
+        }
+      }
+    }
+    console.log('========== 去重完成 ==========');
+    console.log('');
+    
+    console.log('✅ 快取资料读取完成，竞品数：' + Object.keys(allResults).length);
+    return allResults;
+    
+  } catch (error) {
+    console.error('❌ 读取快取失败：' + error.toString());
+    return {};
+  }
+}
+
+// ===== 去重函數：移除活動名稱完全相同的重複項 =====
+function removeDuplicateActivities(activities) {
+  // ⭐ 防禦性檢查1：檢查參數是否存在
+  if (activities === null || activities === undefined) {
+    console.warn('⚠️ removeDuplicateActivities: 傳入的 activities 為 null 或 undefined');
+    return [];
+  }
+  
+  // ⭐ 防禦性檢查2：檢查是否為陣列
+  if (!Array.isArray(activities)) {
+    console.warn('⚠️ removeDuplicateActivities: 傳入的 activities 不是陣列，類型為：' + typeof activities);
+    return [];
+  }
+  
+  // ⭐ 防禦性檢查3：檢查陣列是否為空
+  if (activities.length === 0) {
+    console.log('✓ removeDuplicateActivities: 活動陣列為空，無需去重');
+    return [];
+  }
+  
+  var seen = {};
+  var uniqueActivities = [];
+  var skippedCount = 0;
+  var invalidCount = 0;
+  
+  for (var i = 0; i < activities.length; i++) {
+    var activity = activities[i];
+    
+    // ⭐ 檢查 activity 是否為有效物件
+    if (!activity || typeof activity !== 'object') {
+      console.warn('⚠️ 第 ' + i + ' 個活動不是物件，跳過（類型：' + typeof activity + '）');
+      invalidCount++;
+      continue;
+    }
+    
+    // ⭐ 檢查是否有 name 屬性
+    if (!activity.name) {
+      console.warn('⚠️ 第 ' + i + ' 個活動沒有 name 屬性，跳過');
+      invalidCount++;
+      continue;
+    }
+    
+    // ⭐ 確保 name 是字串
+    var activityName = String(activity.name).trim();
+    
+    // ⭐ 檢查活動名稱是否為空
+    if (activityName.length === 0) {
+      console.warn('⚠️ 第 ' + i + ' 個活動名稱為空，跳過');
+      invalidCount++;
+      continue;
+    }
+    
+    // ⭐ 去重邏輯
+    if (!seen[activityName]) {
+      seen[activityName] = true;
+      uniqueActivities.push(activity);
+    } else {
+      console.log('  ⚠️ 跳過重複活動：' + activityName);
+      skippedCount++;
+    }
+  }
+  
+  // ⭐ 輸出統計資訊
+  console.log('  ✅ 去重完成：總數 ' + activities.length + ' → 保留 ' + uniqueActivities.length + 
+              ' （重複 ' + skippedCount + '，無效 ' + invalidCount + '）');
+  
+  return uniqueActivities;
+}
+
+// ========== 新增：快速載入主要競品 ==========
+function getQuickCompetitorStats() {
+  try {
+    var spreadsheetId = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    
+    var allResults = {};
+    
+    // ⭐ 只載入 TOP 5 主要競品
+    var priorityCompetitors = ['星城', '滿貫大亨', '金好運','老子有錢'];
+    
+    console.log('快速模式：載入主要競品');
+    
+    for (var i = 0; i < priorityCompetitors.length; i++) {
+      var competitorName = priorityCompetitors[i];
+      var sheetName = competitorName + '時間軸';
+      
+      try {
+        var sheet = spreadsheet.getSheetByName(sheetName);
+        if (sheet) {
+          console.log('載入主要競品：' + sheetName);
+          var sheetData = processCompetitorSheetEnhanced(sheet);
+          
+          if (sheetData.stats.length > 0 || sheetData.activities.length > 0) {
+            allResults[competitorName] = sheetData;
+          }
+        }
+      } catch (e) {
+        console.log('處理失敗：' + sheetName);
+      }
+    }
+    
+    console.log('快速載入完成，競品數：' + Object.keys(allResults).length);
+    return allResults;
+    
+  } catch (error) {
+    console.error('快速載入失敗：' + error.toString());
+    return {};
+  }
+}
+    
+    // ... 其餘代碼不變
+// 降級處理函數：當試算表無法開啟時的備用方案
+function processWithoutSpreadsheet() {
+  console.log('進入降級模式：無法存取試算表，返回空結果');
+  return {};
+}
+
+// 關鍵修正：processCompetitorSheetEnhanced（修正合併儲存格問題）
+function processCompetitorSheetEnhanced(sheet) {
+  if (!sheet) {
+    return { stats: [], activities: [] };
+  }
+  
+  var sheetName = '';
+  var data = [];
+  var formulas = [];
+  
+  try {
+    sheetName = sheet.getName();
+    var range = sheet.getDataRange();
+    data = range.getValues();
+    formulas = range.getFormulas();
+    console.log('處理工作表：' + sheetName + '，總行數：' + data.length);
+  } catch (e) {
+    console.error('讀取工作表失敗：' + e.toString());
+    return { stats: [], activities: [] };
+  }
+  
+  var statsResults = [];
+  var activitiesResults = [];
+  var monthTypeActivityCount = {};
+  var globalProcessedActivities = {};
+  var currentMonthYear = '';
+  var currentActivityType = '';
+  
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var formulaRow = formulas[i] || [];
+    
+    if (!row || row.length === 0) continue;
+    
+    var cellA = '';
+    try {
+      if (row[0] instanceof Date) {
+        var date = row[0];
+        var year = date.getFullYear();
+        var month = (date.getMonth() + 1).toString().padStart(2, '0');
+        currentMonthYear = year + '-' + month;
+        console.log('找到日期格式月份標題：' + date + ' -> ' + currentMonthYear);
+        continue;
+      }
+      
+      if (row[0] !== null && row[0] !== undefined) {
+        cellA = row[0].toString().trim();
+      } else {
+        cellA = '';
+      }
+    } catch (e) {
+      cellA = '';
+      continue;
+    }
+    
+    // 處理月份標題
+    var monthMatch = cellA.match(/^(\d{4})年(\d{1,2})月$/);
+    if (monthMatch) {
+      var year = monthMatch[1];
+      var month = monthMatch[2].padStart(2, '0');
+      currentMonthYear = year + '-' + month;
+      console.log('找到文字格式月份標題：' + cellA + ' -> ' + currentMonthYear);
+    }
+    
+    // 特殊行跳過邏輯
+    var shouldSkipRow = false;
+    if (cellA.length > 0) {
+      if (cellA.match(/^\d{4}$/) || 
+          cellA.includes('年分連結') || 
+          cellA.match(/^[日一二三四五六]$/) || 
+          cellA.match(/^\d{1,2}$/)) {
+        shouldSkipRow = true;
+      }
+    }
+    
+    if (shouldSkipRow) {
+      console.log('跳過特殊行：第' + (i+1) + '行 "' + cellA + '"');
+      continue;
+    }
+    
+    if (currentMonthYear) {
+      // 檢查是否為新的活動類型
+      if (cellA.length > 0 && cellA !== '-' && cellA !== '') {
+        var activityType = processActivityType(cellA);
+        if (activityType) {
+          currentActivityType = activityType;
+          console.log('第 ' + (i+1) + ' 行：更新活動類型 "' + cellA + '" -> "' + currentActivityType + '"');
+        }
+      }
+      
+      // 掃描活動內容
+      if (currentActivityType) {
+        for (var j = 1; j < row.length; j++) {
+          try {
+            var cell = row[j];
+            var formulaCell = formulaRow[j] || '';
+            
+            var content = null;
+            var isFormula = false;
+            
+            if (formulaCell && formulaCell.toString().trim() !== '') {
+              content = formulaCell.toString().trim();
+              isFormula = true;
+            } else if (cell !== null && cell !== undefined) {
+              var cellString = cell.toString();
+              if (cellString && cellString.trim() !== '') {
+                content = cellString.trim();
+                isFormula = false;
+              }
+            }
+            
+            if (content && isValidActivityContent(content)) {
+              // 提取URL和文字
+              var activityUrl = null;
+              var cleanContent = content;
+              
+              if (isFormula && content.startsWith('=HYPERLINK')) {
+                activityUrl = extractUrlFromFormula(content);
+                cleanContent = extractTextFromFormula(content);
+              }
+              
+              if (cleanContent && cleanContent.length > 0) {
+                var separatedActivities = separateMultipleActivities(cleanContent);
+                
+                for (var k = 0; k < separatedActivities.length; k++) {
+                  var singleActivity = separatedActivities[k].trim();
+                  if (singleActivity.length === 0) continue;
+                  
+                  var activityInfo = parseActivityDateRange(singleActivity);
+                  
+                  var finalActivityType = currentActivityType;
+
+                  if (activityInfo.name.includes('[新海皇]') || activityInfo.name.includes('[新魚種]')) {
+                    finalActivityType = '魚機-新海皇/魚種';
+                    console.log('[新海皇]/[新魚種]標籤活動歸類到魚機-新海皇/魚種：' + activityInfo.name);
+                  } else if (activityInfo.name.startsWith('[其他]') && currentActivityType === '老虎機') {
+                    finalActivityType = '老虎機';
+                    console.log('[其他]標籤活動歸類到老虎機：' + activityInfo.name);
+                  }
+                  
+                  var activityDetail = {
+                    name: activityInfo.name,
+                    type: finalActivityType,
+                    startDate: activityInfo.startDate,
+                    endDate: activityInfo.endDate,
+                    month: currentMonthYear,
+                    originalContent: singleActivity,
+                    url: activityUrl,
+                    isMultiYear: activityInfo.isMultiYear || false
+                  };
+                  
+                  var globalActivityKey = activityInfo.name + '|' + finalActivityType + '|' + 
+                                        (activityInfo.startDate || 'no-date') + '|' + 
+                                        (activityInfo.endDate || 'no-date') + '|' +
+                                        (activityInfo.startYear || 'no-year') + '|' +
+                                        (activityInfo.endYear || 'no-year');
+                  
+                  if (activityInfo.startDate && activityInfo.endDate) {
+                    var activityMonths = getActivityMonths(activityInfo, currentMonthYear);
+                    
+                    console.log('活動月份計算結果：' + activityInfo.name + ' -> ' + JSON.stringify(activityMonths));
+                    
+                    if (activityMonths.length > 1) {
+                      if (!globalProcessedActivities[globalActivityKey]) {
+                        globalProcessedActivities[globalActivityKey] = true;
+                        console.log('處理跨月活動：' + activityInfo.name + '，跨越 ' + activityMonths.length + ' 個月份');
+                        
+                        for (var m = 0; m < activityMonths.length; m++) {
+                          var targetMonth = activityMonths[m];
+                          var activityCopy = {
+                            name: activityInfo.name,
+                            type: finalActivityType,
+                            startDate: activityInfo.startDate,
+                            endDate: activityInfo.endDate,
+                            month: targetMonth,
+                            originalContent: singleActivity,
+                            isMultiMonth: true,
+                            isMultiYear: activityInfo.isMultiYear || false,
+                            startYear: activityInfo.startYear,
+                            endYear: activityInfo.endYear,
+                            url: activityUrl
+                          };
+                          activitiesResults.push(activityCopy);
+                          console.log('  加入活動到月份：' + targetMonth + ' - ' + activityInfo.name);
+                        }
+                        
+                        for (var m = 0; m < activityMonths.length; m++) {
+                          var targetMonth = activityMonths[m];
+                          var key = targetMonth + '|' + finalActivityType;
+                          if (!monthTypeActivityCount[key]) {
+                            monthTypeActivityCount[key] = 0;
+                          }
+                          monthTypeActivityCount[key] += 1;
+                        }
+                      } else {
+                        console.log('跨月活動已處理過，跳過：' + activityInfo.name);
+                      }
+                    } else {
+                      activitiesResults.push(activityDetail);
+                      var key = activityMonths[0] + '|' + finalActivityType;
+                      if (!monthTypeActivityCount[key]) {
+                        monthTypeActivityCount[key] = 0;
+                      }
+                      monthTypeActivityCount[key] += 1;
+                    }
+                  } else {
+                    activitiesResults.push(activityDetail);
+                    var key = currentMonthYear + '|' + finalActivityType;
+                    if (!monthTypeActivityCount[key]) {
+                      monthTypeActivityCount[key] = 0;
+                    }
+                    monthTypeActivityCount[key] += 1;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('處理第 ' + (i+1) + ' 行第 ' + (j+1) + ' 欄時發生錯誤：' + e.toString());
+          }
+        }
+      }
+    }
+  }
+  
+  // 組成統計結果
+  for (var key in monthTypeActivityCount) {
+    try {
+      var keyParts = key.split('|');
+      if (keyParts.length >= 2) {
+        var month = keyParts[0];
+        var type = keyParts[1];
+        var count = monthTypeActivityCount[key];
+        
+        if (count > 0) {
+          statsResults.push({ 
+            month: month, 
+            type: type, 
+            count: count 
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('處理統計結果時發生錯誤：' + e.toString());
+    }
+  }
+  
+  console.log(sheetName + ' 處理完成');
+  
+  return { stats: statsResults, activities: activitiesResults };
+}
+
+// 從HYPERLINK公式中提取文字
+function extractTextFromFormula(content) {
+  if (!content || typeof content !== 'string') {
+    return '';
+  }
+  
+  var patterns = [
+    /=HYPERLINK\("([^"]+)",\s*"([^"]*)"\)/,
+    /=HYPERLINK\("([^"]+)";\s*"([^"]*)"\)/,
+    /=HYPERLINK\("([^"]+)","([^"]*)"\)/,
+    /=HYPERLINK\("([^"]+)";"([^"]*)"\)/
+  ];
+  
+  for (var i = 0; i < patterns.length; i++) {
+    var match = content.match(patterns[i]);
+    if (match) {
+      return match[2];
+    }
+  }
+  
+  return content;
+}
+
+// 從HYPERLINK公式中提取URL
+function extractUrlFromFormula(content) {
+  if (!content || typeof content !== 'string') {
+    return null;
+  }
+  
+  var patterns = [
+    /=HYPERLINK\("([^"]+)",\s*"[^"]*"\)/,
+    /=HYPERLINK\("([^"]+)";\s*"[^"]*"\)/,
+    /=HYPERLINK\("([^"]+)","[^"]*"\)/,
+    /=HYPERLINK\("([^"]+)";"[^"]*"\)/
+  ];
+  
+  for (var i = 0; i < patterns.length; i++) {
+    var match = content.match(patterns[i]);
+    if (match) {
+      return match[1];
+    }
+  }
+  
+  return null;
+}
+
+// 解析活動名稱中的日期範圍（支援跨年）
+function parseActivityDateRange(activityContent) {
+  if (!activityContent || typeof activityContent !== 'string') {
+    return {
+      name: activityContent,
+      startDate: null,
+      endDate: null,
+      isMultiYear: false
+    };
+  }
+  
+  // 支援完整日期格式：活動名稱(YYYY/M/D~YYYY/M/D)
+  var fullDateRangeMatch = activityContent.match(/(.+?)\((\d{4}\/\d{1,2}\/\d{1,2})~(\d{4}\/\d{1,2}\/\d{1,2})\)/);
+  if (fullDateRangeMatch) {
+    var activityName = fullDateRangeMatch[1].trim();
+    var startFullDate = fullDateRangeMatch[2];
+    var endFullDate = fullDateRangeMatch[3];
+    
+    var startParts = startFullDate.split('/');
+    var endParts = endFullDate.split('/');
+    var startYear = parseInt(startParts[0]);
+    var endYear = parseInt(endParts[0]);
+    var startMonthDay = startParts[1] + '/' + startParts[2];
+    var endMonthDay = endParts[1] + '/' + endParts[2];
+    
+    console.log('解析完整日期格式：' + activityName + ' (' + startFullDate + ' ~ ' + endFullDate + ')');
+    
+    return {
+      name: activityName,
+      startDate: startMonthDay,
+      endDate: endMonthDay,
+      startYear: startYear,
+      endYear: endYear,
+      isMultiYear: startYear !== endYear,
+      fullStartDate: startFullDate,
+      fullEndDate: endFullDate
+    };
+  }
+  
+  // 匹配跨日活動格式：活動名稱(M/D~M/D)
+  var dateRangeMatch = activityContent.match(/(.+?)\((\d{1,2}\/\d{1,2})~(\d{1,2}\/\d{1,2})\)/);
+  if (dateRangeMatch) {
+    var activityName = dateRangeMatch[1].trim();
+    var startDate = dateRangeMatch[2];
+    var endDate = dateRangeMatch[3];
+    
+    var startMonth = parseInt(startDate.split('/')[0]);
+    var endMonth = parseInt(endDate.split('/')[0]);
+    var isLikelyMultiYear = endMonth < startMonth;
+    
+    if (isLikelyMultiYear) {
+      console.log('推斷跨年活動：' + activityName + ' (' + startDate + ' ~ ' + endDate + ')');
+    }
+    
+    return {
+      name: activityName,
+      startDate: startDate,
+      endDate: endDate,
+      isMultiYear: isLikelyMultiYear
+    };
+  }
+  
+  // 檢查單日活動格式：活動名稱(M/D)
+  var singleDateMatch = activityContent.match(/(.+?)\((\d{1,2}\/\d{1,2})\)/);
+  if (singleDateMatch) {
+    var activityName = singleDateMatch[1].trim();
+    var date = singleDateMatch[2];
+    
+    return {
+      name: activityName,
+      startDate: date,
+      endDate: date,
+      isMultiYear: false
+    };
+  }
+  
+  return {
+    name: activityContent,
+    startDate: null,
+    endDate: null,
+    isMultiYear: false
+  };
+}
+
+// 解析月/日格式到完整日期
+function parseMonthDay(monthDay, currentYear) {
+  if (!monthDay || !monthDay.includes('/')) {
+    return null;
+  }
+  
+  var parts = monthDay.split('/');
+  var month = parseInt(parts[0]);
+  var day = parseInt(parts[1]);
+  
+  return new Date(currentYear, month - 1, day);
+}
+
+// 計算活動應該分配到哪些月份
+function getActivityMonths(activityInfo, currentMonthYear) {
+  if (!activityInfo.startDate || !activityInfo.endDate) {
+    return [currentMonthYear];
+  }
+  
+  try {
+    var currentYear = parseInt(currentMonthYear.split('-')[0]);
+    
+    var startDate, endDate;
+    
+    if (activityInfo.startYear && activityInfo.endYear) {
+      startDate = parseMonthDay(activityInfo.startDate, activityInfo.startYear);
+      endDate = parseMonthDay(activityInfo.endDate, activityInfo.endYear);
+      console.log('跨年活動處理：' + activityInfo.fullStartDate + ' ~ ' + activityInfo.fullEndDate);
+    } else {
+      startDate = parseMonthDay(activityInfo.startDate, currentYear);
+      endDate = parseMonthDay(activityInfo.endDate, currentYear);
+      
+      if (activityInfo.isMultiYear || (endDate && startDate && endDate.getMonth() < startDate.getMonth())) {
+        endDate = parseMonthDay(activityInfo.endDate, currentYear + 1);
+        console.log('推斷跨年活動：' + activityInfo.startDate + '(' + currentYear + ') ~ ' + 
+                   activityInfo.endDate + '(' + (currentYear + 1) + ')');
+      }
+    }
+    
+    if (!startDate || !endDate) {
+      return [currentMonthYear];
+    }
+    
+    var months = [];
+    var current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    var end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    
+    console.log('計算月份範圍：' + 
+               current.getFullYear() + '-' + (current.getMonth() + 1).toString().padStart(2, '0') + 
+               ' ~ ' + 
+               end.getFullYear() + '-' + (end.getMonth() + 1).toString().padStart(2, '0'));
+    
+    var maxMonths = 24;
+    var monthCount = 0;
+    
+    while (current <= end && monthCount < maxMonths) {
+      var yearMonth = current.getFullYear() + '-' + 
+                     (current.getMonth() + 1).toString().padStart(2, '0');
+      months.push(yearMonth);
+      console.log('  加入月份：' + yearMonth);
+      
+      current.setMonth(current.getMonth() + 1);
+      monthCount++;
+    }
+    
+    return months.length > 0 ? months : [currentMonthYear];
+    
+  } catch (error) {
+    console.error('計算活動月份時發生錯誤：', error.toString());
+    return [currentMonthYear];
+  }
+}
+
+// 分離合併儲存格中的多個活動
+function separateMultipleActivities(cellContent) {
+  if (!cellContent || typeof cellContent !== 'string') {
+    return [cellContent];
+  }
+  
+  var content = cellContent.trim();
+  if (content.length === 0) {
+    return [];
+  }
+  
+  var activities = [];
+  
+  var lineActivities = content.split('\n').filter(function(activity) {
+    return activity.trim().length > 0;
+  });
+  
+  if (lineActivities.length > 1) {
+    activities = lineActivities.map(function(activity) {
+      return activity.trim();
+    });
+  } else {
+    var singleLine = lineActivities[0] || content;
+    var bracketMatches = singleLine.match(/[^()]+\([^)]+\)/g);
+    
+    if (bracketMatches && bracketMatches.length > 1) {
+      var cleanMatches = bracketMatches.map(function(match) {
+        return match.trim();
+      }).filter(function(match) {
+        return match.match(/\d{1,2}\/\d{1,2}(~\d{1,2}\/\d{1,2})?/);
+      });
+      
+      if (cleanMatches.length > 1) {
+        activities = cleanMatches;
+      } else {
+        activities = [singleLine];
+      }
+    } else {
+      activities = [singleLine];
+    }
+  }
+  
+  if (activities.length === 0) {
+    activities = [content];
+  }
+  
+  return activities;
+}
+
+// 活動內容驗證
+function isValidActivityContent(content) {
+  if (!content || typeof content !== 'string') {
+    return false;
+  }
+  
+  var trimmed = content.trim();
+  
+  if (trimmed.match(/^\d{1,2}$/)) return false;
+  if (trimmed.match(/^[日一二三四五六]$/)) return false;
+  if (trimmed.length <= 2) return false;
+  if (trimmed.match(/^[-~=\s]+$/)) return false;
+  if (trimmed.includes('年分連結') || trimmed.includes('👉')) return false;
+  
+  if (trimmed.match(/[\u4e00-\u9fff]/) && trimmed.length >= 3) {
+    return true;
+  }
+  
+  if (trimmed.match(/[A-Za-z]/) && trimmed.length >= 3) {
+    return true;
+  }
+  
+  return false;
+}
+
+// 處理活動類型
+function processActivityType(originalType) {
+  if (!originalType || typeof originalType !== 'string') return null;
+  
+  var type = originalType.trim();
+  
+  if (type.startsWith('新遊戲')) return '新遊戲';
+  
+  if (type.includes('魚機')) {
+    if (type.includes('主特色改版')) return '魚機-主特色改版';
+    if (type.includes('活動海皇')) return '魚機-活動海皇';
+    if (type.includes('新海皇') || type.includes('新魚種')) return '魚機-新海皇/魚種';
+    if (type.includes('活動')) return '魚機-活動';
+    if (type.includes('優化')) return '魚機-優化';
+    return '魚機';
+  }
+  
+  return type;
+}
+
+// 保留舊函式名稱以維持相容性
+function getStarCityTypeMonthlyStats() {
+  var result = getAllCompetitorStats();
+  var legacyResult = {};
+  
+  for (var competitor in result) {
+    if (result[competitor] && result[competitor].stats) {
+      legacyResult[competitor] = result[competitor].stats;
+    }
+  }
+  
+  return legacyResult;
+}
+
+// ========== 活動類型總表獨立頁籤功能 ==========
+
+// 新增：讀取活動類型總表的原始資料
+function getActivityTypesTableData() {
+  if (!callerHasTab_('活動類型總表')) return { headers: [], data: [] };
+  try {
+    var spreadsheetId = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var sheet = spreadsheet.getSheetByName('活動類型總表');
+    
+    if (!sheet) {
+      console.log('找不到活動類型總表工作表');
+      return { headers: [], data: [] };
+    }
+    
+    var range = sheet.getDataRange();
+    var data = range.getValues();
+    var formulas = range.getFormulas();
+    
+    console.log('活動類型總表讀取成功，總行數：', data.length);
+    
+    if (data.length === 0) {
+      return { headers: [], data: [] };
+    }
+    
+    var headers = data[0] || ['競品名稱', '項目類型', '項目名稱', '備註'];
+    var processedData = [];
+    
+    // 從第2行開始處理數據
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var formulaRow = formulas[i] || [];
+      
+      if (!row || row.length === 0) continue;
+      
+      var competitorName = row[0] ? row[0].toString().trim() : '';
+      var itemType = row[1] ? row[1].toString().trim() : '';
+      var itemNameCell = row[2];
+      var notes = row[3] ? row[3].toString().trim() : '';
+      
+      if (!competitorName && !itemType && !itemNameCell) continue;
+      
+      // 處理項目名稱的超連結
+      var itemName = '';
+      var itemLink = '';
+      
+      var formulaCell = formulaRow[2] || '';
+      if (formulaCell && formulaCell.toString().trim() !== '') {
+        itemLink = extractUrlFromFormula(formulaCell.toString());
+        itemName = extractTextFromFormula(formulaCell.toString());
+      } else if (itemNameCell) {
+        itemName = itemNameCell.toString().trim();
+      }
+      
+      processedData.push({
+        competitorName: competitorName,
+        itemType: itemType,
+        itemName: itemName,
+        itemLink: itemLink,
+        notes: notes,
+        rowIndex: i + 1
+      });
+    }
+    
+    console.log('活動類型總表處理完成，有效資料筆數：', processedData.length);
+    
+    return {
+      headers: headers,
+      data: processedData
+    };
+    
+  } catch (error) {
+    console.error('讀取活動類型總表時發生錯誤：', error.toString());
+    return { headers: [], data: [] };
+  }
+}
+
+// 其他資料：讀取「目錄」頁面 D2↓ 與 I2↓ 的清單（含超連結）
+function getOtherData(conf) {
+  if (!callerHasTab_('其他資料')) return { catalog: [], biweekly: [] };
+  try {
+    conf = conf || {};
+    var spreadsheetId = conf.spreadsheetId || '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var sheetName = conf.sheetName || '目錄';
+    var catalogHeader = conf.catalogHeader || '其他項目連結🎃(需手動更新)';
+    var biweeklyHeader = conf.biweeklyHeader || '營運正式簡報連結(需手動更新)🎃';
+
+    var ss = SpreadsheetApp.openById(spreadsheetId);
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      console.log('getOtherData: 找不到工作表 ' + sheetName);
+      return { catalog: [], biweekly: [] };
+    }
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+
+    // 用標題名稱找欄號（掃描第一列）
+    function findColumnByHeader(headerText) {
+      var headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      for (var c = 0; c < headerRow.length; c++) {
+        if (headerRow[c].toString().trim() === headerText.trim()) {
+          return c + 1; // 回傳 1-based 欄號
+        }
+      }
+      console.log('找不到標題欄位: ' + headerText);
+      return -1;
+    }
+
+    function readColumnFrom(col) {
+      try {
+        var startRow = 2;
+        var numRows = Math.max(0, lastRow - startRow + 1);
+        if (numRows <= 0) return [];
+
+        var rng = sheet.getRange(startRow, col, numRows, 1);
+        var values = rng.getValues();
+        var formulas = rng.getFormulas();
+        var richValues = [];
+        try { richValues = rng.getRichTextValues(); } catch (e) { richValues = []; }
+
+        var list = [];
+        for (var i = 0; i < numRows; i++) {
+          var cellText = values[i][0];
+          var formula = formulas[i][0] || '';
+          var text = '';
+          var url = '';
+
+          if (formula && formula.toString().trim() !== '') {
+            text = extractTextFromFormula(formula.toString()) || '';
+            url = extractUrlFromFormula(formula.toString()) || '';
+          } else {
+            text = cellText !== null && cellText !== undefined ? cellText.toString().trim() : '';
+            // 嘗試從 RichText 抓連結
+            try {
+              var rt = richValues[i] && richValues[i][0];
+              if (rt && rt.getLinkUrl) {
+                var linkUrl = rt.getLinkUrl();
+                if (linkUrl) url = linkUrl;
+              }
+            } catch (e) {}
+          }
+
+         if (text && text.trim().length > 0) {
+  list.push({ name: text.trim(), url: url });  // ⭐ text 改成 name
+}
+        }
+        return list;
+      } catch (e) {
+        console.warn('readColumnFrom 失敗：col=' + col + ' -> ' + e.toString());
+        return [];
+      }
+    }
+
+    var catalogCol = findColumnByHeader(catalogHeader);
+    var biweeklyCol = findColumnByHeader(biweeklyHeader);
+
+    var catalog = catalogCol > 0 ? readColumnFrom(catalogCol) : [];
+    var biweekly = biweeklyCol > 0 ? readColumnFrom(biweeklyCol) : [];
+    console.log('getOtherData 完成：catalog=' + catalog.length + ', biweekly=' + biweekly.length);
+    return { catalog: catalog, biweekly: biweekly };
+
+  } catch (error) {
+    console.error('getOtherData 失敗：' + error.toString());
+    return { catalog: [], biweekly: [] };
+  }
+}
+
+// ========== SensorTower 營收分析功能 ==========
+
+// SensorTower API 設定
+var SENSOR_TOWER_CONFIG = {
+  API_TOKEN: PropertiesService.getScriptProperties().getProperty('SENSOR_TOWER_API_TOKEN'),
+  COUNTRY: 'TW',
+  PRODUCT_IDS: [
+    '5afe71d49d52283ac1fcea88',  // 包你發
+    '55d93f8302ac645ad2137ccf',  // 星城
+    '59bf63b70211a64f5c25efe9',  // 金好運
+    '568def73ec3a22567700164d',  // 滿貫
+    '56cbc0e4a04776527300035d',  // 老子
+    '5c087c9b5dbd3971f6c02645',  // 豪神
+    '579aaed02a56e40922000018'   // 錢街
+  ],
+  PRODUCT_NAMES: {
+    '5afe71d49d52283ac1fcea88': '包你發',
+    '55d93f8302ac645ad2137ccf': '星城',
+    '59bf63b70211a64f5c25efe9': '金好運',
+    '568def73ec3a22567700164d': '滿貫',
+    '56cbc0e4a04776527300035d': '老子',
+    '5c087c9b5dbd3971f6c02645': '豪神',
+    '579aaed02a56e40922000018': '錢街'
+  }
+};
+
+// 從前端調用的 SensorTower 數據獲取函數（前端傳名稱，後端自行對應 ID）
+function getSensorTowerData(startDate, endDate, selectedProductNames) {
+  try {
+    if (!selectedProductNames || selectedProductNames.length === 0) {
+      throw new Error('請選擇至少一個產品');
+    }
+
+    // 建立名稱→ID 對照表（ID 只存在後端）
+    var nameToId = {};
+    Object.keys(SENSOR_TOWER_CONFIG.PRODUCT_NAMES).forEach(function(id) {
+      nameToId[SENSOR_TOWER_CONFIG.PRODUCT_NAMES[id]] = id;
+    });
+
+    // 白名單驗證：只允許已知產品名稱，過濾掉任何非法輸入
+    var validIds = selectedProductNames
+      .filter(function(name) { return nameToId.hasOwnProperty(name); })
+      .map(function(name) { return nameToId[name]; });
+
+    if (validIds.length === 0) {
+      throw new Error('無效的產品名稱');
+    }
+
+    // 將驗證後的 ID 轉換為逗號分隔的字串
+    var appIdsString = validIds.join(',');
+    
+    var url = 'https://api.sensortower.com/v1/unified/sales_report_estimates?' +
+              'start_date=' + startDate + 
+              '&end_date=' + endDate + 
+              '&app_ids=' + appIdsString + 
+              '&countries=' + SENSOR_TOWER_CONFIG.COUNTRY + 
+              '&date_granularity=daily' + 
+              '&auth_token=' + SENSOR_TOWER_CONFIG.API_TOKEN;
+    
+    var response = UrlFetchApp.fetch(url, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json'
+      },
+      muteHttpExceptions: true
+    });
+    
+    var responseCode = response.getResponseCode();
+    var contentText = response.getContentText();
+    
+    if (responseCode !== 200) {
+      var errorMessage = 'API 錯誤 (' + responseCode + ')';
+      switch(responseCode) {
+        case 401:
+          errorMessage = 'API Token 無效或過期';
+          break;
+        case 403:
+          errorMessage = '沒有權限訪問該資源';
+          break;
+        case 500:
+          errorMessage = '伺服器錯誤，請稍後再試';
+          break;
+        default:
+          errorMessage = '未知錯誤：' + contentText;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    var jsonData = JSON.parse(contentText);
+    
+    if (!jsonData || jsonData.length === 0) {
+      return [];
+    }
+    
+    // 處理數據格式
+    var processedData = jsonData.map(function(item) {
+      return {
+        date: item.date.split('T')[0],
+        app_id: item.app_id,
+        product_name: SENSOR_TOWER_CONFIG.PRODUCT_NAMES[item.app_id] || '未知產品',
+        android_revenue: item.android_revenue || 0,
+        iphone_revenue: item.iphone_revenue || 0,
+        ipad_revenue: item.ipad_revenue || 0,
+        android_units: item.android_units || 0,
+        iphone_units: item.iphone_units || 0,
+        ipad_units: item.ipad_units || 0,
+        total_revenue: (item.android_revenue || 0) + (item.iphone_revenue || 0) + (item.ipad_revenue || 0),
+        total_units: (item.android_units || 0) + (item.iphone_units || 0) + (item.ipad_units || 0)
+      };
+    });
+    
+    return processedData;
+    
+  } catch (error) {
+    console.error('獲取 SensorTower 數據失敗：' + error.toString());
+    throw error;
+  }
+}
+
+// 測試 API 連接
+function testSensorTowerAPI() {
+  try {
+    var testStartDate = '2025-01-01';
+    var testEndDate = '2025-01-03';
+    var testProducts = [SENSOR_TOWER_CONFIG.PRODUCT_IDS[0]];
+    
+    var result = getSensorTowerData(testStartDate, testEndDate, testProducts);
+    
+    if (result && result.length > 0) {
+      console.log('API 測試成功');
+      return { success: true, message: 'API 連接正常', data: result };
+    } else {
+      console.log('API 測試返回空數據');
+      return { success: false, message: 'API 返回空數據' };
+    }
+    
+  } catch (error) {
+    console.error('API 測試失敗：' + error.toString());
+    return { success: false, message: error.message };
+  }
+}
+
+// ========== 權限控管系統 ==========
+
+// ========== 權限控管系統 ==========
+
+const PERMISSION_SPREADSHEET_ID = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+const PERMISSION_SHEET_NAME = '權限管理';
+
+// ⭐⭐⭐ 簡化後的函數（只返回權限資訊）⭐⭐⭐
+function getAllCategoriesData() {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    console.log('當前使用者:', userEmail);
+    
+    const userPermissions = getUserPermissions(userEmail);
+    console.log('使用者權限:', userPermissions);
+    
+    // ⭐ 直接返回權限資訊，不讀取分類資料
+    return {
+      userPermissions: userPermissions,
+      userEmail: userEmail,
+      categories: {},  // 空物件，前端不需要
+      favorites: []    // 空陣列，前端不需要
+    };
+    
+  } catch (error) {
+    console.error('獲取權限資料失敗:', error);
+    return {
+      userPermissions: getDefaultPermissions(),
+      userEmail: '',
+      categories: {},
+      favorites: []
+    };
+  }
+}
+
+
+// ===== backend auth =====
+function getCallerEmail_() {
+  var email = '';
+  try { email = Session.getActiveUser().getEmail() || ''; } catch(e) {}
+  return email.toLowerCase();
+}
+
+function callerHasTab_(tabName) {
+  var email = getCallerEmail_();
+  if (!email) return false;
+  var perms = getUserPermissions(email);
+  if (!perms || !perms.allowedTabs) return false;
+  return perms.allowedTabs.indexOf(tabName) !== -1;
+}
+
+// getUserPermissions 函數保持不變
+function getUserPermissions(userEmail) {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(PERMISSION_SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheetByName(PERMISSION_SHEET_NAME);
+    
+    if (!sheet) {
+      console.log('找不到權限管理工作表，返回空權限');
+      return {
+        allowedTabs: [],
+        isAdmin: false,
+        canEdit: false,
+        canView: false
+      };
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    const emailCol = headers.indexOf('信箱');
+    const permissionCol = headers.indexOf('可查看頁籤(每個項目請用,分開)');
+    
+    if (emailCol === -1 || permissionCol === -1) {
+      console.log('權限工作表格式不正確，返回空權限');
+      return {
+        allowedTabs: [],
+        isAdmin: false,
+        canEdit: false,
+        canView: false
+      };
+    }
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][emailCol] === userEmail) {
+        const permissions = data[i][permissionCol];
+        return parsePermissions(permissions);
+      }
+    }
+    
+    const defaultRow = data.findIndex(row => row[emailCol] === 'default' || row[emailCol] === '預設');
+    if (defaultRow !== -1) {
+      const permissions = data[defaultRow][permissionCol];
+      return parsePermissions(permissions);
+    }
+    
+    console.log('使用者無權限設定，返回空權限');
+    return {
+      allowedTabs: [],
+      isAdmin: false,
+      canEdit: false,
+      canView: false
+    };
+    
+  } catch (error) {
+    console.error('獲取使用者權限失敗:', error);
+    return {
+      allowedTabs: [],
+      isAdmin: false,
+      canEdit: false,
+      canView: false
+    };
+  }
+}
+
+// parsePermissions 函數保持不變
+function parsePermissions(permissionStr) {
+  if (!permissionStr || permissionStr.trim() === '') {
+    return {
+      allowedTabs: [],
+      isAdmin: false,
+      canEdit: false,
+      canView: false
+    };
+  }
+  
+  const permissions = permissionStr.split(',').map(p => p.trim());
+  const allowedTabs = [];
+  
+  const permissionMap = {
+    'all': ['營收分析', '活動類型總表', '其他資料', '跨產品搜尋', '數學資料庫', '行銷資料庫', '金好運', '大頭家', '滿貫大亨', '星城', 'HUGA', '豪神', '錢街', '寶島', '老子', '老子有錢', '嚦咕麻將', '王牌'],
+    'basic': ['營收分析', '活動類型總表', '其他資料'],
+    'readonly': ['活動類型總表'],
+    'admin': ['營收分析', '活動類型總表', '其他資料', '跨產品搜尋', '數學資料庫', '行銷資料庫', '金好運', '大頭家', '滿貫大亨', '星城', 'HUGA', '豪神', '錢街', '寶島', '老子', '老子有錢', '嚦咕麻將', '王牌', '管理功能']
+  };
+  
+  permissions.forEach(perm => {
+    if (permissionMap[perm]) {
+      allowedTabs.push(...permissionMap[perm]);
+    } else if (perm === '營收分析' || perm === '活動類型總表' || perm === '其他資料' || perm === '跨產品搜尋' || 
+           perm === '數學資料庫' ||
+           perm === '行銷資料庫' ||  // 🆕 新增
+           perm === '金好運' || perm === '大頭家' || perm === '滿貫大亨' || perm === '星城' || 
+           perm === 'HUGA' || perm === '豪神' || perm === '錢街' || perm === '寶島' || 
+           perm === '老子' || perm === '老子有錢' || perm === '嚦咕麻將' || perm === '王牌') {
+  allowedTabs.push(perm);
+}
+  });
+  
+  return {
+    allowedTabs: [...new Set(allowedTabs)],
+    isAdmin: permissions.includes('admin'),
+    canEdit: permissions.includes('all') || permissions.includes('admin'),
+    canView: allowedTabs.length > 0
+  };
+}
+
+// 預設權限
+function getDefaultPermissions() {
+  return {
+    allowedTabs: [],
+    isAdmin: false,
+    canEdit: false,
+    canView: false
+  };
+}
+
+// 從所有工作表獲取分類資料
+function getAllCategoriesFromSheets() {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(PERMISSION_SPREADSHEET_ID);
+    const sheets = spreadsheet.getSheets();
+    const categories = {};
+    
+    const excludeSheets = [PERMISSION_SHEET_NAME, '目錄', '營運正式雙週報'];
+    
+    sheets.forEach(sheet => {
+      const sheetName = sheet.getName();
+      
+      if (excludeSheets.includes(sheetName)) return;
+      
+      try {
+        const sheetData = getSheetData(sheet);
+        if (sheetData && sheetData.length > 0) {
+          categories[sheetName] = sheetData;
+        }
+      } catch (error) {
+        console.log(`處理工作表 ${sheetName} 失敗:`, error);
+      }
+    });
+    
+    return categories;
+    
+  } catch (error) {
+    console.error('獲取工作表資料失敗:', error);
+    throw error;
+  }
+}
+
+// 獲取工作表資料
+function getSheetData(sheet) {
+  try {
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    const nameCol = headers.findIndex(h => h === '名稱' || h === 'Name' || h === 'name');
+    const descCol = headers.findIndex(h => h === '說明' || h === 'Description' || h === 'description');
+    const linkCol = headers.findIndex(h => h === '連結' || h === 'Link' || h === 'link');
+    const categoryCol = headers.findIndex(h => h === '分類' || h === 'Category' || h === 'category');
+    
+    if (nameCol === -1) return [];
+    
+    return rows.map(row => {
+      const item = {
+        name: row[nameCol] || '',
+        category: sheet.getName(),
+        description: descCol !== -1 ? (row[descCol] || '') : '',
+        link: linkCol !== -1 ? (row[linkCol] || '') : ''
+      };
+      
+      if (categoryCol !== -1 && row[categoryCol]) {
+        item.category = row[categoryCol];
+      }
+      
+      return item;
+    }).filter(item => item.name && item.name.trim() !== '');
+    
+  } catch (error) {
+    console.error(`處理工作表 ${sheet.getName()} 失敗:`, error);
+    return [];
+  }
+}
+
+// 獲取使用者最愛
+function getUserFavorites(userEmail) { return []; }
+
+// 新增最愛
+function addFavorite(item) { return getUserFavorites(Session.getActiveUser().getEmail()); }
+
+// 移除最愛
+function removeFavorite(item) { return getUserFavorites(Session.getActiveUser().getEmail()); }
+
+// 獲取工作表行資料
+function getSheetRows(sheetName) {
+  try {
+    const spreadsheet = SpreadsheetApp.openById(PERMISSION_SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheetByName(sheetName);
+    
+    if (!sheet) {
+      console.log(`找不到工作表: ${sheetName}`);
+      return [];
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    const nameCol = headers.findIndex(h => h === '名稱' || h === 'Name' || h === 'name');
+    const descCol = headers.findIndex(h => h === '說明' || h === 'Description' || h === 'description');
+    const categoryCol = headers.findIndex(h => h === '分類' || h === 'Category' || h === 'category');
+    const linkCol = headers.findIndex(h => h === '連結' || h === 'Link' || h === 'link');
+    
+    if (nameCol === -1) return [];
+    
+    return rows.map(row => {
+      const item = {
+        name: row[nameCol] || '',
+        desc: descCol !== -1 ? (row[descCol] || '') : '',
+        category: categoryCol !== -1 ? (row[categoryCol] || '') : '',
+        link: linkCol !== -1 ? (row[linkCol] || '') : ''
+      };
+      
+      return item;
+    }).filter(item => item.name && item.name.trim() !== '');
+    
+  } catch (error) {
+    console.error(`獲取工作表 ${sheetName} 資料失敗:`, error);
+    throw error;
+  }
+}
+
+// 測試權限系統
+function testPermissionSystem() {
+  try {
+    const userEmail = Session.getActiveUser().getEmail();
+    console.log('測試使用者:', userEmail);
+    
+    const permissions = getUserPermissions(userEmail);
+    console.log('權限測試結果:', permissions);
+    
+    const categories = getAllCategoriesFromSheets();
+    console.log('分類數量:', Object.keys(categories).length);
+    
+    const favorites = [];
+    console.log('最愛數量:', favorites.length);
+    
+    return {
+      success: true,
+      userEmail: userEmail,
+      permissions: permissions,
+      categoriesCount: Object.keys(categories).length,
+      favoritesCount: favorites.length
+    };
+    
+  } catch (error) {
+    console.error('權限系統測試失敗:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// ========== 測試去重功能 ==========
+function testRemoveDuplicateActivities() {
+  console.log('====== 開始測試 removeDuplicateActivities ======');
+  
+  // 測試1：正常情況 - 有重複的活動
+  console.log('\n📝 測試1：正常情況（有重複）');
+  var test1 = [
+    { name: '[SLOT] 辣椒圓舞曲 (12/10)', type: '新遊戲' },
+    { name: '[SLOT] 辣椒圓舞曲 (12/10)', type: '新遊戲' },
+    { name: '[SLOT] 寶石傳說 (12/15)', type: '新遊戲' }
+  ];
+  var result1 = removeDuplicateActivities(test1);
+  console.log('結果：' + result1.length + ' 筆（預期：2 筆）');
+  
+  // 測試2：空陣列
+  console.log('\n📝 測試2：空陣列');
+  var test2 = [];
+  var result2 = removeDuplicateActivities(test2);
+  console.log('結果：' + result2.length + ' 筆（預期：0 筆）');
+  
+  // 測試3：傳入 undefined
+  console.log('\n📝 測試3：傳入 undefined');
+  var result3 = removeDuplicateActivities(undefined);
+  console.log('結果：' + result3.length + ' 筆（預期：0 筆）');
+  
+  // 測試4：傳入 null
+  console.log('\n📝 測試4：傳入 null');
+  var result4 = removeDuplicateActivities(null);
+  console.log('結果：' + result4.length + ' 筆（預期：0 筆）');
+  
+  // 測試5：包含無效物件
+  console.log('\n📝 測試5：包含無效物件');
+  var test5 = [
+    { name: '正常活動', type: '新遊戲' },
+    null,
+    { name: '', type: '新遊戲' },  // 空名稱
+    { type: '新遊戲' },  // 沒有 name
+    { name: '另一個正常活動', type: '老虎機' }
+  ];
+  var result5 = removeDuplicateActivities(test5);
+  console.log('結果：' + result5.length + ' 筆（預期：2 筆）');
+  
+  // 測試6：全部重複
+  console.log('\n📝 測試6：全部重複');
+  var test6 = [
+    { name: '相同活動', type: '新遊戲' },
+    { name: '相同活動', type: '新遊戲' },
+    { name: '相同活動', type: '新遊戲' }
+  ];
+  var result6 = removeDuplicateActivities(test6);
+  console.log('結果：' + result6.length + ' 筆（預期：1 筆）');
+  
+  console.log('\n====== 測試完成 ======');
+  
+  return {
+    test1: result1.length === 2,
+    test2: result2.length === 0,
+    test3: result3.length === 0,
+    test4: result4.length === 0,
+    test5: result5.length === 2,
+    test6: result6.length === 1,
+    allPassed: (result1.length === 2 && result2.length === 0 && 
+                result3.length === 0 && result4.length === 0 && 
+                result5.length === 2 && result6.length === 1)
+  };
+}
+// ========== 🆕 數學資料庫功能 ==========
+
+/**
+ * 讀取數學資料庫（從「數學html資料快取」工作表）
+ * @return {Array} 所有競品的數學遊戲資料
+ */
+function getMathDatabaseData() {
+  if (!callerHasTab_('數學資料庫')) return [];
+  try {
+    var spreadsheetId = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var cacheSheet = spreadsheet.getSheetByName('數學html資料快取');
+    
+    if (!cacheSheet) {
+      console.log('⚠️ 找不到「數學html資料快取」工作表');
+      return [];
+    }
+    
+    var data = cacheSheet.getDataRange().getValues();
+    console.log('📖 讀取數學資料，總行數：' + data.length);
+    
+    if (data.length <= 1) {
+      console.log('⚠️ 數學資料快取為空（只有表頭或無資料）');
+      return [];
+    }
+    
+    var allGames = [];
+    
+    // 從第2行開始讀取（第1行是表頭）
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      
+      var productName = row[0];  // 第一欄：競品名稱（例如「星城」）
+      var gamesJson = row[1];    // 第二欄：JSON 陣列
+      
+      console.log('📋 處理第 ' + (i+1) + ' 行');
+      console.log('   - 競品名稱: ' + productName);
+      console.log('   - JSON 長度: ' + (gamesJson ? gamesJson.length : 0));
+      
+      // 跳過空行
+      if (!productName || !gamesJson) {
+        console.log('   ⚠️ 跳過空行');
+        continue;
+      }
+      
+      try {
+        var games = JSON.parse(gamesJson);
+        console.log('   ✓ JSON 解析成功');
+        console.log('   - 遊戲數量: ' + (Array.isArray(games) ? games.length : '非陣列'));
+        
+        if (!Array.isArray(games)) {
+          console.warn('   ⚠️ 遊戲資料不是陣列');
+          continue;
+        }
+        
+        // 為每個遊戲添加 product 欄位
+        for (var j = 0; j < games.length; j++) {
+          var game = games[j];
+          
+          if (!game.name) {
+            console.warn('   ⚠️ 遊戲 ' + (j+1) + ' 缺少 name 欄位');
+            continue;
+          }
+          
+          // ⭐ 關鍵：將競品名稱加入每個遊戲物件
+          allGames.push({
+            product: productName,
+            name: game.name || '',
+            releaseDate: game.releaseDate || '',
+            gameplayTypes: game.gameplayTypes || '',
+            gameplayDescription: game.gameplayDescription || '',
+            artDescription: game.artDescription || '',
+            gridSize: game.gridSize || '',
+            referenceGames: game.referenceGames || '',
+            featureBuy: game.featureBuy || '',
+            extraBet: game.extraBet || '',
+            slideUrl: game.slideUrl || ''
+          });
+        }  // ← 這個 } 是 for (var j...) 的結尾，要補回來
+        
+        console.log('   ✓ ' + productName + '：成功添加 ' + games.length + ' 個遊戲');
+        
+      } catch (e) {
+        console.error('   ❌ 解析 ' + productName + ' 的 JSON 失敗：' + e.toString());
+        console.error('   原始資料前100字：' + gamesJson.substring(0, 100));
+      }
+    }
+    
+    console.log('✅ 數學資料讀取完成，總共 ' + allGames.length + ' 個遊戲');
+    
+    // 輸出最終結果的樣本
+    if (allGames.length > 0) {
+      console.log('📋 第一筆遊戲資料範例：');
+      console.log(JSON.stringify(allGames[0]));
+    }
+    
+    return allGames;
+    
+  } catch (error) {
+    console.error('❌ 讀取數學資料庫失敗：' + error.toString());
+    console.error('   錯誤堆疊：' + error.stack);
+    return [];
+  }
+}/**
+ * 讀取行銷資料庫（從「行銷html資料快取」工作表）
+ * 工作表格式：A欄=競品名稱, B欄=季度, C欄=類型, D欄=JSON資料, E欄=更新時間
+ * JSON格式：{"stats":[...],"activities":[...]}
+ */
+function getMarketingDatabaseData() {
+  if (!callerHasTab_('行銷資料庫')) return [];
+  try {
+    var spreadsheetId = '1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI';
+    var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    var cacheSheet = spreadsheet.getSheetByName('行銷html資料快取');
+    
+    if (!cacheSheet) {
+      console.log('⚠️ 找不到「行銷html資料快取」工作表');
+      return [];
+    }
+    
+    var data = cacheSheet.getDataRange().getValues();
+    console.log('📖 讀取行銷資料，總行數：' + data.length);
+    
+    if (data.length <= 1) {
+      console.log('⚠️ 行銷資料快取為空');
+      return [];
+    }
+    
+    var allActivities = [];
+    
+    // 從第2行開始讀取（第1行是表頭）
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      
+      var productName = row[0];   // A欄：競品名稱
+      var quarter = row[1];        // B欄：季度（例如 2026-Q1）
+      var type = row[2];           // C欄：類型（通常是 'all'）
+      var jsonData = row[3];       // D欄：JSON資料
+      var updateTime = row[4];     // E欄：更新時間
+      
+      // 跳過空白列
+      if (!productName || !jsonData) continue;
+      
+      try {
+        // 解析 JSON 資料
+        var quarterData = JSON.parse(jsonData);
+        
+        // 提取 activities 陣列
+        if (!quarterData.activities || !Array.isArray(quarterData.activities)) {
+          console.log('⚠️ ' + productName + ' 的 JSON 沒有 activities 陣列');
+          continue;
+        }
+        
+        var activities = quarterData.activities;
+        
+        // 為每個活動添加 product 欄位並統一格式
+        for (var j = 0; j < activities.length; j++) {
+          var activity = activities[j];
+          
+          allActivities.push({
+            product: productName,
+            category: activity.type || '',           // type → category
+            name: activity.name || '',
+            startDate: activity.startDate || '',
+            endDate: activity.endDate || '',
+            slideUrl: activity.url || '',            // url → slideUrl
+            month: activity.month || ''
+          });
+        }
+        
+      } catch (e) {
+        console.error('解析 ' + productName + ' 的 JSON 失敗：' + e.toString());
+      }
+    }
+    
+    console.log('✅ 行銷資料讀取完成，共 ' + allActivities.length + ' 個活動');
+    return allActivities;
+    
+  } catch (error) {
+    console.error('❌ 讀取行銷資料庫失敗：' + error.toString());
+    return [];
+  }
+}
