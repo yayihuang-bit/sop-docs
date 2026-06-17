@@ -111,13 +111,25 @@
         animateFly();
       }
 
+      var _flyScheduleTimeout = null;
+
       function scheduleFlyGif(){
-        var delay = (30 + Math.random() * 60) * 1000;
-        setTimeout(function(){
-          triggerFlyGif();
-          if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024) scheduleFlyGif();
-        }, delay);
+        if(document.hidden) return;
+        _flyScheduleTimeout = setTimeout(function(){
+          if(!document.hidden){
+            triggerFlyGif();
+            scheduleFlyGif();
+          }
+        }, (30 + Math.random() * 60) * 1000);
       }
+
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden){
+          if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
+        } else {
+          scheduleFlyGif();
+        }
+      });
 
       if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
         scheduleFlyGif();
