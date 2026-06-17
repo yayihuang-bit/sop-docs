@@ -1,16 +1,29 @@
 site_name: SOP 文件
+site_url: https://yayihuang-bit.github.io/sop-docs/
 theme:
   name: material
-  language: zh-TW
+  language: zh
   palette:
-    - scheme: default
-      primary: indigo
-      accent: pink
+    primary: indigo
+    accent: indigo
   features:
+    - navigation.instant
+    - navigation.tracking
     - navigation.tabs
     - navigation.top
+    - toc.integrate
     - search.suggest
-    - content.code.copy
+    - search.highlight
+
+plugins:
+  - search:
+      lang: zh
+
+markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
   - 首頁: index.md
+  - 遊戲上線 SOP: 遊戲上線SOP.md
