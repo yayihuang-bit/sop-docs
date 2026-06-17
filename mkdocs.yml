@@ -1,0 +1,16 @@
+site_name: SOP 文件
+theme:
+  name: material
+  language: zh-TW
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: pink
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+
+nav:
+  - 首頁: index.md
