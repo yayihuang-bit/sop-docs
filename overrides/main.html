@@ -1,27 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <script>
-    if (localStorage.getItem('sop_authenticated') !== 'true') {
-      document.documentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:rgba(0,0,0,0.8);"><div style="background:white;padding:40px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.3);text-align:center;"><h2 style="margin:0 0 20px 0;color:#333;">需要密碼</h2><input id="pwd-input" type="password" placeholder="請輸入密碼" style="padding:10px;font-size:16px;width:200px;border:1px solid #ccc;border-radius:4px;"><button style="margin-left:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:16px;">確認</button></div></div>';
-      document.getElementById('pwd-input').focus();
-      document.querySelector('button').onclick = function(){
-        if(document.getElementById('pwd-input').value === 'asd12345'){
-          localStorage.setItem('sop_authenticated', 'true');
-          location.reload();
-        } else {
-          alert('密碼錯誤');
-          document.getElementById('pwd-input').value = '';
-        }
-      };
-      document.getElementById('pwd-input').onkeypress = function(e){
-        if(e.key === 'Enter') document.querySelector('button').onclick();
-      };
-    }
-  </script>
-  <div id="content-container">
-    {{ super() }}
-  </div>
+  {{ super() }}
 {% endblock %}
 
 {% block styles %}
@@ -42,59 +22,51 @@
 {% block scripts %}
   {{ super() }}
   <script>
-    var PASSWORD_HASH = '6a204bd89f3c8348afd5c77c717a097a';
+    function initPasswordProtection(){
+      if (localStorage.getItem('sop_authenticated') !== 'true') {
+        var overlay = document.createElement('div');
+        overlay.id = 'pwd-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10001;display:flex;align-items:center;justify-content:center;';
 
-    function md5(str) {
-      var hash = 0, i, chr;
-      if (str.length === 0) return hash.toString();
-      for (i = 0; i < str.length; i++) {
-        chr = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + chr;
-        hash = hash & hash;
-      }
-      return Math.abs(hash).toString();
-    }
+        var box = document.createElement('div');
+        box.style.cssText = 'background:white;padding:40px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.3);text-align:center;';
 
-    function showContent() {
-      document.getElementById('password-container').style.display = 'none';
-      document.getElementById('content-container').style.display = 'block';
-      initFlyGif();
-    }
+        box.innerHTML = '<h2 style="margin:0 0 20px 0;color:#333;">需要密碼</h2><input id="pwd-input" type="password" placeholder="請輸入密碼" style="padding:10px;font-size:16px;width:200px;border:1px solid #ccc;border-radius:4px;"><button style="margin-left:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:16px;">確認</button>';
 
-    function checkPassword() {
-      var pwd = document.getElementById('pwd-input').value;
-      if (pwd === 'asd12345') {
-        localStorage.setItem('sop_authenticated', 'true');
-        showContent();
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        var pwdInput = document.getElementById('pwd-input');
+        pwdInput.focus();
+
+        function checkPwd(){
+          if(pwdInput.value === 'asd12345'){
+            localStorage.setItem('sop_authenticated', 'true');
+            overlay.remove();
+            initFlyGif();
+          } else {
+            alert('密碼錯誤');
+            pwdInput.value = '';
+            pwdInput.focus();
+          }
+        }
+
+        box.querySelector('button').onclick = checkPwd;
+        pwdInput.onkeypress = function(e){ if(e.key === 'Enter') checkPwd(); };
       } else {
-        alert('密碼錯誤');
-        document.getElementById('pwd-input').value = '';
+        initFlyGif();
       }
-    }
-
-    var pwdInput = document.getElementById('pwd-input');
-    if (pwdInput) {
-      pwdInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') checkPassword();
-      });
-    }
-
-    if (localStorage.getItem('sop_authenticated') === 'true') {
-      showContent();
-    } else {
-      document.getElementById('password-container').style.display = 'flex';
-      document.getElementById('content-container').style.display = 'none';
     }
 
     function initFlyGif() {
       var FLY_GIFS = [
-      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
-      'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
-      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
-      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
-      'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
-      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
-    ];
+        'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+        'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+        'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+        'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+        'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+        'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
+      ];
 
       FLY_GIFS.forEach(function(u){ new Image().src = u; });
 
@@ -104,10 +76,10 @@
       function triggerFlyGif(){
         if(_flyCount >= FLY_MAX) return;
         _flyCount++;
-        var gif    = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+        var gif = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
         var topPct = (5 + Math.random() * 85) + '%';
-        var dur    = (2.5 + Math.random() * 5).toFixed(1) + 's';
-        var size   = (100 + Math.random() * 180) + 'px';
+        var dur = (2.5 + Math.random() * 5).toFixed(1) + 's';
+        var size = (100 + Math.random() * 180) + 'px';
         var el = document.createElement('img');
         el.src = gif;
         var startTop = parseFloat(topPct);
@@ -160,6 +132,12 @@
       if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
         scheduleFlyGif();
       }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPasswordProtection);
+    } else {
+      initPasswordProtection();
     }
   </script>
 {% endblock %}
