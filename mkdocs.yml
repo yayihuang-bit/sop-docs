@@ -14,7 +14,8 @@ theme:
     - toc.integrate
     - search.suggest
     - search.highlight
-  
+  custom_dir: overrides
+
 plugins:
   - search:
       lang: zh
