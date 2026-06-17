@@ -16,26 +16,14 @@
 {% block styles %}
   {{ super() }}
   <style>
-    .md-sidebar {
-      width: 380px !important;
-    }
     .md-sidebar--primary {
       width: 380px !important;
     }
-    .md-content {
-      margin-left: 380px !important;
-    }
     .md-content__inner {
-      max-width: 100% !important;
+      max-width: none !important;
     }
     .md-typeset {
-      max-width: 100% !important;
-    }
-    .md-nav__link {
-      font-size: 0.9rem;
-    }
-    .md-nav__item {
-      padding: 0.3rem 0;
+      max-width: none !important;
     }
   </style>
 {% endblock %}
