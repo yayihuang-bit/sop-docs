@@ -96,7 +96,11 @@
           if(_dragging){ _flyRaf = requestAnimationFrame(animateFly); return; }
           var elapsed = Date.now() - _startTime;
           var progress = elapsed / _durMs;
-          if(progress >= 1){ if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;} return; }
+          if(progress >= 1){
+            if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;}
+            scheduleFlyGif();
+            return;
+          }
           var x = (1 - progress) * (window.innerWidth + 200) - 200;
           el.style.right = 'auto';
           el.style.left = x + 'px';
@@ -112,10 +116,10 @@
 
       function scheduleFlyGif(){
         if(document.hidden) return;
+        if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
         _flyScheduleTimeout = setTimeout(function(){
           if(!document.hidden){
             triggerFlyGif();
-            scheduleFlyGif();
           }
         }, (30 + Math.random() * 60) * 1000);
       }
