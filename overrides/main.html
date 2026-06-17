@@ -56,31 +56,31 @@
       return Math.abs(hash).toString();
     }
 
-    var pwdInput = document.getElementById('pwd-input');
-    pwdInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') checkPassword();
-    });
-
-    function checkPassword() {
-      var pwd = pwdInput.value;
-      if (pwd === 'asd12345') {
-        sessionStorage.setItem('authenticated', 'true');
-        document.getElementById('password-container').style.display = 'none';
-        document.getElementById('content-container').style.display = 'block';
-        initFlyGif();
-      } else {
-        alert('密碼錯誤');
-        pwdInput.value = '';
-      }
-    }
-
     function showContent() {
       document.getElementById('password-container').style.display = 'none';
       document.getElementById('content-container').style.display = 'block';
       initFlyGif();
     }
 
-    if (sessionStorage.getItem('authenticated') === 'true') {
+    function checkPassword() {
+      var pwd = document.getElementById('pwd-input').value;
+      if (pwd === 'asd12345') {
+        localStorage.setItem('sop_authenticated', 'true');
+        showContent();
+      } else {
+        alert('密碼錯誤');
+        document.getElementById('pwd-input').value = '';
+      }
+    }
+
+    var pwdInput = document.getElementById('pwd-input');
+    if (pwdInput) {
+      pwdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') checkPassword();
+      });
+    }
+
+    if (localStorage.getItem('sop_authenticated') === 'true') {
       showContent();
     } else {
       document.getElementById('password-container').style.display = 'flex';
