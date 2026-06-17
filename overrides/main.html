@@ -58,20 +58,21 @@
       }
     }
 
+    var FLY_GIFS = [
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+      'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+      'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
+    ];
+    var FLY_MAX = 1;
+    var _flyCount = 0;
+    var _flyScheduleTimeout = null;
+
+    FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
     function initFlyGif() {
-      var FLY_GIFS = [
-        'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
-        'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
-        'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
-        'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
-        'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
-        'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
-      ];
-
-      FLY_GIFS.forEach(function(u){ new Image().src = u; });
-
-      var FLY_MAX = 3;
-      var _flyCount = 0;
 
       function triggerFlyGif(){
         if(_flyCount >= FLY_MAX) return;
@@ -108,8 +109,6 @@
         el.onmouseleave = function(){ _dragging = false; };
         animateFly();
       }
-
-      var _flyScheduleTimeout = null;
 
       function scheduleFlyGif(){
         if(document.hidden) return;
