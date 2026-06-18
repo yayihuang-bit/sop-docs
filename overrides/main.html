@@ -20,11 +20,27 @@
       max-width: none !important;
     }
 
-    /* 手机版 drawer 模式：调整抽屉宽度 */
-    @media (max-width: 1220px) {
+    /* 平板版（1024px - 1220px）：调整抽屉宽度 */
+    @media (max-width: 1220px) and (min-width: 768px) {
       .md-sidebar--primary {
-        width: 85vw !important;
-        max-width: 300px !important;
+        width: 70vw !important;
+        max-width: 280px !important;
+      }
+    }
+
+    /* 手机版（小于 768px）：进一步缩小 */
+    @media (max-width: 768px) {
+      .md-sidebar--primary {
+        width: 65vw !important;
+        max-width: 240px !important;
+      }
+    }
+
+    /* 超小手机（480px 以下）：最小化宽度 */
+    @media (max-width: 480px) {
+      .md-sidebar--primary {
+        width: 60vw !important;
+        max-width: 200px !important;
       }
     }
     .back-button-container {
