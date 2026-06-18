@@ -69,32 +69,6 @@
       }
     }
 
-    .back-button-container {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .back-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background-color: #f5f5f5;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #333;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .back-button:hover {
-      background-color: #efefef;
-      border-color: #bbb;
-    }
-    .back-button::before {
-      content: '←';
-      font-weight: bold;
-    }
   </style>
 {% endblock %}
 
@@ -216,34 +190,10 @@
       }
     }
 
-    function addBackButton() {
-      var nav = document.querySelector('.md-nav');
-      if (nav && !document.querySelector('.back-button-container')) {
-        var container = document.createElement('div');
-        container.className = 'back-button-container';
-        var button = document.createElement('button');
-        button.className = 'back-button';
-        button.textContent = '返回上一頁';
-        button.onclick = function() {
-          if (window.history.length > 1) {
-            window.history.back();
-          }
-        };
-        container.appendChild(button);
-        nav.insertBefore(container, nav.firstChild);
-      }
-    }
-
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        initPasswordProtection();
-        setTimeout(addBackButton, 100);
-      });
+      document.addEventListener('DOMContentLoaded', initPasswordProtection);
     } else {
       initPasswordProtection();
-      setTimeout(addBackButton, 100);
     }
-
-    document.addEventListener('page:load', addBackButton);
   </script>
 {% endblock %}
