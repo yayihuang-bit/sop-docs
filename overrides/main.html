@@ -7,7 +7,128 @@
 {% block styles %}
   {{ super() }}
   <style>
-    /* 桌面版：侧边栏宽度 */
+    /* ════ 顏色變數 ════ */
+    :root {
+      --primary: #1a73e8;
+      --primary-light: #e8f0fe;
+      --warn-bg: #fff8e1;
+      --warn-border: #f9a825;
+      --tip-bg: #e8f5e9;
+      --tip-border: #43a047;
+      --code-bg: #f5f5f5;
+      --border: #e0e0e0;
+      --text: #202124;
+      --text-muted: #5f6368;
+    }
+
+    /* ════ MkDocs 基礎樣式美化 ════ */
+    .md-typeset {
+      color: var(--text);
+    }
+
+    .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
+      color: var(--text);
+    }
+
+    .md-typeset h2 {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .md-typeset a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .md-typeset a:hover {
+      text-decoration: underline;
+    }
+
+    /* ════ 表格美化 ════ */
+    .md-typeset table {
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .md-typeset thead th {
+      background: var(--primary);
+      color: #fff;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+      border: none;
+    }
+
+    .md-typeset td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .md-typeset tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .md-typeset tbody tr:hover {
+      background-color: var(--primary-light);
+    }
+
+    /* ════ 程式碼塊美化 ════ */
+    .md-typeset code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--text);
+      font-family: "Consolas", "Monaco", monospace;
+    }
+
+    .md-typeset pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      margin: 14px 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .md-typeset pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* ════ 引用和特殊框 ════ */
+    .md-typeset blockquote {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+
+    /* ════ 提示框（綠色） ════ */
+    .md-typeset .admonition.tip,
+    .md-typeset .admonition.hint,
+    .md-typeset .admonition.note {
+      border-left: 4px solid var(--tip-border);
+      background: var(--tip-bg);
+    }
+
+    /* ════ 警告框（黃色） ════ */
+    .md-typeset .admonition.warning,
+    .md-typeset .admonition.caution,
+    .md-typeset .admonition.attention {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+    }
+
+    /* ════ 桌面版：側邊欄寬度 ════ */
     .md-sidebar--primary {
       width: 380px !important;
     }
@@ -20,7 +141,7 @@
       max-width: none !important;
     }
 
-    /* 平板版（1024px - 1220px）：调整抽屉宽度 */
+    /* ════ 平板版（1024px - 1220px） ════ */
     @media (max-width: 1220px) and (min-width: 768px) {
       .md-sidebar--primary {
         width: 70vw !important;
@@ -28,7 +149,7 @@
       }
     }
 
-    /* 手机版（小于 768px）：进一步缩小 */
+    /* ════ 手機版（小於 768px） ════ */
     @media (max-width: 768px) {
       .md-sidebar--primary {
         width: 65vw !important;
@@ -36,7 +157,7 @@
       }
     }
 
-    /* 超小手机（480px 以下）：最小化宽度 */
+    /* ════ 超小手機（480px 以下） ════ */
     @media (max-width: 480px) {
       .md-sidebar--primary {
         width: 60vw !important;
@@ -44,7 +165,7 @@
       }
     }
 
-    /* 菜单打开时：使用半透明覆盖层覆盖右侧内容 */
+    /* ════ 菜單打開時覆蓋效果 ════ */
     @media (max-width: 1220px) {
       #__drawer:checked ~ .md-overlay {
         display: block !important;
