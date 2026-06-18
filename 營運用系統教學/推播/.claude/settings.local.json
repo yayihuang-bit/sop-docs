@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx playwright:*)",
+      "Bash(dir \"C:\\\\Users\\\\yayihuang\\\\Desktop\\\\魚機規格RAG系統_Antigravity最終執行包_v6.md\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\yayihuang\\\\Desktop' -Filter '*.md' | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem 'C:\\\\Users\\\\yayihuang\\\\Desktop' | Select-Object Name\")"
+    ]
+  }
+}
