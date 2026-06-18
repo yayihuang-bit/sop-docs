@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(findstr /n \"channel\" \"c:\\\\Users\\\\yayihuang\\\\Desktop\\\\auto-post-playwright\\\\auto-post-playwright\\\\auto-post-from-sheet.js\" \"c:\\\\Users\\\\yayihuang\\\\Desktop\\\\auto-post-playwright\\\\auto-post-playwright\\\\sync-push-stats.js\" \"c:\\\\Users\\\\yayihuang\\\\Desktop\\\\auto-post-playwright\\\\auto-post-playwright\\\\google-login.js\")",
-      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\yayihuang\\\\Desktop\\\\auto-post-playwright\\\\\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object FullName)"
-    ]
-  }
-}
