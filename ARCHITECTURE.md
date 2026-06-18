@@ -91,20 +91,37 @@ nav:                                    # 導航菜單
 if(document.getElementById('pwd-input').value === 'asd12345'){  // ← 改這裡
 ```
 
-#### B. CSS 樣式（第 22-27 行）
+#### B. CSS 樣式（第 9-30 行）
 
 ```css
 .md-sidebar--primary {
-  width: 380px !important;              /* 左邊目錄寬度 */
+  width: 380px !important;              /* 桌面版左邊目錄寬度 */
 }
 .md-content__inner {
   max-width: none !important;           /* 移除內容最大寬度限制 */
 }
+.md-typeset {
+  max-width: none !important;           /* 移除文字區寬度限制 */
+}
+@media (max-width: 1024px) {
+  .md-sidebar--primary {
+    width: 85vw !important;             /* 平板版：螢幕寬度的 85% */
+    max-width: 300px !important;
+  }
+}
+@media (max-width: 480px) {
+  .md-sidebar--primary {
+    width: 90vw !important;             /* 手機版：螢幕寬度的 90% */
+    max-width: 280px !important;
+  }
+}
 ```
 
 **調整寬度：**
-- 目錄太窄？改 `380px` 為 `420px` 或 `450px`
-- 內容區域寬度自動填滿右邊空間
+- **桌面版**：改 `380px` 為其他數值
+- **平板版**（1024px 以下）：改 `85vw` 和 `300px`
+- **手機版**（480px 以下）：改 `90vw` 和 `280px`
+- 使用 `vw` (視口寬度百分比) 讓菜單自適應螢幕，不會超出邊界
 
 #### C. Flying GIFs（第 28-170 行）
 
@@ -267,6 +284,17 @@ localStorage 沒有正確存取（跨域或隱私模式）
 - 檢查 GIF URL 是否還能訪問
 - 試試其他瀏覽器
 
+### 問題：手機上點左上角菜單，菜單寬度超過螢幕
+
+**原因：**
+菜單寬度 380px 在手機螢幕上太寬
+
+**解決方案：**
+已修復！使用響應式設計：
+- 1024px 以下（平板/手機）：自動調整為 `85vw` / `90vw`
+- 480px 以下（小手機）：進一步縮小至最大 280px
+- 菜單現在會自適應螢幕寬度，不會超出邊界
+
 ---
 
 ## 💡 給 AI 的提示
@@ -277,13 +305,13 @@ localStorage 沒有正確存取（跨域或隱私模式）
 
 | 請求 | 改動檔案 | 位置 |
 |------|--------|------|
-| 改密碼 | `overrides/main.html` | 第 ~15 行 |
-| 改 GIF 頻率 | `overrides/main.html` | 第 ~140 行 |
+| 改密碼 | `overrides/main.html` | 第 ~51 行 |
+| 改 GIF 頻率 | `overrides/main.html` | 第 ~132、140 行 |
 | 加新頁面 | `docs/` 新增 `.md` + `mkdocs.yml` | nav 段落 |
-| 改目錄寬度 | `overrides/main.html` | 第 ~23 行 |
+| 改目錄寬度（含手機版） | `overrides/main.html` | 第 ~10-30 行 CSS 區塊 |
 | 改網站名稱 | `mkdocs.yml` | `site_name` 欄位 |
 | 改顏色主題 | `mkdocs.yml` | `palette` 段落 |
-| 換 GIF 素材 | `overrides/main.html` | `FLY_GIFS` 陣列 |
+| 換 GIF 素材 | `overrides/main.html` | 第 ~70-76 行 `FLY_GIFS` 陣列 |
 
 ---
 
