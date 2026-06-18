@@ -234,13 +234,64 @@
   }
   #back-top.show { display: flex; }
 
+  /* ── Mobile drawer ── */
+  #drawer-checkbox {
+    display: none;
+  }
+  #drawer-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    z-index: 101;
+    font-size: 18px;
+  }
+  #drawer-overlay {
+    display: none;
+  }
+
   @media (max-width: 768px) {
-    #sidebar { display: none; }
-    #content { margin-left: 0; padding: 24px 20px; }
+    #drawer-toggle { display: block; }
+    #drawer-checkbox:checked ~ #drawer-overlay {
+      display: block;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 98;
+    }
+    #drawer-checkbox:checked ~ #sidebar {
+      left: 0;
+    }
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: -100%;
+      width: 70vw;
+      max-width: 280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 99;
+    }
+    #content {
+      margin-left: 0;
+      padding: 24px 20px;
+    }
   }
 </style>
 </head>
 <body>
+
+<!-- ══════════════ Mobile Drawer ══════════════ -->
+<input type="checkbox" id="drawer-checkbox">
+<button id="drawer-toggle">☰</button>
+<div id="drawer-overlay"></div>
 
 <!-- ══════════════ SIDEBAR ══════════════ -->
 <nav id="sidebar">
@@ -1125,5 +1176,38 @@
     scheduleFlyGif();
   }
 </script>
+
+<!-- ══════════════ Mobile Drawer Control ══════════════ -->
+<script>
+  var drawerCheckbox = document.getElementById('drawer-checkbox');
+  var drawerToggle = document.getElementById('drawer-toggle');
+  var drawerOverlay = document.getElementById('drawer-overlay');
+  var sidebarLinks = document.querySelectorAll('#sidebar a');
+
+  // 点击按钮打开/关闭 drawer
+  drawerToggle.onclick = function() {
+    drawerCheckbox.checked = !drawerCheckbox.checked;
+  };
+
+  // 点击覆盖层关闭 drawer
+  drawerOverlay.onclick = function() {
+    drawerCheckbox.checked = false;
+  };
+
+  // 点击菜单项后关闭 drawer
+  sidebarLinks.forEach(function(link) {
+    link.onclick = function() {
+      drawerCheckbox.checked = false;
+    };
+  });
+
+  // 响应式：监听窗口大小变化
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+      drawerCheckbox.checked = false;
+    }
+  });
+</script>
+
 </body>
 </html>
