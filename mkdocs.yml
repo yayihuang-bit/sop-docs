@@ -7,7 +7,6 @@ theme:
     primary: indigo
     accent: indigo
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.top
