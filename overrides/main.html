@@ -316,5 +316,19 @@
     } else {
       initPasswordProtection();
     }
+
+    // 修正回到頂部按鈕：只滑到頂部，不打開目錄
+    document.addEventListener('DOMContentLoaded', function(){
+      var backToTopBtn = document.querySelector('.md-top');
+      if(backToTopBtn){
+        backToTopBtn.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return false;
+        });
+      }
+    });
+  </script>
   </script>
 {% endblock %}
