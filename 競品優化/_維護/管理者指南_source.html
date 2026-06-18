@@ -139,6 +139,20 @@
     border-collapse: collapse;
     margin: 14px 0;
     font-size: 14px;
+    table-layout: auto;
+  }
+  @media (max-width: 1220px) {
+    table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+    }
+    table thead, table tbody, table tr { display: contents; }
+    table th, table td {
+      display: table-cell;
+      white-space: normal;
+    }
   }
   th {
     background: var(--primary);
