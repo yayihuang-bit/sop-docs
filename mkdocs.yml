@@ -2,7 +2,7 @@ site_name: SOP 文件
 site_url: https://yayihuang-bit.github.io/sop-docs/
 theme:
   name: material
-  language: zh
+  language: zh-TW
   palette:
     primary: indigo
     accent: indigo
@@ -18,7 +18,7 @@ theme:
 
 plugins:
   - search:
-      lang: zh
+      lang: zh-TW
 
 markdown_extensions:
   - pymdownx.emoji:
