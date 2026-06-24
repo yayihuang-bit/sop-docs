@@ -16,6 +16,12 @@ theme:
     - search.highlight
   custom_dir: overrides
 
+nav:
+  - 首頁: index.md
+  - 遊戲上線工作: 遊戲上線SOP.md
+  - 營運用系統教學: 營運_索引.md
+  - 競品指南: 競品指南_索引.md
+
 plugins:
   - search:
       lang: zh-TW
