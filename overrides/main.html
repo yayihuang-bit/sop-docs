@@ -128,14 +128,18 @@
       background: var(--warn-bg);
     }
 
-    /* ════ 隱藏左側導航 ════ */
-    .md-sidebar--primary {
-      display: none !important;
+    /* ════ 隱藏左側導航（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-sidebar--primary {
+        display: none !important;
+      }
     }
 
-    /* ════ 隱藏漢堡選單按鈕 ════ */
-    .md-header__button[for="__drawer"] {
-      display: none !important;
+    /* ════ 隱藏漢堡選單按鈕（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-header__button[for="__drawer"] {
+        display: none !important;
+      }
     }
 
     .md-content {
@@ -185,10 +189,6 @@
         height: 100% !important;
         z-index: 8 !important;
         background-color: rgba(0, 0, 0, 0.5) !important;
-      }
-
-      #__drawer:checked ~ .md-sidebar--primary {
-        display: block !important;
       }
 
       .md-sidebar--primary {
