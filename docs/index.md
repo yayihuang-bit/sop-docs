@@ -16,6 +16,12 @@
 <a href="/sop-docs/遊戲上線SOP.md" style="display:inline-block;background:#7c3aed;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看 →</a>
 </div>
 
+<div style="border:2px solid #7c3aed;border-radius:12px;padding:24px;background:#f5f3ff;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#7c3aed;margin:0 0 12px 0;">⚙️ 遊戲調整流程</h3>
+<p style="color:#555;font-size:14px;margin:0 0 auto 0;flex-grow:1;">關閉/門檻更動</p>
+<a href="https://docs.google.com/presentation/d/1l5BFAhnA-TxklW4-ScBxuFaSX0ODdWgKom84wQdnXU8/edit?slide=id.p#slide=id.p" style="display:inline-block;background:#7c3aed;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看 →</a>
+</div>
+
 </div>
 
 ---
