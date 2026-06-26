@@ -1,6 +1,6 @@
-# 🎮遊戲上線設定　流程 & 檢查清單🎮
+![](https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif) **🎮 遊戲上線設定 流程 & 檢查清單** ![](https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif)
 
-> 版本：v1.0 | 統一遊戲從未上架到正式上線的設定流程
+> 版本：v1.0　撰寫日期：2026-06-17　BY yayihuang-bit
 
 ## 📋 項目目的性
 
