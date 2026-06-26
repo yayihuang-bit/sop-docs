@@ -1,0 +1,12 @@
+.md-typeset h2 {
+  margin-top: 12px !important;
+}
+
+.md-typeset blockquote {
+  margin-bottom: 12px !important;
+}
+
+.md-typeset table {
+  width: 100% !important;
+  table-layout: fixed;
+}

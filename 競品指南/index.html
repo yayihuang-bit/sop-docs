@@ -1,0 +1,1515 @@
+
+<!doctype html>
+<html lang="zh-TW" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://yayihuang-bit.github.io/sop-docs/%E7%AB%B6%E5%93%81%E6%8C%87%E5%8D%97/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>競品指南 - SOP 文件</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  <style>
+    /* ════ 顏色變數 ════ */
+    :root {
+      --primary: #1a73e8;
+      --primary-light: #e8f0fe;
+      --warn-bg: #fff8e1;
+      --warn-border: #f9a825;
+      --tip-bg: #e8f5e9;
+      --tip-border: #43a047;
+      --code-bg: #f5f5f5;
+      --border: #e0e0e0;
+      --text: #202124;
+      --text-muted: #5f6368;
+    }
+
+    /* ════ 隱藏 MkDocs 自動產生的頁面 H1 標題 ════ */
+    .md-content__inner > h1 {
+      display: none !important;
+    }
+
+    /* ════ 縮小 h2 頂部空隙 ════ */
+    .md-typeset h2 {
+      margin-top: 12px !important;
+    }
+    .md-typeset blockquote {
+      margin-bottom: 12px !important;
+    }
+
+    /* ════ MkDocs 基礎樣式美化 ════ */
+    .md-typeset {
+      color: var(--text);
+    }
+
+    .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
+      color: var(--text);
+    }
+
+    .md-typeset h2 {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .md-typeset a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .md-typeset a:hover {
+      text-decoration: underline;
+    }
+
+    /* ════ 表格美化 ════ */
+    .md-typeset table {
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .md-typeset thead th {
+      background: var(--primary);
+      color: #fff;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+      border: none;
+    }
+
+    .md-typeset td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .md-typeset tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .md-typeset tbody tr:hover {
+      background-color: var(--primary-light);
+    }
+
+    /* ════ 程式碼塊美化 ════ */
+    .md-typeset code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--text);
+      font-family: "Consolas", "Monaco", monospace;
+    }
+
+    .md-typeset pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      margin: 14px 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .md-typeset pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* ════ 引用和特殊框 ════ */
+    .md-typeset blockquote {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+
+    /* ════ 提示框（綠色） ════ */
+    .md-typeset .admonition.tip,
+    .md-typeset .admonition.hint,
+    .md-typeset .admonition.note {
+      border-left: 4px solid var(--tip-border);
+      background: var(--tip-bg);
+    }
+
+    /* ════ 警告框（黃色） ════ */
+    .md-typeset .admonition.warning,
+    .md-typeset .admonition.caution,
+    .md-typeset .admonition.attention {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+    }
+
+    /* ════ 隱藏左側導航（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-sidebar--primary {
+        display: none !important;
+      }
+    }
+
+    /* ════ 隱藏漢堡選單按鈕（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-header__button[for="__drawer"] {
+        display: none !important;
+      }
+    }
+
+    .md-content {
+      margin-left: 0 !important;
+    }
+
+    .md-content__inner {
+      max-width: none !important;
+    }
+
+    .md-typeset {
+      max-width: none !important;
+    }
+
+    /* ════ 平板版（1024px - 1220px） ════ */
+    @media (max-width: 1220px) and (min-width: 768px) {
+      .md-sidebar--primary {
+        width: 70vw !important;
+        max-width: 280px !important;
+      }
+    }
+
+    /* ════ 手機版（小於 768px） ════ */
+    @media (max-width: 768px) {
+      .md-sidebar--primary {
+        width: 65vw !important;
+        max-width: 240px !important;
+      }
+    }
+
+    /* ════ 超小手機（480px 以下） ════ */
+    @media (max-width: 480px) {
+      .md-sidebar--primary {
+        width: 60vw !important;
+        max-width: 200px !important;
+      }
+    }
+
+    /* ════ 菜單打開時覆蓋效果 ════ */
+    @media (max-width: 1220px) {
+      #__drawer:checked ~ .md-overlay {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 8 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+      }
+
+      .md-sidebar--primary {
+        z-index: 9 !important;
+      }
+    }
+
+  </style>
+
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳轉到
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="頁首">
+    <a href=".." title="SOP 文件" class="md-header__button md-logo" aria-label="SOP 文件" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SOP 文件
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              競品指南
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="搜尋">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清除" aria-label="清除" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜尋引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="標籤" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首頁
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9A%E5%B7%A5%E4%BD%9C_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  遊戲上線工作
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../%E7%87%9F%E9%81%8B_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  營運活動教學
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%AB%B6%E5%93%81%E6%8C%87%E5%8D%97_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  競品指南
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="導覽列" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SOP 文件" class="md-nav__button md-logo" aria-label="SOP 文件" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SOP 文件
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲上線工作
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    遊戲上線工作
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9A%E5%B7%A5%E4%BD%9C_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9ASOP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲上線設定
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E8%AA%BF%E6%95%B4%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲調整流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    營運活動教學
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    營運活動教學
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8F%9B%E7%9A%AE%E8%B3%87%E8%A8%8A_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    換皮資訊
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    抽獎
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    抽獎
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8A%BD%E7%8D%8E_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%9B%B4%E6%92%AD%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    直播流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8A%BD%E7%8D%8E%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    抽獎流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%AB%B6%E5%93%81%E6%8C%87%E5%8D%97_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    競品指南
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+                  
+
+
+
+  <h1>競品指南</h1>
+
+<p><a href="/sop-docs/競品指南_索引/">← 返回競品指南</a></p>
+<hr />
+<p style="font-size:2em; font-weight:bold; margin:20px 0 8px 0;"><img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> 競品營運簡報 製作指南 <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"></p>
+
+<blockquote>
+<p>版本：v1.0　撰寫日期：2026-06-24　BY yayihuang-bit</p>
+</blockquote>
+<h2 id="_1">一、為什麼要做營運簡報？</h2>
+<p>我們的日常工作涵蓋活動、系統、遊戲開發與營運等各個面向，這其實給了我們觀察競品時一個天然的優勢——可以用自己的專業經驗去反推對方的行為動機，思考「他們為什麼這樣做？這個活動背後想解決什麼問題？」，然後把這些觀察帶回到自己的工作裡。</p>
+<p>另一方面，這些累積下來的資料，也能作為公司制定策略的參考依據。知道市場在往哪走、對手在做什麼，決策的時候就不是只靠直覺。</p>
+<hr />
+<h2 id="8">二、8家競品基本檔案</h2>
+<p><strong>這8家並非永久固定，大約每年會重新檢視一次。</strong>
+如果某家競品出現明顯的營運突破或營收急速攀升，可能會被納入；反之則移出。</p>
+<table>
+<thead>
+<tr>
+<th>競品</th>
+<th>母公司</th>
+<th>定位</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>星城</td>
+<td>網銀國際</td>
+<td>輕博弈、遊戲豐富度高</td>
+</tr>
+<tr>
+<td>滿貫大亨</td>
+<td>IGS</td>
+<td>輕博弈、營運、遊戲更新頻率高</td>
+</tr>
+<tr>
+<td>金好運</td>
+<td>IGS</td>
+<td>重博弈、魚機為強項</td>
+</tr>
+<tr>
+<td>老子有錢</td>
+<td>向上國際</td>
+<td>老牌、近年風格年輕化</td>
+</tr>
+<tr>
+<td>王牌俱樂部</td>
+<td>向上國際</td>
+<td>老子有錢的新內容測試場</td>
+</tr>
+<tr>
+<td>豪神</td>
+<td>芬格</td>
+<td>吳宗憲、媽祖的品牌感強、更新頻率低</td>
+</tr>
+<tr>
+<td>嚦咕麻將城</td>
+<td>博格</td>
+<td>休閒麻將起家、遊戲種類多元</td>
+</tr>
+<tr>
+<td>錢街</td>
+<td>糖蛙</td>
+<td>老牌、營運更新頻率低</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">各家簡介</h3>
+<p><img alt="image" src="https://hackmd.io/_uploads/rJIpj8L-fx.png =250x80" />
+<strong>星城</strong>
+博弈界的龍頭，遊戲種類豐富，異業合作與廠商聯名相當多，整體走輕博弈路線。每年至少會有1～3次動漫或遊戲IP聯名，靠遊戲豐富度和體感累積了一批死忠玩家。他們的遊戲相對較「控」——會依照玩家的遊戲歷程調整開獎，讓玩家有來有回的體驗感。</p>
+<p><img alt="image" src="https://hackmd.io/_uploads/r1Fl28Lbzl.png =150x45" /> <img alt="image" src="https://hackmd.io/_uploads/BJ6h28LZze.png =150x75" />
+<strong>滿貫大亨 &amp; 金好運</strong>（同屬 IGS）
+這兩家是同一家公司，但定位完全不同，分別對應不同的玩家族群。</p>
+<ul>
+<li><strong>滿貫大亨</strong>：走輕博弈路線，活動更新頻繁、主題活潑，曾和大富翁、街頭快打等知名IP聯名，魚機風格輕鬆有趣，是8家中更新頻率相對較高的一家。</li>
+<li><strong>金好運</strong>：走重博弈路線，活動相對單一，魚機強調財富感與賭感，以威鯨傳奇系列等自家經典IP為主打。母公司以魚機、街機起家，這也是金好運最重要的底氣。近年也跟進接了ATG的戰神賽特。</li>
+</ul>
+<p>補充：兩家的柏青都持續在接日本原廠授權的機台。</p>
+<p><img alt="image" src="https://www.08online.com/hotfix-26.06.36/logo.CrWRf9nL3UOGhznY.png =150x85" /><img alt="image" src="https://hackmd.io/_uploads/H1J26LUWGg.png =150x130" />
+<strong>老子有錢 &amp; 王牌俱樂部</strong>（同屬向上國際）
+台灣老牌博弈廠商，這兩家也是同一家公司，有明確的內部分工。</p>
+<ul>
+<li><strong>王牌俱樂部</strong>：老子有錢新內容的測試場，柏青、押分機、新活動、新系統...等等，通常會先在王牌上線，確認沒問題再推到老子有錢。例行有雙周抽獎活動。</li>
+<li><strong>老子有錢</strong>：2025年有做過一次風格改版，整體從偏老賭客的調性變得稍微年輕化，但營運活動的頻率比以前少了不少。近年也跟進接了ATG的熱門遊戲。</li>
+</ul>
+<p>補充：柏青偏向自行開發，主題與玩法多參考日本機台；捕魚機目前特色相對簡單。</p>
+<p><img alt="image" src="https://hackmd.io/_uploads/S17zRULWze.png =130x130" /> <img alt="image" src="https://hackmd.io/_uploads/B1BLCU8WGe.png =140x80" />
+<strong>豪神 &amp; 嚦咕麻將城</strong>（同屬芬格／博格）
+這兩家也是同一家公司。</p>
+<ul>
+<li><strong>豪神</strong>：品牌與吳宗憲、媽祖的連結度極高，活動大多是舊內容重複循環，2026年起開始頻繁接ATG的熱門遊戲，其餘沒有太多特別的更新。</li>
+<li><strong>嚦咕麻將城</strong>：以休閒麻將起家，後來改版後博弈感越來越重，老虎機和捕魚機更新頻繁，遊戲種類相對多元，但營運活動較為單一。有一套可以兌換實體獎品的系統，是其他競品比較少見的特色。</li>
+</ul>
+<p><img alt="image" src="https://hackmd.io/_uploads/SkciCU8Wzl.png =140x80" />
+<strong>錢街</strong>（糖蛙）
+老牌博弈廠商，但營運活動更新頻率偏低，多半是舊活動重複舉辦。2026年起簽了啦啦隊代言人，風格開始有一點年輕化的轉變，但整體來說目前還不算明顯。</p>
+<hr />
+<h2 id="_3">三、營運簡報的用途</h2>
+<p><strong>月報的原料來源</strong>
+每個月我們會對決策圈與各端點進行一次競品月報，報告上個月的競品核心動態。月報的內容，仰賴大家製作的營運簡報——它負責的是「資料收集 + 重點初篩」的角色，讓月報窗口有完整的素材可以彙整。
+※ 月報窗口後續有機會輪替。</p>
+<p><strong>內部的競品知識庫</strong>
+營運簡報同時是一本字典。日常工作中，如果有類似的發想需要參考，或是想確認某個機制競品是否做過，都可以翻閱過去的紀錄，作為靈感來源或設計依據。</p>
+<hr />
+<h2 id="_4">四、時間軸與分工</h2>
+<p>每個月會有兩次企劃內部開會，分別針對：
+- <strong>上個月月中～月底</strong>的競品內容
+- <strong>這個月月初～月中</strong>的競品內容</p>
+<table>
+<thead>
+<tr>
+<th>時間點</th>
+<th>參與者</th>
+<th>內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>月初（約5號）</td>
+<td>月報窗口</td>
+<td>提供上月競品表格給數據與美術</td>
+</tr>
+<tr>
+<td>月初（約5號）</td>
+<td>月報窗口</td>
+<td>提供上月競品初版內容給米香</td>
+</tr>
+<tr>
+<td>第1個周二</td>
+<td>企劃內部</td>
+<td>討論上月營運簡報（下半月）<br>※初版簡報請於上月月底更新完畢<br>※完善+排版於第1個週二前更新完畢</td>
+</tr>
+<tr>
+<td>第2個周二 ★</td>
+<td>月報窗口</td>
+<td>完成上月月報，進行月報會議</td>
+</tr>
+<tr>
+<td>第3個周二</td>
+<td>企劃內部</td>
+<td>1. 討論本月營運簡報（上半月）<br> 2.同步上月月報內容</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 時間軸補充：
+- 下個月的第1個周二 ＝ 討論本月營運簡報（下半月），以此循環。
+- 月報會議若有意願參與，歡迎告知月報窗口 </p>
+</blockquote>
+<h3 id="2026">2026下半年度 負責分工</h3>
+<table>
+<thead>
+<tr>
+<th>窗口</th>
+<th>觀察競品</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10（月報窗口）</td>
+<td>豪神+金好運</td>
+</tr>
+<tr>
+<td>青蛙</td>
+<td>老子+錢街</td>
+</tr>
+<tr>
+<td>呱呱</td>
+<td>星城+嚦咕</td>
+</tr>
+<tr>
+<td>榮大</td>
+<td>滿貫+王牌</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>💡 分工補充：
+- 每半年或一年會視情況調整各自負責的競品
+- 上述表格自2026/7月開始實施
+- 建議每次輪替競品時，錄影或截圖紀錄，以防未來出現突襲式的大更新</p>
+</blockquote>
+<hr />
+<h2 id="_5">五、製作規則</h2>
+<h3 id="_6">競品總結表</h3>
+<p>位於每個競品的第一頁，條列該月所有項目並進行初步分類。
+<img alt="螢幕擷取畫面 2026-06-10 120149" src="https://hackmd.io/_uploads/HkOpbPUbzl.png" />
+| 分類 | 說明 |
+|------|------|
+| 新遊戲 | 除了 SLOT（由數學負責）以外，其他新遊戲都由企劃這邊報告 |
+| 抽獎活動 | 通常在節慶／周年慶大推時出現，屆時需要記錄 |
+| 主題活動 | 綜合式活動，無法單純歸類在老虎機／魚機／牌桌其中一類 |
+| 老虎機 | 老虎機相關內容，包含排行榜、活動、功能優化等 |
+| 魚機 | 魚機相關內容，包含排行榜、活動、功能優化、海皇、活動海皇更新等 |
+| 牌桌 | 牌桌相關內容，包含排行榜、活動、功能優化等 |
+| 其他類型 | 新系統功能、換皮、優化、每登活動、CCU活動、儲值活動、異業合作等 |</p>
+<blockquote>
+<p>💡 顏色標記
+標紅字：重點內容、新內容、抽獎活動...等等
+標黑字：例行內容、舊活動...等等</p>
+</blockquote>
+<h3 id="_7">內容製作原則</h3>
+<p><img alt="螢幕擷取畫面 2026-06-10 130841" src="https://hackmd.io/_uploads/B1yOZdIWGx.png" /></p>
+<p><strong>舊內容</strong>
+截圖或翻以往的簡報貼上，並將該分頁隱藏。
+但要特別留意：
+- 規則或數值是否有變更
+- 很久以前的活動突然重新出現</p>
+<p>若出現以上兩種情況，皆需要特別拉出來說明。</p>
+<blockquote>
+<p>💡 我們有<a href="https://script.google.com/a/macros/yile.com.tw/s/AKfycbx2MMu6jTOlF1VdlPrHgaI4uigbH_Oz6bp5505Y-JCPMuY6xeC8WywkgXB2vlYWBp73/exec">競品查詢網站</a>，整合了從開始記錄至今的所有競品內容，可以用標題關鍵字搜尋。找不到的話也要上網再查一次。實在不確定是否有更新，可以在企劃會議上提出，大家一起幫忙回憶。</p>
+</blockquote>
+<p><img alt="image" src="https://hackmd.io/_uploads/rkChG_I-fl.png" />
+<strong>新內容</strong>
+- 控制在 1～2 頁內結束
+- 不能只截圖，一定要用文字記錄活動辦法或遊戲玩法
+- 內容複雜或文字較多時，改用流程圖代替
+- 如果有最大獎，需特別以文字記錄，並換算台幣價值
+- 如果為新遊戲，而且是少見的玩法，請上網查詢是否有類似的玩法
+- 詳細內容可截圖 / 文字補充在後續分頁 ( 需隱藏 )</p>
+<blockquote>
+<p>💡 通用內容有固定模板，各競品常見的活動也有各自的模板，可在 PPT 上方列表找到「開啟範本工具」，通過授權後即可使用。</p>
+</blockquote>
+<p><img alt="image" src="https://hackmd.io/_uploads/SJJ87dI-fl.png" />
+<strong>月份重點</strong>
+每個月寫一次，只在討論該月下半部分的時候才會處理這一塊。
+寫法：列出這個月該競品是否有做什麼特殊操作，並推測可能的原因。</p>
+<blockquote>
+<p>💡 範例：當下適逢媽祖繞境，順應主題熱度舉辦對應活動，並搭配行銷宣傳擴大曝光。</p>
+</blockquote>
+<p><img alt="image" src="https://hackmd.io/_uploads/BkHUquUWfx.png =150x100" />VS &ensp;&ensp;<img alt="image" src="https://hackmd.io/_uploads/H1ko5OLWGg.png =65x80" />
+<strong>安卓與蘋果的版本差異</strong>
+數據上偶爾會出現同一家競品，在兩個平台的下載量或營收走勢不一致的情況。例如星城在 2026/5 月時，安卓端的營收有明顯提升，但 iOS 端卻沒有同步反應。
+因此請在日常觀測競品時，留意一下兩個平台的活動或儲值內容是否有所不同，並在簡報中新增分頁進行備註。</p>
+<hr />
+<h2 id="_8">六、競品文件</h2>
+<ul>
+<li><strong><a href="https://drive.google.com/drive/folders/1A3318pxpWfgoFlLVz8_kBReVpl-KZlrz">競品資料夾</a></strong></li>
+<li><strong><a href="https://docs.google.com/spreadsheets/d/1uq1G9x3S05RYUXl8yLQ5613DGDketkHXAjC19zs29Bk/edit?gid=0#gid=0">競品公帳</a></strong></li>
+<li><strong><a href="https://script.google.com/a/macros/yile.com.tw/s/AKfycbx2MMu6jTOlF1VdlPrHgaI4uigbH_Oz6bp5505Y-JCPMuY6xeC8WywkgXB2vlYWBp73/exec">競品活動分析</a></strong></li>
+</ul>
+<hr />
+<h2 id="_9">七、競品儲值流程</h2>
+<p><strong>1. 若出現以下儲值需求：</strong></p>
+<ul>
+<li>公帳沒錢 </li>
+<li>因應活動、系統、遊戲限制 VIP 門檻</li>
+</ul>
+<p>在每個月20號前，找月報窗口 ( 目前找10 ) 統一儲值。</p>
+<blockquote>
+<p>💡 若公帳內還有錢，平常也可以多掛著打，衝一下帳號等級。</p>
+</blockquote>
+<p><strong>2. 儲值流程：</strong></p>
+<p>&ensp;a. 每次儲值使用第三方，通常會跳轉Mycard，可填寫公司Title、統編。
+&ensp;b. 儲值成功過幾天後，Mycard會寄送發票開立通知，需截圖至每個月的彙整簡報。
+&ensp;c. 彙整後每個月20號左右提供該簡報給Penny(財務)。
+&ensp;d. Penny後續會將電子發票證明聯貼在對應的簡報上。
+&ensp;e. 將簡報提供給白白報帳。</p>
+<blockquote>
+<p>💡 25號以後的報到下個月 ( 或者保險起見等到下個月再儲值 )
+💡 滿貫/金好運：沒辦法輸入公司Title，所以填完訊息+統編+付款後
+要去<a href="https://www.einvoice.nat.gov.tw/accounts/login/mw?login_challenge=a5ffe3e2e0084672999789b184e78cf3">電子發票整合網站</a>，登入並選擇發票查詢及捐贈，用購買時間前後查詢
+然後截圖紀錄</p>
+</blockquote>
+<p><strong>3. 公司報帳需填入：</strong>
+- 公司Title：弈樂科技股份有限公司
+- 公司統編：50820427</p>
+<blockquote>
+<p>💡 報帳簡報可參考：<a href="https://docs.google.com/presentation/d/1zU9FQeQft8h-6xK2IFYtyFaJqwPID9zuS6alfqQM88E/edit?usp=sharing">3月份報帳彙整</a></p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到頂端
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tracking", "navigation.tabs", "navigation.top", "navigation.expand", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u8907\u88fd", "clipboard.copy": "\u8907\u88fd", "search.result.more.one": "\u6b64\u9801\u5c1a\u6709 1 \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.more.other": "\u6b64\u9801\u5c1a\u6709 # \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.none": "\u6c92\u6709\u7b26\u5408\u7684\u9805\u76ee", "search.result.one": "\u627e\u5230 1 \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.other": "\u627e\u5230 # \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.placeholder": "\u6253\u5b57\u9032\u884c\u641c\u5c0b", "search.result.term.missing": "\u7f3a\u5c11\u5b57\u8a5e", "select.version": "\u9078\u64c7\u7248\u672c"}, "version": null}</script>
+    
+    
+  
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  <script>
+    function initPasswordProtection(){
+      if (localStorage.getItem('sop_authenticated') !== 'true') {
+        var overlay = document.createElement('div');
+        overlay.id = 'pwd-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10001;display:flex;align-items:center;justify-content:center;';
+
+        var box = document.createElement('div');
+        box.style.cssText = 'background:white;padding:40px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.3);text-align:center;';
+
+        box.innerHTML = '<h2 style="margin:0 0 20px 0;color:#333;">需要密碼</h2><input id="pwd-input" type="password" placeholder="請輸入密碼" style="padding:10px;font-size:16px;width:200px;border:1px solid #ccc;border-radius:4px;"><button style="margin-left:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:16px;">確認</button>';
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        var pwdInput = document.getElementById('pwd-input');
+        pwdInput.focus();
+
+        function checkPwd(){
+          if(pwdInput.value === 'asd12345'){
+            localStorage.setItem('sop_authenticated', 'true');
+            overlay.remove();
+            initFlyGif();
+          } else {
+            alert('密碼錯誤');
+            pwdInput.value = '';
+            pwdInput.focus();
+          }
+        }
+
+        box.querySelector('button').onclick = checkPwd;
+        pwdInput.onkeypress = function(e){ if(e.key === 'Enter') checkPwd(); };
+      } else {
+        initFlyGif();
+      }
+    }
+
+    var FLY_GIFS = [
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+      'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+      'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
+    ];
+    var FLY_MAX = 1;
+    var _flyCount = 0;
+    var _flyScheduleTimeout = null;
+
+    FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
+    function initFlyGif() {
+
+      function triggerFlyGif(){
+        if(_flyCount >= FLY_MAX) return;
+        _flyCount++;
+        var gif = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+        var topPct = (5 + Math.random() * 85) + '%';
+        var dur = (2.5 + Math.random() * 5).toFixed(1) + 's';
+        var size = (100 + Math.random() * 180) + 'px';
+        var el = document.createElement('img');
+        el.src = gif;
+        var startTop = parseFloat(topPct);
+        el.style.cssText = 'position:fixed;right:-200px;top:'+topPct+';width:'+size+';height:auto;z-index:500;pointer-events:all;cursor:grab;border:none;outline:none;box-shadow:none;background:transparent;';
+        document.body.appendChild(el);
+        var _durMs = parseFloat(dur) * 1000;
+        var _startTime = Date.now();
+        var _waveAmp = 8 + Math.random() * 12;
+        var _waveFreq = 1.5 + Math.random() * 2;
+        var _flyRaf = null;
+        var _dragging = false;
+        function animateFly(){
+          if(_dragging){ _flyRaf = requestAnimationFrame(animateFly); return; }
+          var elapsed = Date.now() - _startTime;
+          var progress = elapsed / _durMs;
+          if(progress >= 1){
+            if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;}
+            scheduleFlyGif();
+            return;
+          }
+          var x = (1 - progress) * (window.innerWidth + 200) - 200;
+          el.style.right = 'auto';
+          el.style.left = x + 'px';
+          var topVal = startTop + Math.sin(progress * Math.PI * 2 * _waveFreq) * _waveAmp;
+          el.style.top = topVal + '%';
+          _flyRaf = requestAnimationFrame(animateFly);
+        }
+        el.onmousedown = function(){ _dragging = true; };
+        el.onmouseup = function(){ _dragging = false; };
+        el.onmouseleave = function(){ _dragging = false; };
+        animateFly();
+      }
+
+      function scheduleFlyGif(){
+        if(document.hidden) return;
+        if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
+        _flyScheduleTimeout = setTimeout(function(){
+          if(!document.hidden){
+            triggerFlyGif();
+          }
+        }, (30 + Math.random() * 60) * 1000);
+      }
+
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden){
+          if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
+        } else {
+          scheduleFlyGif();
+        }
+      });
+
+      if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
+        scheduleFlyGif();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPasswordProtection);
+    } else {
+      initPasswordProtection();
+    }
+
+    // 修正回到頂部按鈕：只滑到頂部，不打開目錄
+    document.addEventListener('DOMContentLoaded', function(){
+      var backToTopBtn = document.querySelector('.md-top');
+      if(backToTopBtn){
+        backToTopBtn.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return false;
+        });
+      }
+    });
+
+    // ════ 自動排序卡片（根據點擊紀錄）════
+    (function(){
+      var KEY = 'sop_clicks';
+      function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+      function inc(href){ var c=load(); c[href]=(c[href]||0)+1; localStorage.setItem(KEY,JSON.stringify(c)); }
+
+      function sortPage(){
+        var counts = load();
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+
+        // 只有索引頁（有 grid 卡片）才執行排序
+        if(!inner.querySelector('div[style*="display:grid"]')) return;
+
+        // 收集各分類區塊（h2 + 後續元素，到下一個 h2 或 hr 為止）
+        var allNodes = Array.from(inner.children);
+        var sections = [];
+        var i = 0;
+        while(i < allNodes.length){
+          var node = allNodes[i];
+          if(node.tagName === 'H2'){
+            var sec = { nodes:[node], total:0 };
+            i++;
+            while(i < allNodes.length && allNodes[i].tagName !== 'H2' && allNodes[i].tagName !== 'HR'){
+              var child = allNodes[i];
+              sec.nodes.push(child);
+              child.querySelectorAll('a[href]').forEach(function(a){
+                sec.total += (counts[a.getAttribute('href')]||0);
+              });
+              i++;
+            }
+            if(i < allNodes.length && allNodes[i].tagName === 'HR') i++; // 跳過 hr
+            sections.push(sec);
+          } else { i++; }
+        }
+
+        // 依點擊數排序分類區塊
+        if(sections.length >= 2){
+          sections.sort(function(a,b){ return b.total - a.total; });
+          sections.forEach(function(sec, idx){
+            sec.nodes.forEach(function(n){ inner.appendChild(n); });
+            if(idx < sections.length-1){
+              var hr = document.createElement('hr');
+              inner.appendChild(hr);
+            }
+          });
+        }
+
+        // 依點擊數排序每個 grid 內的卡片
+        inner.querySelectorAll('div[style*="display:grid"]').forEach(function(grid){
+          var cards = Array.from(grid.children);
+          if(cards.length < 2) return;
+          cards.sort(function(a,b){
+            var aEl = a.querySelector('a[href]');
+            var bEl = b.querySelector('a[href]');
+            var aKey = aEl ? aEl.getAttribute('href') : '';
+            var bKey = bEl ? bEl.getAttribute('href') : '';
+            return (counts[bKey]||0) - (counts[aKey]||0);
+          });
+          cards.forEach(function(c){ grid.appendChild(c); });
+        });
+      }
+
+      function addTracking(){
+        document.querySelectorAll('.md-content__inner a[href]').forEach(function(a){
+          a.addEventListener('click', function(){ inc(this.getAttribute('href')); });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){ sortPage(); addTracking(); });
+    })();
+  </script>
+  </script>
+
+  </body>
+</html>
