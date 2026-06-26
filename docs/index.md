@@ -61,6 +61,12 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #34a853;border-radius:12px;padding:24px;background:#f1f8f5;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#34a853;margin:0 0 12px 0;">📝 營運簡報製作指南</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">競品觀察、分工、製作規則</p>
+<a href="/sop-docs/競品指南/" style="display:inline-block;background:#34a853;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+<div style="border:2px solid #34a853;border-radius:12px;padding:24px;background:#f1f8f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#34a853;margin:0 0 12px 0;">📊 競品活動分析系統 — 使用指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">競品分析系統的操作說明</p>
 <a href="/sop-docs/競品優化_使用指南.html" style="display:inline-block;background:#34a853;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
@@ -70,12 +76,6 @@
 <h3 style="color:#34a853;margin:0 0 12px 0;">🔐 競品活動分析系統 — 管理者指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">系統維護與權限說明</p>
 <a href="/sop-docs/競品優化_管理者指南.html" style="display:inline-block;background:#34a853;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
-</div>
-
-<div style="border:2px solid #34a853;border-radius:12px;padding:24px;background:#f1f8f5;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#34a853;margin:0 0 12px 0;">📝 營運簡報製作指南</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">競品觀察、分工、製作規則</p>
-<a href="/sop-docs/競品指南/" style="display:inline-block;background:#34a853;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 </div>
