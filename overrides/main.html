@@ -360,6 +360,9 @@
         var inner = document.querySelector('.md-content__inner');
         if(!inner) return;
 
+        // 只有索引頁（有 grid 卡片）才執行排序
+        if(!inner.querySelector('div[style*="display:grid"]')) return;
+
         // 收集各分類區塊（h2 + 後續元素，到下一個 h2 或 hr 為止）
         var allNodes = Array.from(inner.children);
         var sections = [];
