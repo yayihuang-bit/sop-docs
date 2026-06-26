@@ -1,4 +1,4 @@
-![](https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif) **🎮 遊戲上線設定 流程 & 檢查清單** ![](https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif)
+﻿<img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> **🎮 遊戲上線設定 流程 & 檢查清單** <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50">
 
 > 版本：v1.0　撰寫日期：2026-06-17　BY yayihuang-bit
 
