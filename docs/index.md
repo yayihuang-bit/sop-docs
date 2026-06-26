@@ -1,7 +1,5 @@
 ## 🎮 遊戲上線工作
 
-本系統提供遊戲上線的完整設定流程與檢查清單。
-
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #7c3aed;border-radius:12px;padding:24px;background:#f5f3ff;text-align:center;display:flex;flex-direction:column;">
@@ -39,7 +37,7 @@
 <div style="border:2px solid #f57c00;border-radius:12px;padding:24px;background:#fff8e1;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#f57c00;margin:0 0 12px 0;">📢 推播教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">自動發送推播、追蹤成效</p>
-<a href="\sop-docs\營運_推播教學.html" style="display:inline-block;background:#f57c00;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運_推播教學.html" style="display:inline-block;background:#f57c00;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 <div style="border:2px solid #f57c00;border-radius:12px;padding:24px;background:#fff8e1;text-align:center;display:flex;flex-direction:column;">

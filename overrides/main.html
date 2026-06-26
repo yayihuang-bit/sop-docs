@@ -340,6 +340,75 @@
         });
       }
     });
+
+    // ════ 自動排序卡片（根據點擊紀錄）════
+    (function(){
+      var KEY = 'sop_clicks';
+      function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+      function inc(href){ var c=load(); c[href]=(c[href]||0)+1; localStorage.setItem(KEY,JSON.stringify(c)); }
+
+      function sortPage(){
+        var counts = load();
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+
+        // 收集各分類區塊（h2 + 後續元素，到下一個 h2 或 hr 為止）
+        var allNodes = Array.from(inner.children);
+        var sections = [];
+        var i = 0;
+        while(i < allNodes.length){
+          var node = allNodes[i];
+          if(node.tagName === 'H2'){
+            var sec = { nodes:[node], total:0 };
+            i++;
+            while(i < allNodes.length && allNodes[i].tagName !== 'H2' && allNodes[i].tagName !== 'HR'){
+              var child = allNodes[i];
+              sec.nodes.push(child);
+              child.querySelectorAll('a[href]').forEach(function(a){
+                sec.total += (counts[a.getAttribute('href')]||0);
+              });
+              i++;
+            }
+            if(i < allNodes.length && allNodes[i].tagName === 'HR') i++; // 跳過 hr
+            sections.push(sec);
+          } else { i++; }
+        }
+
+        // 依點擊數排序分類區塊
+        if(sections.length >= 2){
+          sections.sort(function(a,b){ return b.total - a.total; });
+          sections.forEach(function(sec, idx){
+            sec.nodes.forEach(function(n){ inner.appendChild(n); });
+            if(idx < sections.length-1){
+              var hr = document.createElement('hr');
+              inner.appendChild(hr);
+            }
+          });
+        }
+
+        // 依點擊數排序每個 grid 內的卡片
+        inner.querySelectorAll('div[style*="display:grid"]').forEach(function(grid){
+          var cards = Array.from(grid.children);
+          if(cards.length < 2) return;
+          cards.sort(function(a,b){
+            var aEl = a.querySelector('a[href]');
+            var bEl = b.querySelector('a[href]');
+            var aKey = aEl ? aEl.getAttribute('href') : '';
+            var bKey = bEl ? bEl.getAttribute('href') : '';
+            return (counts[bKey]||0) - (counts[aKey]||0);
+          });
+          cards.forEach(function(c){ grid.appendChild(c); });
+        });
+      }
+
+      function addTracking(){
+        document.querySelectorAll('.md-content__inner a[href]').forEach(function(a){
+          a.addEventListener('click', function(){ inc(this.getAttribute('href')); });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){ sortPage(); addTracking(); });
+    })();
   </script>
   </script>
 {% endblock %}
