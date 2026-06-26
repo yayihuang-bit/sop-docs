@@ -1,4 +1,4 @@
-﻿<img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> **🎮 遊戲上線設定 流程 & 檢查清單** <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50">
+﻿<p style="font-size:2em; font-weight:bold; margin:20px 0 8px 0;"><img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> 🎮 遊戲上線設定 流程 & 檢查清單 <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"></p>
 
 > 版本：v1.0　撰寫日期：2026-06-17　BY yayihuang-bit
 
