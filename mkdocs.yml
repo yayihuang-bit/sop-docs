@@ -31,6 +31,9 @@ nav:
       - 抽獎流程: 抽獎流程.md
   - 競品指南: 競品指南_索引.md
 
+extra_css:
+  - stylesheets/extra.css
+
 plugins:
   - search:
       lang: zh-TW
