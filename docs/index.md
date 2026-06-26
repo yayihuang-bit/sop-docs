@@ -1,4 +1,4 @@
-# 🎮 SOP 文件系統
+﻿# 🎮 SOP 文件系統
 
 歡迎使用 SOP 文件。請選擇要查看的項目：
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 🦆 營運用系統教學
+## 🦆 營運活動教學
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
@@ -46,6 +46,12 @@
 <h3 style="color:#d32f2f;margin:0 0 12px 0;">📢 推播教學</h3>
 <p style="color:#555;font-size:14px;margin:0 0 auto 0;flex-grow:1;">自動發送推播、追蹤成效</p>
 <a href="/sop-docs/營運_推播教學.html" style="display:inline-block;background:#d32f2f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看 →</a>
+</div>
+
+<div style="border:2px solid #1a73e8;border-radius:12px;padding:24px;background:#f0f7ff;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#1a73e8;margin:0 0 12px 0;">🖼️ 換皮資訊</h3>
+<p style="color:#555;font-size:14px;margin:0 0 auto 0;flex-grow:1;">換皮製作流程 & 彙整包檔案位置</p>
+<a href="/sop-docs/換皮資訊_索引/" style="display:inline-block;background:#1a73e8;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看 →</a>
 </div>
 
 </div>
