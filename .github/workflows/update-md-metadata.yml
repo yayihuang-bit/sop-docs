@@ -1,0 +1,66 @@
+name: Auto-update MD metadata
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**.md'
+
+jobs:
+  update-metadata:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update 撰寫日期 and BY in changed MD files
+        env:
+          ACTOR: ${{ github.actor }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          DATE=$(date +%Y-%m-%d)
+
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            FILES=$(git show --name-only --format="" HEAD | grep '^docs/.*\.md$' || true)
+          else
+            FILES=$(git diff --name-only "$BEFORE" "$AFTER" | grep '^docs/.*\.md$' || true)
+          fi
+
+          echo "Changed MD files: $FILES"
+
+          echo "$FILES" | while IFS= read -r filepath; do
+            [ -z "$filepath" ] && continue
+            [ -f "$filepath" ] || continue
+            echo "Updating metadata in: $filepath"
+            python3 -c "
+import re, sys
+date, actor, path = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(path, 'r', encoding='utf-8') as f:
+    content = f.read()
+content = re.sub(r'撰寫日期：\d{4}-\d{2}-\d{2}', f'撰寫日期：{date}', content)
+content = re.sub(r'BY \S+', f'BY {actor}', content)
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
+print(f'Done: {path}')
+" "$DATE" "$ACTOR" "$filepath"
+          done
+
+      - name: Commit updated metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/*.md 2>/dev/null || true
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-update MD metadata [skip ci]"
+            git push
+          else
+            echo "No metadata changes to commit."
+          fi
