@@ -17,9 +17,47 @@
   margin-bottom: 12px !important;
 }
 
+/* 黃底引用區塊自動加 💡 */
+.md-typeset blockquote > :first-child::before {
+  content: "🦉 ";
+  font-size: 2em;
+  vertical-align: -0.2em;
+}
+
 .md-typeset table {
   width: 100% !important;
   table-layout: fixed;
+}
+
+/* 數字清單改為藍底白字圓框 */
+.md-typeset ol {
+  list-style: none;
+  counter-reset: step;
+  padding-left: 0;
+}
+.md-typeset ol > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 34px;
+  margin-bottom: 8px;
+}
+.md-typeset ol > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: calc((1.6em - 23px) / 2 * (16 / 13));
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 23px;
+  text-align: center;
+  letter-spacing: 0;
+  text-indent: 0;
+  display: block;
 }
 
 /* 內容圖片自動加黑色邊框（裝飾用 GIF 不受影響） */

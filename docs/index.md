@@ -1,4 +1,4 @@
-## 🎮 遊戲上線工作
+## 🎮 遊戲類教學
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 

@@ -420,6 +420,93 @@
 
       document.addEventListener('DOMContentLoaded', function(){ sortPage(); addTracking(); });
     })();
+
+    // ════ 自動連結彙整（文章頁自動生成）════
+    (function(){
+      // 連結文字太籠統的不列入（會看不懂是什麼）
+      var GENERIC = ['參考', '這裡', '查看', '點此', '連結', '簡報'];
+      var GROUP_ORDER = ['站內文件', '試算表', '簡報', '雲端資料夾', 'Slack 群組', '其他'];
+
+      function build(){
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+        // 索引頁（grid 卡片）不生成
+        if(inner.querySelector('div[style*="display:grid"]')) return;
+
+        var groups = {};
+        GROUP_ORDER.forEach(function(g){ groups[g] = []; });
+        var seen = {};
+        var count = 0;
+
+        inner.querySelectorAll('a[href]').forEach(function(a){
+          var raw = a.getAttribute('href') || '';
+          if(raw.charAt(0) === '#' || raw.indexOf('mailto:') === 0) return;
+          var text = (a.textContent || '').trim();
+          if(!text || text.charAt(0) === '←') return;
+          if(GENERIC.indexOf(text) !== -1) return;
+          if(seen[a.href]) return;
+          seen[a.href] = true;
+
+          var g;
+          if(a.host === location.host) g = '站內文件';
+          else if(a.href.indexOf('docs.google.com/spreadsheets') !== -1) g = '試算表';
+          else if(a.href.indexOf('docs.google.com/presentation') !== -1) g = '簡報';
+          else if(a.href.indexOf('drive.google.com') !== -1) g = '雲端資料夾';
+          else if(a.href.indexOf('slack.com') !== -1) g = 'Slack 群組';
+          else g = '其他';
+          groups[g].push({ text: text, href: a.href, external: a.host !== location.host });
+          count++;
+        });
+
+        if(count === 0) return;
+
+        var h2 = document.createElement('h2');
+        h2.id = 'link-summary';
+        h2.textContent = '連結彙整';
+        var note = document.createElement('span');
+        note.style.cssText = 'font-size:12px; font-weight:400; color:#888; margin-left:10px;';
+        note.textContent = '（自動彙整內文連結，「參考」「這裡」等籠統命名不列入）';
+        h2.appendChild(note);
+
+        var table = document.createElement('table');
+        table.style.cssText = 'width:100%; table-layout:fixed;';
+        var thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th style="width:18%">分類</th><th style="width:82%">連結</th></tr>';
+        table.appendChild(thead);
+        var tbody = document.createElement('tbody');
+        GROUP_ORDER.forEach(function(g){
+          if(!groups[g].length) return;
+          var tr = document.createElement('tr');
+          var td1 = document.createElement('td');
+          td1.textContent = g;
+          var td2 = document.createElement('td');
+          groups[g].forEach(function(item, idx){
+            if(idx > 0) td2.appendChild(document.createTextNode('、'));
+            var link = document.createElement('a');
+            link.href = item.href;
+            link.textContent = item.text;
+            if(item.external) link.target = '_blank';
+            td2.appendChild(link);
+          });
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        // 插在版本資訊（第一個 blockquote）後面，找不到就插在最前面
+        var bq = inner.querySelector(':scope > blockquote');
+        if(bq){
+          bq.parentNode.insertBefore(table, bq.nextSibling);
+          bq.parentNode.insertBefore(h2, table);
+        } else {
+          inner.insertBefore(table, inner.firstChild);
+          inner.insertBefore(h2, table);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', build);
+    })();
   </script>
   </script>
 {% endblock %}
