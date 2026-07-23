@@ -1,3 +1,15 @@
+/* 頂部導覽列改為石頭色系 */
+[data-md-color-primary] {
+  --md-primary-fg-color: #0c0a09 !important;
+  --md-primary-fg-color--light: #292524 !important;
+  --md-primary-fg-color--dark: #000000 !important;
+}
+
+.md-header,
+.md-tabs {
+  background: linear-gradient(90deg, #0c0a09 0%, #57534e 100%) !important;
+}
+
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3 {
@@ -27,6 +39,7 @@
 .md-typeset table {
   width: 100% !important;
   table-layout: fixed;
+  font-size: inherit !important;
 }
 
 /* 數字清單改為藍底白字圓框 */
