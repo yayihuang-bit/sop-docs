@@ -24,6 +24,7 @@ nav:
     - 遊戲調整流程: 遊戲調整流程.md
   - 營運活動教學:
     - 首頁: 營運_索引.md
+    - 文案調整流程: 文案調整.md
     - 換皮資訊: 換皮資訊_索引.md
     - 抽獎:
       - 首頁: 抽獎_索引.md
@@ -50,7 +51,6 @@ extra:
     competitor_sheet: "https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI/edit?gid=796982050"
     competitor_sheet_permission: "https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI"
     livestream_minigame_form: "https://docs.google.com/spreadsheets/d/1LYcw13Xo17py_ZfnE9JuFHvDBmRvmnEdNXW32S0mq3g/edit?gid=217238638#gid=217238638"
-    game_adjust_slides: "https://docs.google.com/presentation/d/1l5BFAhnA-TxklW4-ScBxuFaSX0ODdWgKom84wQdnXU8/edit?slide=id.p#slide=id.p"
     competitor_query_tool: "https://script.google.com/a/macros/yile.com.tw/s/AKfycbx2MMu6jTOlF1VdlPrHgaI4uigbH_Oz6bp5505Y-JCPMuY6xeC8WywkgXB2vlYWBp73/exec"
     winner_announcement_example: "https://online808.com/news/3405"
     golden_snake_example: "https://online808.com/news/2712"
@@ -63,6 +63,8 @@ extra:
     campaign_doc_sheet: "https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1234248588#gid=1234248588"
     ticket_planning_sheet: "https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=1161207418#gid=1161207418"
     ops_automation_sheet: "https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=0#gid=0"
+    ops_group_slack: "https://yiletechnology.slack.com/archives/C0AH47UFFJQ"
+    game_website_info_folder: "https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn"
 
 markdown_extensions:
   - pymdownx.emoji:

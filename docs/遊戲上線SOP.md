@@ -80,7 +80,7 @@ graph TD
 </tr></thead>
 <tbody>
 <tr><td>遊戲狀態</td><td>改為「開啟」</td></tr>
-<tr><td>限制地區</td><td class="wrap">看<a href="https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn" target="_blank">官網 INFO</a>，通常是外接或者 IP 授權的遊戲都有地區限制</td></tr>
+<tr><td>限制地區</td><td class="wrap">看<a href="{{ links.game_website_info_folder }}" target="_blank">官網 INFO</a>，通常是外接或者 IP 授權的遊戲都有地區限制</td></tr>
 <tr><td>遊戲標籤</td><td class="wrap">新上架（彩金類遊戲 → 無標籤）</td></tr>
 <tr><td>彩金</td><td>🟡 文件之後補</td></tr>
 <tr><td style="white-space:nowrap;">彩金 bank 動態</td><td class="wrap">現在預設都會動（不需要動的狀態 🟡 待確認）</td></tr>

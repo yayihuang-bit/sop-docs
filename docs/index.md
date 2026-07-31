@@ -34,8 +34,14 @@
 
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#7c6a9c;margin:0 0 12px 0;">⚙️ 遊戲調整流程</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">關閉/門檻更動</p>
-<a href="{{ links.game_adjust_slides }}" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">調整進入門檻、遊戲關閉、臨時維護、商品下架預告</p>
+<a href="/sop-docs/遊戲調整流程/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+<div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#7c6a9c;margin:0 0 12px 0;">✏️ 文案調整流程</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
+<a href="/sop-docs/文案調整/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 </div>
@@ -45,6 +51,12 @@
 <h2 style="color:#a8734f;">🦆 營運活動教學</h2>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案調整流程</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
+<a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📄 活動文件生成教學</h3>
