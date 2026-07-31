@@ -38,6 +38,31 @@ extra_css:
 plugins:
   - search:
       lang: zh-TW
+  - macros
+
+extra:
+  links:
+    reward_slides: "https://docs.google.com/presentation/d/1aGmy3_ZOKVrzxiTna8NUukvYr2gb10t_BQwuaEcMd2U/edit?slide=id.g3b3122b0bb8_0_51#slide=id.g3b3122b0bb8_0_51"
+    winner_list_tool: "https://docs.google.com/spreadsheets/d/1sinphj2XoP8rD8ap136AqlyJT1nAREzQN_4Bk_aW91c/edit?gid=1356522514#gid=1356522514"
+    reward_letter_template: "https://docs.google.com/spreadsheets/d/1sinphj2XoP8rD8ap136AqlyJT1nAREzQN_4Bk_aW91c/edit?gid=921909471#gid=921909471"
+    confirm_notice_template: "https://docs.google.com/spreadsheets/d/1sinphj2XoP8rD8ap136AqlyJT1nAREzQN_4Bk_aW91c/edit?gid=545192984#gid=545192984&range=A12:Q12"
+    reward_dispatch: "https://docs.google.com/spreadsheets/d/1sinphj2XoP8rD8ap136AqlyJT1nAREzQN_4Bk_aW91c/edit?gid=545192984#gid=545192984"
+    competitor_sheet: "https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI/edit?gid=796982050"
+    competitor_sheet_permission: "https://docs.google.com/spreadsheets/d/1TD-uKw3pz9ax7CW2WgtS8z4xfal-kCODliT4PU2CqoI"
+    livestream_minigame_form: "https://docs.google.com/spreadsheets/d/1LYcw13Xo17py_ZfnE9JuFHvDBmRvmnEdNXW32S0mq3g/edit?gid=217238638#gid=217238638"
+    game_adjust_slides: "https://docs.google.com/presentation/d/1l5BFAhnA-TxklW4-ScBxuFaSX0ODdWgKom84wQdnXU8/edit?slide=id.p#slide=id.p"
+    competitor_query_tool: "https://script.google.com/a/macros/yile.com.tw/s/AKfycbx2MMu6jTOlF1VdlPrHgaI4uigbH_Oz6bp5505Y-JCPMuY6xeC8WywkgXB2vlYWBp73/exec"
+    winner_announcement_example: "https://online808.com/news/3405"
+    golden_snake_example: "https://online808.com/news/2712"
+    planning_slides_folder: "https://drive.google.com/drive/folders/1GvBQfZ4651DTJn3WOcP6DQZWf0dbMbqn"
+    math_slides_folder: "https://drive.google.com/drive/folders/1hzm_M_LelaC2DpDZ98784vppfqIQyD73"
+    marketing_slides_folder: "https://drive.google.com/drive/folders/1YnmltpcksZXL5NsMa0gBY65zkN_M8s33"
+    ticket_reward_content: "https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=1414618376#gid=1414618376"
+    minigame_draft_slides: "https://docs.google.com/presentation/d/1sqSnzG7iTMN_nPPbUYmIQcwu0zNHJ3Xa0IZYlw4TXqc/edit?slide=id.g3d83b813a02_1_0#slide=id.g3d83b813a02_1_0"
+    update_plan_sheet: "https://docs.google.com/spreadsheets/d/11WV7ZNaF5fkPnuLllWUHvoDBpDIv6eB7ncCicSIJaIs/edit?gid=868125360#gid=868125360"
+    campaign_doc_sheet: "https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1234248588#gid=1234248588"
+    ticket_planning_sheet: "https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=1161207418#gid=1161207418"
+    ops_automation_sheet: "https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=0#gid=0"
 
 markdown_extensions:
   - pymdownx.emoji:

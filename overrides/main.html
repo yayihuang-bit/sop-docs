@@ -215,6 +215,62 @@
 {% block scripts %}
   {{ super() }}
   <script>
+    // ════ 我的常用連結（每人存自己瀏覽器，不同人不同份，依來源分類）════
+    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', '其他'];
+    var CATEGORY_COLORS = {
+      '遊戲類教學': { fg: '#7c6a9c', bg: '#f2f0f5' },
+      '營運活動教學': { fg: '#a8734f', bg: '#f7f0e8' },
+      '競品指南': { fg: '#6f8f76', bg: '#eff4f0' },
+      '其他': { fg: '#888', bg: '#f2f2f2' }
+    };
+    // 依網址路徑判斷這頁屬於首頁哪個大分類（跟 mkdocs.yml 的 nav 分類對應）
+    function getPageCategory(){
+      var path = decodeURIComponent(location.pathname);
+      if(/\/遊戲/.test(path)) return '遊戲類教學';
+      if(/\/(營運|換皮|抽獎|直播|其他抽獎)/.test(path)) return '營運活動教學';
+      if(/\/競品/.test(path)) return '競品指南';
+      return '其他';
+    }
+
+    var DEFAULT_FAVORITES = [
+      { text: '包你發更新計畫表', href: '{{ config.extra.links.update_plan_sheet }}', category: '遊戲類教學' },
+      { text: '營運活動文件表', href: '{{ config.extra.links.campaign_doc_sheet }}', category: '營運活動教學' },
+      { text: '抽獎券規劃表', href: '{{ config.extra.links.ticket_planning_sheet }}', category: '營運活動教學' },
+      { text: '營運自動化文件表', href: '{{ config.extra.links.ops_automation_sheet }}', category: '營運活動教學' }
+    ];
+    var FAVORITES_KEY = 'sop_favorites';
+    function loadFavorites(){
+      try {
+        var raw = localStorage.getItem(FAVORITES_KEY);
+        if(raw === null) return DEFAULT_FAVORITES.slice();
+        var list = JSON.parse(raw);
+        // 相容舊資料（分類功能上線前存的）：先試著用網址比對預設清單補回分類，比對不到才歸到「其他」
+        list.forEach(function(f){
+          if(f.category) return;
+          var match = DEFAULT_FAVORITES.find(function(d){ return d.href === f.href; });
+          f.category = match ? match.category : '其他';
+        });
+        return list;
+      } catch(e){ return DEFAULT_FAVORITES.slice(); }
+    }
+    function saveFavorites(list){
+      try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); } catch(e){}
+    }
+    function isFavorited(href){
+      var list = loadFavorites();
+      for(var i=0;i<list.length;i++){ if(list[i].href === href) return true; }
+      return false;
+    }
+    function toggleFavorite(href, text, category){
+      var list = loadFavorites();
+      var idx = -1;
+      for(var i=0;i<list.length;i++){ if(list[i].href === href){ idx = i; break; } }
+      if(idx === -1) list.push({ href: href, text: text, category: category || getPageCategory() });
+      else list.splice(idx, 1);
+      saveFavorites(list);
+      return list;
+    }
+
     function initPasswordProtection(){
       if (localStorage.getItem('sop_authenticated') !== 'true') {
         var overlay = document.createElement('div');
@@ -370,6 +426,8 @@
         while(i < allNodes.length){
           var node = allNodes[i];
           if(node.tagName === 'H2'){
+            // 「我的常用連結」固定釘在最前面，不參與點擊排序
+            var isPinned = node.textContent.indexOf('我的常用連結') !== -1;
             var sec = { nodes:[node], total:0 };
             i++;
             while(i < allNodes.length && allNodes[i].tagName !== 'H2' && allNodes[i].tagName !== 'HR'){
@@ -381,7 +439,7 @@
               i++;
             }
             if(i < allNodes.length && allNodes[i].tagName === 'HR') i++; // 跳過 hr
-            sections.push(sec);
+            if(!isPinned) sections.push(sec);
           } else { i++; }
         }
 
@@ -487,6 +545,16 @@
             link.textContent = item.text;
             if(item.external) link.target = '_blank';
             td2.appendChild(link);
+
+            var star = document.createElement('span');
+            star.textContent = isFavorited(item.href) ? '★' : '☆';
+            star.title = '加入／移除我的常用連結';
+            star.style.cssText = 'cursor:pointer; margin-left:2px; margin-right:6px; user-select:none; color:#a8734f;';
+            star.addEventListener('click', function(){
+              toggleFavorite(item.href, item.text);
+              star.textContent = isFavorited(item.href) ? '★' : '☆';
+            });
+            td2.appendChild(star);
           });
           tr.appendChild(td1);
           tr.appendChild(td2);
@@ -506,6 +574,135 @@
       }
 
       document.addEventListener('DOMContentLoaded', build);
+    })();
+
+    // ════ 首頁「我的常用連結」渲染 ════
+    (function(){
+      function renderFavorites(){
+        var container = document.getElementById('my-favorites-list');
+        if(!container) return;
+
+        var list = loadFavorites();
+        container.innerHTML = '';
+
+        if(!list.length){
+          var empty = document.createElement('p');
+          empty.style.cssText = 'color:#888; font-size:14px;';
+          empty.textContent = '目前沒有常用連結，逛其他頁面時可以點連結旁的 ☆ 加入。';
+          container.appendChild(empty);
+          return;
+        }
+
+        // 依來源分類分組
+        var groups = {};
+        CATEGORY_ORDER.forEach(function(c){ groups[c] = []; });
+        list.forEach(function(item){
+          var c = item.category && groups[item.category] ? item.category : '其他';
+          groups[c].push(item);
+        });
+
+        CATEGORY_ORDER.forEach(function(cat){
+          if(!groups[cat].length) return;
+          var colors = CATEGORY_COLORS[cat];
+
+          var h3 = document.createElement('h3');
+          h3.textContent = cat;
+          h3.style.cssText = 'color:' + colors.fg + '; margin:16px 0 8px 0; font-size:16px;';
+          container.appendChild(h3);
+
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex; flex-wrap:wrap; gap:10px; margin-bottom:8px;';
+
+          groups[cat].forEach(function(item){
+            var chip = document.createElement('span');
+            chip.style.cssText = 'display:inline-flex; align-items:center; gap:8px; border:1px solid ' + colors.fg + '; border-radius:20px; padding:6px 10px 6px 16px; background:' + colors.bg + ';';
+
+            var a = document.createElement('a');
+            a.href = item.href;
+            a.textContent = item.text;
+            try {
+              var isExternal = new URL(item.href, location.href).host !== location.host;
+              if(isExternal) a.target = '_blank';
+            } catch(e){}
+            a.style.cssText = 'color:' + colors.fg + '; font-weight:600; text-decoration:none;';
+
+            var remove = document.createElement('span');
+            remove.textContent = '✕';
+            remove.title = '移除這個常用連結';
+            remove.style.cssText = 'cursor:pointer; color:#999; font-size:12px; padding:2px;';
+            remove.addEventListener('click', function(){
+              toggleFavorite(item.href, item.text, item.category);
+              renderFavorites();
+            });
+
+            chip.appendChild(a);
+            chip.appendChild(remove);
+            wrap.appendChild(chip);
+          });
+
+          container.appendChild(wrap);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', renderFavorites);
+    })();
+
+    // ════ 表格儲存格：一行放得下就不換行，放不下才換行（依欄位實際可用寬度判斷）════
+    // 註：table-layout:fixed 底下，「同一欄」所有儲存格共用同一個欄寬——只要欄內
+    // 有一格文字很長把欄撐寬，同欄其他短格的 scrollWidth 量到的也是那個被撐寬後的
+    // 欄寬，不是它自己文字真正的寬度，導致直接量儲存格會誤判。
+    // 解法：用一個隱藏的量尺 <span>（不受表格版面影響）分別量每一格文字「自己」
+    // 不換行時的真實寬度，再跟這一欄依 % 換算出的實際可用寬度比較。
+    (function(){
+      function autoWrapCells(){
+        var probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute; visibility:hidden; white-space:nowrap; top:-9999px; left:-9999px;';
+        document.body.appendChild(probe);
+
+        document.querySelectorAll('.md-typeset table').forEach(function(table){
+          var wrap = table.closest('.md-typeset__scrollwrap');
+          var containerWidth = wrap ? wrap.clientWidth : table.parentElement.clientWidth;
+          if(!containerWidth) return;
+
+          var headerCells = table.querySelectorAll('thead th');
+          var fractions = [];
+          headerCells.forEach(function(th){
+            var w = th.style.width;
+            fractions.push(w && w.indexOf('%') !== -1 ? parseFloat(w) / 100 : null);
+          });
+
+          var rows = table.querySelectorAll('tbody tr');
+          rows.forEach(function(row){
+            var tds = row.children;
+            for(var i = 0; i < tds.length; i++){
+              var td = tds[i];
+              var frac = fractions[i] || (1 / tds.length);
+              var targetPx = containerWidth * frac;
+
+              var cs = getComputedStyle(td);
+              probe.style.fontSize = cs.fontSize;
+              probe.style.fontFamily = cs.fontFamily;
+              probe.style.fontWeight = cs.fontWeight;
+              probe.style.letterSpacing = cs.letterSpacing;
+              probe.innerHTML = td.innerHTML;
+
+              var naturalWidth = probe.scrollWidth + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+              td.style.whiteSpace = (naturalWidth > targetPx + 2) ? 'normal' : 'nowrap';
+            }
+          });
+        });
+
+        document.body.removeChild(probe);
+      }
+
+      var resizeTimer = null;
+      function scheduleAutoWrap(){
+        if(resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(autoWrapCells, 150);
+      }
+
+      document.addEventListener('DOMContentLoaded', autoWrapCells);
+      window.addEventListener('resize', scheduleAutoWrap);
     })();
   </script>
   </script>

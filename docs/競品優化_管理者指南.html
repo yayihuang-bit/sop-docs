@@ -321,6 +321,8 @@
 
   <h1><img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 8px 0 0;vertical-align:middle;">🔐 競品活動分析系統 — 管理者指南<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaTVsZmZ4bmN3MGltZWc0dnEyMzRzZGo2bGh1N21yZGZlaHE3YWc2NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/KOrIxsEQaBJcHgiiqL/giphy.gif" width="60" style="display:inline;border:none;margin:0 0 0 8px;vertical-align:middle;"></h1>
   <p class="subtitle">版本：v1.0　撰寫日期：2026-05-26　BY 呱呱🦆</p>
+  <div id="fav-link-summary" style="margin:20px 0;"></div>
+
 
   <div style="background:#e8f0fe;border-left:4px solid #1a73e8;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:28px;font-size:14px;">
     📌 本文件為管理員專用。一般使用者操作說明請參閱 <strong>使用指南.html</strong>。
@@ -697,6 +699,137 @@ PRODUCT_NAMES: {
   if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
     scheduleFlyGif();
   }
+</script>
+
+<script>
+(function(){
+  // ── 常用連結核心邏輯（跟主站頁面共用同一份 localStorage，同網域即共用）──
+  function getPageCategory(){
+    var path = decodeURIComponent(location.pathname);
+    if(/\/遊戲/.test(path)) return '遊戲類教學';
+    if(/\/(營運|換皮|抽獎|直播|其他抽獎)/.test(path)) return '營運活動教學';
+    if(/\/競品/.test(path)) return '競品指南';
+    return '其他';
+  }
+  var DEFAULT_FAVORITES = [
+    { text: '包你發更新計畫表', href: 'https://docs.google.com/spreadsheets/d/11WV7ZNaF5fkPnuLllWUHvoDBpDIv6eB7ncCicSIJaIs/edit?gid=868125360#gid=868125360', category: '遊戲類教學' },
+    { text: '營運活動文件表', href: 'https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1234248588#gid=1234248588', category: '營運活動教學' },
+    { text: '抽獎券規劃表', href: 'https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=1161207418#gid=1161207418', category: '營運活動教學' },
+    { text: '營運自動化文件表', href: 'https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=0#gid=0', category: '營運活動教學' }
+  ];
+  var FAVORITES_KEY = 'sop_favorites';
+  function loadFavorites(){
+    try {
+      var raw = localStorage.getItem(FAVORITES_KEY);
+      if(raw === null) return DEFAULT_FAVORITES.slice();
+      var list = JSON.parse(raw);
+      list.forEach(function(f){
+        if(f.category) return;
+        var match = DEFAULT_FAVORITES.find(function(d){ return d.href === f.href; });
+        f.category = match ? match.category : '其他';
+      });
+      return list;
+    } catch(e){ return DEFAULT_FAVORITES.slice(); }
+  }
+  function saveFavorites(list){ try{ localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); }catch(e){} }
+  function isFavorited(href){
+    var list = loadFavorites();
+    for(var i=0;i<list.length;i++){ if(list[i].href === href) return true; }
+    return false;
+  }
+  function toggleFavorite(href, text, category){
+    var list = loadFavorites();
+    var idx = -1;
+    for(var i=0;i<list.length;i++){ if(list[i].href === href){ idx = i; break; } }
+    if(idx === -1) list.push({ href: href, text: text, category: category || getPageCategory() });
+    else list.splice(idx, 1);
+    saveFavorites(list);
+    return list;
+  }
+
+  // ── 連結彙整（跟主站頁面同一套邏輯，簡化版）──
+  var GENERIC = ['參考', '這裡', '查看', '點此', '連結', '簡報'];
+  var GROUP_ORDER = ['試算表', '簡報', '雲端資料夾', 'Slack 群組', '其他'];
+
+  function build(){
+    var content = document.getElementById('content');
+    var container = document.getElementById('fav-link-summary');
+    if(!content || !container) return;
+
+    var groups = {};
+    GROUP_ORDER.forEach(function(g){ groups[g] = []; });
+    var seen = {};
+    var count = 0;
+
+    content.querySelectorAll('a[href]').forEach(function(a){
+      var raw = a.getAttribute('href') || '';
+      if(raw.charAt(0) === '#' || raw.indexOf('mailto:') === 0) return;
+      var text = (a.textContent || '').trim();
+      if(!text) return;
+      if(GENERIC.indexOf(text) !== -1) return;
+      if(seen[a.href]) return;
+      seen[a.href] = true;
+
+      var g;
+      if(a.href.indexOf('docs.google.com/spreadsheets') !== -1) g = '試算表';
+      else if(a.href.indexOf('docs.google.com/presentation') !== -1) g = '簡報';
+      else if(a.href.indexOf('drive.google.com') !== -1) g = '雲端資料夾';
+      else if(a.href.indexOf('slack.com') !== -1) g = 'Slack 群組';
+      else g = '其他';
+      groups[g].push({ text: text, href: a.href });
+      count++;
+    });
+
+    if(count === 0) return;
+
+    var h2 = document.createElement('h2');
+    h2.textContent = '連結彙整';
+    var note = document.createElement('span');
+    note.style.cssText = 'font-size:14px; font-weight:400; color:#888; margin-left:10px;';
+    note.textContent = '（自動彙整內文連結，點 ☆ 可加入常用連結）';
+    h2.appendChild(note);
+    container.appendChild(h2);
+
+    var list = document.createElement('div');
+    GROUP_ORDER.forEach(function(g){
+      if(!groups[g].length) return;
+      var row = document.createElement('div');
+      row.style.cssText = 'margin:8px 0; font-size:14px; line-height:1.8;';
+      var label = document.createElement('strong');
+      label.textContent = g + '：';
+      label.style.cssText = 'color:#333; margin-right:6px;';
+      row.appendChild(label);
+
+      groups[g].forEach(function(item, idx){
+        if(idx > 0) row.appendChild(document.createTextNode('、'));
+        var link = document.createElement('a');
+        link.href = item.href;
+        link.textContent = item.text;
+        link.target = '_blank';
+        row.appendChild(link);
+
+        var star = document.createElement('span');
+        star.textContent = isFavorited(item.href) ? '\u2605' : '\u2606';
+        star.title = '加入／移除我的常用連結';
+        star.style.cssText = 'cursor:pointer; margin-left:2px; margin-right:6px; user-select:none; color:#a8734f;';
+        star.addEventListener('click', function(){
+          toggleFavorite(item.href, item.text);
+          star.textContent = isFavorited(item.href) ? '\u2605' : '\u2606';
+        });
+        row.appendChild(star);
+      });
+
+      list.appendChild(row);
+    });
+    container.appendChild(list);
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', build);
+  } else {
+    build();
+  }
+})();
 </script>
 </body>
 </html>

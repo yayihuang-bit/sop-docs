@@ -2,12 +2,18 @@
 
 ## 📋 快速概覽
 
-這是用 **MkDocs** 搭配 **GitHub Pages** 的文件站。特點：
+這是用 **MkDocs Material** 搭配 **GitHub Pages** 的文件站，內容全是繁體中文的公司內部 SOP。特點：
 
-- **靜態站點**：部署到 GitHub Pages，自動更新
-- **密碼保護**：所有頁面都有登入認證（密碼：asd12345）
+- **靜態站點**：部署到 GitHub Pages，push 到 `main` 自動更新
+- **密碼保護**：所有頁面都有登入認證（密碼：`asd12345`），但 **repo 是 public 的**，這個密碼只是擋一般人隨便滑進來看，不是真的權限控管
 - **Flying GIFs**：頁面會隨機播放飛行的 gif
-- **適應式寬度**：左邊目錄寬 380px，內容區域自適應
+- **石頭色系頂部**：導覽列是深黑到石頭灰的漸層（不是 Material 預設的 indigo）
+- **各分類有自己的主題色**：遊戲類教學＝紫、營運活動教學＝棕、競品指南＝綠，卡片邊框、按鈕、標題文字都統一套色
+- **集中連結管理**：用 `mkdocs-macros-plugin`，同一個網址如果會出現在兩個以上地方，寫在 `mkdocs.yml` 的 `extra.links` 一次，全站用 `{{ links.xxx }}` 引用，改一次全部同步
+- **每篇文件自動生成「連結彙整」**：掃描內文所有連結，依分類（試算表／簡報／雲端資料夾／Slack／其他）整理成表格，不用手動維護
+- **表格儲存格智慧換行**：一行放得下就不換行，真的太長才換行，靠 JS 量測實際寬度判斷，不是猜字數
+- **「我的常用連結」個人化收藏**：每個訪客自己的瀏覽器記錄自己的常用連結（localStorage，不同人不同份），可以在任何頁面的連結彙整裡點 ☆ 收藏，首頁會依來源分類分組顯示
+- **版本資訊自動更新**：每份文件開頭的「撰寫日期」「BY」欄位，push 時 GitHub Actions 自動填，但「版本號」（v1.0 這種）要手動改
 
 ---
 
@@ -15,303 +21,231 @@
 
 ```
 sop-docs/
-├── mkdocs.yml              # MkDocs 配置文件
-├── README.md               # 專案說明（不是文件內容，只是舊的）
-├── ARCHITECTURE.md         # 這個檔案（給 AI 用）
+├── mkdocs.yml                    # MkDocs 配置：nav、plugins、集中連結清單 extra.links
+├── README.md                     # 專案說明（舊的，非架構文件）
+├── ARCHITECTURE.md               # 這個檔案（給 AI 用，要跟著改動更新）
 ├── docs/
-│   ├── index.md            # 首頁
-│   └── 遊戲上線SOP.md      # 文件內容
+│   ├── index.md                  # 首頁：常用連結 + 三大分類卡片導覽
+│   ├── 連結總表.md               # 內部工具頁，不排進 nav，用來列出 links 清單方便挑選常用連結預設值
+│   ├── 遊戲上線工作_索引.md／遊戲上線SOP.md／遊戲調整流程.md
+│   ├── 營運_索引.md／換皮資訊_索引.md
+│   ├── 抽獎_索引.md／直播流程.md／抽獎流程.md（抽獎券推廣流程）／其他抽獎流程.md
+│   ├── 競品指南_索引.md／競品指南.md
+│   ├── 競品優化_使用指南.md／競品優化_管理者指南.md（有對應的 .html，見下方）
+│   ├── stylesheets/
+│   │   └── extra.css             # 全站自訂樣式（見下方詳解）
+│   └── *.html                    # 5 個獨立 HTML 檔案，見「獨立 HTML 頁面」章節
 ├── overrides/
-│   └── main.html           # 自訂 HTML override（密碼 + gif 邏輯）
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # GitHub Actions 自動部署
-└── .git/                   # Git 版本控制
+│   └── main.html                 # Material 主題 override：密碼、GIF、常用連結、連結彙整、表格換行邏輯全在這
+├── .github/workflows/
+│   ├── deploy.yml                # push 到 main 就自動 build + 部署
+│   └── update-md-metadata.yml    # push 時自動更新 .md 檔案的「撰寫日期」「BY」
+└── 競品優化/                     # 舊的維護資料夾，含 _embed.py／_embed_admin.py（已棄用，見下方說明）
 ```
 
 ---
 
 ## 🔧 核心組件
 
-### 1. **mkdocs.yml** - 配置文件
+### 1. mkdocs.yml
 
 ```yaml
-site_name: SOP 文件                    # 網站標題
-site_url: https://yayihuang-bit.github.io/sop-docs/
 theme:
-  name: material                        # Material Design 主題
-  language: zh                          # 繁體中文
+  name: material
+  palette:
+    primary: indigo    # 這個設定其實被 extra.css 的 CSS 變數蓋掉了，實際顯示是石頭色
   features:
-    - navigation.instant                # 快速導航（無刷新）
-    - navigation.tracking               # 導航追蹤
-    - navigation.tabs                   # 標籤導航
-    - navigation.top                    # 回到頂部按鈕
-    - toc.integrate                     # 整合目錄
-    - search.suggest                    # 搜尋建議
-    - search.highlight                  # 搜尋高亮
-  custom_dir: overrides                 # 使用 overrides 資料夾內的自訂檔案
+    - navigation.tabs   # 三大分類渲染成頂部分頁籤
+    - toc.integrate
+    - search.suggest
+    - search.highlight
 
-nav:                                    # 導航菜單
-  - 首頁: index.md
-  - 遊戲上線 SOP: 遊戲上線SOP.md
+nav:                     # 見檔案內容，目前是「首頁 / 遊戲類教學 / 營運活動教學 / 競品指南」三大分類
+
+plugins:
+  - search
+  - macros               # mkdocs-macros-plugin，讓 {{ links.xxx }} 能在 .md 裡被替換成真正網址
+
+extra:
+  links:                 # 集中連結清單，key 是代號，value 是真正網址
+    xxx_yyy: "https://..."
 ```
 
-**如何更新：**
-- 加新頁面：在 `docs/` 新增 `.md` 檔案，然後在 `nav:` 底下加一行
-- 改顏色：修改 `palette` → `primary` / `accent` 欄位
+**加新頁面**：`docs/` 新增 `.md`，在 `nav:` 對應分類底下加一行。
+
+**改共用連結（重要）**：如果某個網址會出現在兩個以上地方（不管是同一份文件內還是跨文件），**不要直接貼網址**，改成：
+1. 在 `extra.links` 底下加一行 `代號: "網址"`
+2. 內文用 `{{ links.代號 }}` 引用，例如 `[中獎名單]({{ links.winner_list_tool }})`
+3. 之後網址要改，只改 `mkdocs.yml` 這一行，全部引用處建置時自動同步
+
+`docs/連結總表.md` 有目前所有 `links.*` 代號跟中文說明的對照，忘記代號叫什麼可以去那邊查。
+
+⚠️ **這個外掛在本地要先裝**：`python -m pip install mkdocs-macros-plugin`（GitHub Actions 的 `deploy.yml` 已經裝了）。**新增 plugin 或改 `mkdocs.yml` 的 plugins 設定後，本地 `mkdocs serve` 要整個重啟才會生效**，光改文件內容觸發的即時重載不夠。
 
 ---
 
-### 2. **overrides/main.html** - 密碼 + GIF 邏輯
+### 2. overrides/main.html
 
-這是 Material 主題的 override 檔案，主要包含三部分：
+Material 主題的 override 檔案，`{% block scripts %}` 裡塞了好幾個獨立的 IIFE，各自負責一件事：
 
-#### A. 密碼保護邏輯（第 3-19 行）
+| 功能 | 邏輯摘要 |
+|------|---------|
+| 密碼保護 | 檢查 `localStorage.sop_authenticated`，沒有就蓋一層密碼框，密碼寫死在程式碼裡（`asd12345`） |
+| Flying GIFs | 隨機挑一張 GIF，從右邊界飛到左邊界，30-90 秒觸發一次，最多同時 1 隻，可拖曳 |
+| 自動排序卡片 | 只在有 `display:grid` 卡片的索引頁生效，依 `localStorage.sop_clicks`（每個連結的累積點擊次數）把卡片區塊排到前面。**「我的常用連結」區塊有特別排除，永遠固定在第一個，不參與排序**（用 `node.textContent.indexOf('我的常用連結')` 判斷） |
+| 我的常用連結（收藏系統） | 見下方「常用連結系統」專節 |
+| 自動連結彙整 | 見下方「連結彙整」專節 |
+| 表格儲存格智慧換行 | 見下方「表格換行」專節 |
 
-```html
-<script>
-  if (localStorage.getItem('sop_authenticated') !== 'true') {
-    // 顯示密碼框，覆蓋整個頁面
-    document.documentElement.innerHTML = '...密碼框 HTML...';
-    // 檢查密碼是否正確
-    // 正確 → 存到 localStorage + 重新載入頁面
-    // 錯誤 → 顯示錯誤訊息
-  }
-</script>
-```
+**⚠️ 修改這個檔案後的重要規則**：本地 `mkdocs serve` 只監看 `docs/` 資料夾，**不監看 `overrides/`**。改完 `main.html` 要嘛重啟伺服器，要嘛用「碰一下 `docs/index.md` 的修改時間」的方式強制觸發重建（`Get-Item ... .LastWriteTime = Get-Date`），不然預覽會是舊版但你不會發現。
 
-**邏輯流程：**
-1. 頁面載入 → 檢查 `localStorage.sop_authenticated`
-2. 沒有 or 值不是 `'true'` → 顯示密碼框，覆蓋所有內容
-3. 輸入 `asd12345` → 存到 localStorage + `location.reload()`
-4. 下次訪問 → 直接跳過密碼框（localStorage 在本地瀏覽器保存）
+#### 常用連結系統（收藏功能）
 
-**修改密碼：**
-```javascript
-if(document.getElementById('pwd-input').value === 'asd12345'){  // ← 改這裡
-```
+- 資料存在瀏覽器的 `localStorage['sop_favorites']`，格式是 `[{href, text, category}, ...]`，**每個訪客的瀏覽器各自獨立**，換裝置/清快取會重置回預設值
+- `DEFAULT_FAVORITES`：新訪客第一次進站看到的預設收藏，目前是 4 個（包你發更新計畫表、營運活動文件表、抽獎券規劃表、營運自動化文件表），網址用 `{{ config.extra.links.xxx }}` 從 `mkdocs.yml` 的集中清單拉，不是寫死
+- `getPageCategory()`：依網址路徑判斷這頁屬於「遊戲類教學／營運活動教學／競品指南／其他」哪個分類（正則比對路徑裡有沒有「遊戲」「營運/換皮/抽獎/直播」「競品」），**加星星時會自動記錄當下頁面屬於哪個分類**
+- 首頁 `index.md` 有個 `<div id="my-favorites-list">` 容器，`renderFavorites()` 會把收藏依分類分組渲染成一區一區，顏色跟著分類走
+- 舊資料相容：`loadFavorites()` 讀到沒有 `category` 欄位的項目，會先試著用網址比對 `DEFAULT_FAVORITES` 補回分類，比對不到才歸到「其他」
 
-#### B. CSS 樣式（第 9-30 行）
+#### 連結彙整（自動生成）
 
-```css
-.md-sidebar--primary {
-  width: 380px !important;              /* 桌面版左邊目錄寬度 */
-}
-.md-content__inner {
-  max-width: none !important;           /* 移除內容最大寬度限制 */
-}
-.md-typeset {
-  max-width: none !important;           /* 移除文字區寬度限制 */
-}
-@media (max-width: 1024px) {
-  .md-sidebar--primary {
-    width: 85vw !important;             /* 平板版：螢幕寬度的 85% */
-    max-width: 300px !important;
-  }
-}
-@media (max-width: 480px) {
-  .md-sidebar--primary {
-    width: 90vw !important;             /* 手機版：螢幕寬度的 90% */
-    max-width: 280px !important;
-  }
-}
-```
+- 只在**非索引頁**（沒有 grid 卡片的一般文章頁）生效
+- 掃描 `.md-content__inner` 裡所有 `a[href]`，排除 `#開頭`／`mailto:`／文字是「參考」「這裡」「查看」「點此」「連結」「簡報」這種太籠統的
+- 依網址分類：站內文件／試算表／簡報／雲端資料夾／Slack 群組／其他
+- 插在頁面版本資訊（第一個 blockquote）後面
+- 每個連結後面會加一顆 ☆／★，點擊呼叫 `toggleFavorite()` 加入/移除常用連結
 
-**調整寬度：**
-- **桌面版**：改 `380px` 為其他數值
-- **平板版**（1024px 以下）：改 `85vw` 和 `300px`
-- **手機版**（480px 以下）：改 `90vw` 和 `280px`
-- 使用 `vw` (視口寬度百分比) 讓菜單自適應螢幕，不會超出邊界
+#### 表格換行（重要的 CSS 陷阱記錄）
 
-#### C. Flying GIFs（第 28-170 行）
+- CSS 預設全部表格儲存格 `white-space: nowrap`（見 `extra.css`）
+- **陷阱**：`table-layout:fixed` 底下，同一欄所有儲存格共用同一個欄寬，只要欄內有一格文字很長把欄撐寬，同欄其他短格量到的也是撐寬後的欄寬，不是自己文字的真實寬度，直接拿 `scrollWidth` vs `clientWidth` 比較會誤判
+- **解法**：用一個隱藏的量尺 `<span>`（不在表格裡，不受欄寬共用影響）分別量每格文字自己的真實寬度，再跟該欄依 `%` 換算出的實際可用寬度（`外層 .md-typeset__scrollwrap 的寬度 × th 宣告的 %`）比較，超過才設 `white-space:normal`
+- 頁面載入、視窗縮放都會重新計算
 
-隨機播放的動畫邏輯：
+---
 
-```javascript
-var FLY_GIFS = [
-  'https://media2.giphy.com/media/...',  // gif URL 列表
-  'https://media4.giphy.com/media/...',
-  // ...6 個 gif
-];
+### 3. docs/stylesheets/extra.css
 
-function triggerFlyGif(){
-  // 隨機選一個 gif
-  // 右邊界飛到左邊界（動畫 2.5-7.5 秒）
-  // 上下波動（wave 動畫）
-  // 可以拖動（mousedown/up）
-}
+全站 CSS override，重點規則：
 
-function scheduleFlyGif(){
-  // 每隔 30-90 秒觸發一次
-  // 最多同時 3 個 gif
-  // 页面隱藏時暫停（visibilitychange 事件）
-}
-```
+- `[data-md-color-primary] { --md-primary-fg-color: ... }`：蓋掉 Material 預設的 indigo，改成頂部導覽列的石頭色漸層（`.md-header`／`.md-tabs` 用 `linear-gradient`）。**注意**：Material 把顏色設定寫在 `<body data-md-color-primary="indigo">` 屬性上，單純改 `:root` 的 CSS 變數蓋不掉，要用 `[data-md-color-primary]` 選擇器 + `!important`
+- 標題（h1/h2/h3）全部 `font-weight:700`，h2 之間 margin 拉大到 40px（緊接版本資訊 blockquote 後的第一個 h2 例外，保持較近）
+- 黃底引用區塊（`>` blockquote）開頭自動加 🦉 emoji（`::before` content）
+- 表格 `width:100% !important; table-layout:fixed;`，字級跟內文一樣大（不用 Material 預設的縮小字）
+- 數字清單（`<ol>`）改成藍底白字圓框，不用瀏覽器預設的 `1. 2. 3.`
+- 圖片（png/jpg/jpeg，排除裝飾用 GIF）自動加 1px 黑框
+- 表格儲存格預設 `white-space:nowrap`，`.wrap` class 可覆蓋回 `normal`（但這個 class 現在其實用不太到了，因為 JS 會動態算並直接蓋 inline style）
 
-**修改 GIF 播放：**
-- 改頻率：找 `(30 + Math.random() * 60) * 1000` 這行，數字越小越頻繁
-- 改最多同時數：找 `var FLY_MAX = 3` 改成別的數字
-- 換 GIF：修改 `FLY_GIFS` 陣列裡的 URL
+**注意**：各分類的主題色（遊戲類教學紫／營運活動教學棕／競品指南綠）**不是**寫在 extra.css，是直接寫在 `index.md` 各個卡片的 `style="color:#7c6a9c"` 這種 inline style 裡，逐個 div 手動上色的。三個分類顏色代碼：
+- 遊戲類教學：`#7c6a9c`（底色 `#f2f0f5`）
+- 營運活動教學：`#a8734f`（底色 `#f7f0e8`）
+- 競品指南：`#6f8f76`（底色 `#eff4f0`）
+
+---
+
+### 4. 獨立 HTML 頁面
+
+`docs/` 底下有 5 個**完全獨立、自成一份的 HTML 檔案**（自己的 `<!DOCTYPE html><html><head><style>`），不是 MkDocs 用 Markdown 渲染出來的：
+
+- `營運_文件生成指南.html`
+- `營運_自動發布指南.html`
+- `營運_推播教學.html`
+- `競品優化_使用指南.html`（有對應的 `競品優化_使用指南.md`，但兩者已經不同步）
+- `競品優化_管理者指南.html`（同上，對應 `競品優化_管理者指南.md`）
+
+**這些檔案完全不會經過 `overrides/main.html` 這個模板**，因為 MkDocs 對 `docs/` 裡的 `.html` 檔案是直接原封不動複製到輸出資料夾，不會套用主題。這代表：
+- 沒有石頭色頂部、沒有分類配色，維持自己內嵌 `<style>` 的舊樣式
+- 主站的密碼保護、GIF 動畫**不會**自動套用（除非這幾個檔案自己也寫了）
+
+**但「連結彙整＋星星收藏」功能已經個別注入到這 5 個檔案裡**（各自在 `<main id="content">` 的版本資訊後插入 `<div id="fav-link-summary">`，在 `</body>` 前插入一段自包含的 `<script>`，複製了跟 main.html 同一套收藏邏輯，靠同網域共用 localStorage 跟主站互通）。以後要改收藏系統的邏輯，記得**這 6 個地方要一起改**（`overrides/main.html` + 這 5 個 HTML 檔案），沒有共用機制可以一次改全部。
+
+**`競品優化_使用指南.html`／`管理者指南.html` 的 `.md` 對應檔案已經名存實亡**：`競品優化/_維護/_embed.py`／`_embed_admin.py` 這兩支產生腳本從建立後就沒再被執行過，git 紀錄顯示後來都是直接手改 `.html`，兩邊內容已經分岔、不同步。改這兩個系統教學時要直接改 `.html`，不要以為改 `.md` 會自動同步過去。
 
 ---
 
 ## 🚀 部署流程
 
-### GitHub Actions 自動部署
+### GitHub Actions（兩支）
 
-檔案：`.github/workflows/deploy.yml`
+**`deploy.yml`**：push 到 `main` 就觸發，`pip install mkdocs-material mkdocs-macros-plugin` → `mkdocs gh-deploy --force`。1-2 分鐘後 https://yayihuang-bit.github.io/sop-docs/ 更新。
 
-每次 push 到 `main` 分支時，自動執行：
-1. 檢出程式碼
-2. 安裝 Python + MkDocs + Material 主題
-3. Build 靜態網站到 `site/` 資料夾
-4. 推送到 `gh-pages` 分支
-5. GitHub Pages 發佈
-
-**需要推送才能看到更新。** 本地改好後：
-```bash
-git add .
-git commit -m "描述改動"
-git push
-```
-
-1-2 分鐘後在 https://yayihuang-bit.github.io/sop-docs/ 看到更新。
+**`update-md-metadata.yml`**：push 到 `main` 且有動到 `docs/**.md` 才觸發。掃描這次改動的 `.md` 檔案，自動把「撰寫日期：」改成當天日期、「BY 」改成推送者的 GitHub 帳號。**只認這兩個關鍵字**，「版本：v1.0」的版本號不會被自動改，要手動維護。commit message 帶 `[skip metadata]` 會跳過這支（bot 自己 commit 時會加，避免無限循環）。
 
 ---
 
 ## ✏️ 常見更新場景
 
-### 📝 情景 1：新增或修改文件內容
+### 情景 1：新增或修改文件內容
+編輯 `docs/*.md` → push。「撰寫日期」「BY」自動更新，「版本號」要自己改。
 
-**步驟：**
-1. 編輯 `docs/` 底下的 `.md` 檔案
-2. Push 到 GitHub
-3. 等 1-2 分鐘，網站自動更新
+### 情景 2：加新頁面
+1. `docs/` 新增 `.md`
+2. `mkdocs.yml` 的 `nav:` 底下對應分類加一行
+3. 如果內容裡有連結會跟別的頁面共用，用 `{{ links.xxx }}`（先在 `extra.links` 登記）
+4. push
 
-**注意：**
-- 密碼保護會自動套用到所有頁面（不需要每頁都加）
-- GIF 動畫也是全站套用
+### 情景 3：某個網址要改，而且不只一個地方在用
+改 `mkdocs.yml` 的 `extra.links` 對應那行，不用去每份文件找。
 
-### 🎨 情景 2：改密碼
+### 情景 4：改「我的常用連結」的預設值
+1. `mkdocs.yml` 的 `extra.links` 加新代號
+2. `overrides/main.html` 的 `DEFAULT_FAVORITES` 陣列加一筆，`category` 選 `遊戲類教學`／`營運活動教學`／`競品指南`／`其他`
+3. 順手在 `docs/連結總表.md` 也加一筆做紀錄
+4. 觸發本地伺服器重建驗證
 
-**步驟：**
-1. 打開 `overrides/main.html`
-2. 找到 `if(document.getElementById('pwd-input').value === 'asd12345'){` 這行
-3. 改 `'asd12345'` 為新密碼
-4. Push
+### 情景 5：改密碼 / GIF 頻率 / 目錄寬度
+同舊版說明，都在 `overrides/main.html` 裡（密碼寫死的字串、`FLY_MAX`、`FLY_GIFS` 陣列）。**現在桌面版側邊欄是隱藏的**（`display:none`，見 extra.css 的 `@media (min-width: 1221px)` 區塊），舊版文件講的 380px 寬度設定已經不適用。
 
-**注意：**
-- localStorage 會記住舊密碼，使用者需要清快取 (Ctrl+Shift+Del) 才能重新輸入
-
-### 🌈 情景 3：修改左邊目錄寬度
-
-**步驟：**
-1. 打開 `overrides/main.html`
-2. 找 `.md-sidebar--primary { width: 380px !important; }`
-3. 改 `380px` 為你要的寬度（如 `420px`）
-4. Push
-
-### 🎬 情景 4：改 GIF 播放頻率或數量
-
-**步驟：**
-1. 打開 `overrides/main.html`
-2. 找 `var FLY_MAX = 3;` → 改同時最多幾個 gif
-3. 找 `(30 + Math.random() * 60) * 1000` → 改播放間隔時間（毫秒）
-   - `30-90` 秒：`(30 + Math.random() * 60) * 1000`
-   - `10-30` 秒：`(10 + Math.random() * 20) * 1000`
-4. Push
-
-### 📌 情景 5：換 GIF 素材
-
-**步驟：**
-1. 打開 `overrides/main.html`
-2. 找 `var FLY_GIFS = [` 這段
-3. 把 `'https://media...giphy.gif'` 換成新 URL
-4. Push
-
-**找 GIF URL 的方法：**
-- 在 Giphy / Tenor 找想要的 GIF
-- 右鍵 → 複製圖片連結
-- 貼進去就行
-
-### 🎯 情景 6：改導航菜單
-
-**步驟：**
-1. 打開 `mkdocs.yml`
-2. 修改 `nav:` 段落：
-   ```yaml
-   nav:
-     - 首頁: index.md
-     - 遊戲上線 SOP: 遊戲上線SOP.md
-     - 新頁面: 路徑/新文件.md  # ← 加這行
-   ```
-3. Push
+### 情景 6：改導航菜單 / 加新分類
+`mkdocs.yml` 的 `nav:`。如果是全新的大分類（不是塞進現有三個），記得：
+- `getPageCategory()`（`overrides/main.html`）的正則要加新分類的路徑判斷
+- `CATEGORY_ORDER`／`CATEGORY_COLORS` 也要加
+- `index.md` 首頁要加對應的卡片區塊（照現有三色配色的方式手動指定顏色）
 
 ---
 
 ## 🔍 Debug 常見問題
 
-### 問題：推送後網站沒有更新
+### 改了 overrides/main.html，本地預覽沒反應
+`mkdocs serve` 不監看 `overrides/`。重啟伺服器，或碰一下 `docs/index.md` 的檔案修改時間強制觸發重建。
 
-**原因可能：**
-1. GitHub Actions 還在執行（1-2 分鐘）
-2. 瀏覽器快取（Ctrl+Shift+Del 清快取）
-3. 檔案名稱大小寫錯誤（Linux 區分大小寫）
+### 加了新的 plugin（例如 macros），本地預覽一直連不上/沒反應
+Plugin 設定變更要整個重啟 `mkdocs serve` 進程，不是碰檔案時間能解決的，光重載不會重新載入 plugin。
 
-**解決方案：**
-- 檢查 GitHub repo 的 Actions 分頁，看是否有紅叉
-- 清瀏覽器快取
-- 確認檔案路徑拼寫
+### `{{ links.xxx }}` 在畫面上直接顯示成文字，沒被換成網址
+確認：① `mkdocs.yml` 有沒有裝 `- macros`；② 代號有沒有在 `extra.links` 裡拼對；③ 這個語法只在 `.md` 檔案裡有效，**獨立 HTML 檔案裡完全不會被處理**，那邊要直接寫死網址。
 
-### 問題：密碼輸入後又跳密碼框
+### 常用連結分類跑到「其他」去
+通常是瀏覽器裡已經存了分類功能上線前存的舊資料（`localStorage.sop_favorites` 裡的項目沒有 `category` 欄位）。`loadFavorites()` 已經有做「用網址比對 DEFAULT_FAVORITES 自動補分類」，但比對不到的舊項目還是只能落到「其他」，這是預期行為，不是 bug——因為系統真的不知道那個項目當初是從哪個分類頁面收藏的。
 
-**原因：**
-localStorage 沒有正確存取（跨域或隱私模式）
+### 表格文字明明很短卻被強制換行 / 明明很長卻擠成一行不換行
+八成是量測邏輯抓錯表格（例如頁面上有多個 table，選錯了）或是量測時機在 DOM 還沒完全 render 完。實際除錯方式：在瀏覽器 console 直接重跑 `autoWrapCells()` 內部邏輯，把 `containerWidth`／`targetPx`／量尺量到的 `naturalWidth` 都印出來比對，不要用儲存格自己的 `scrollWidth`/`clientWidth`（會被同欄其他儲存格撐寬污染，見上方「表格換行」陷阱說明）。
 
-**解決方案：**
-- 清快取試試
-- 不用隱私模式
-
-### 問題：GIF 沒有播放
-
-**原因可能：**
-1. 頁面還沒認證（沒輸密碼）
-2. GIF URL 失效（Giphy 刪除了）
-3. 瀏覽器閹割了（某些瀏覽器對動畫限制）
-
-**解決方案：**
-- 先輸入密碼
-- 檢查 GIF URL 是否還能訪問
-- 試試其他瀏覽器
-
-### 問題：手機上點左上角菜單，菜單寬度超過螢幕
-
-**原因：**
-菜單寬度 380px 在手機螢幕上太寬
-
-**解決方案：**
-已修復！使用響應式設計：
-- 1024px 以下（平板/手機）：自動調整為 `85vw` / `90vw`
-- 480px 以下（小手機）：進一步縮小至最大 280px
-- 菜單現在會自適應螢幕寬度，不會超出邊界
+### 推送後網站沒有更新
+1. 看 GitHub repo 的 Actions 分頁有沒有紅叉
+2. `update-md-metadata.yml` 那支 bot commit 也會觸發一次 `deploy.yml`，等它跑完
+3. 清瀏覽器快取
 
 ---
 
 ## 💡 給 AI 的提示
 
-如果使用者要求更新此站，請參考這份文件：
-
 **常見請求 → 對應改動：**
 
-| 請求 | 改動檔案 | 位置 |
-|------|--------|------|
-| 改密碼 | `overrides/main.html` | 第 ~51 行 |
-| 改 GIF 頻率 | `overrides/main.html` | 第 ~132、140 行 |
-| 加新頁面 | `docs/` 新增 `.md` + `mkdocs.yml` | nav 段落 |
-| 改目錄寬度（含手機版） | `overrides/main.html` | 第 ~10-30 行 CSS 區塊 |
-| 改網站名稱 | `mkdocs.yml` | `site_name` 欄位 |
-| 改顏色主題 | `mkdocs.yml` | `palette` 段落 |
-| 換 GIF 素材 | `overrides/main.html` | 第 ~70-76 行 `FLY_GIFS` 陣列 |
+| 請求 | 改動檔案 | 備註 |
+|------|---------|------|
+| 改密碼 | `overrides/main.html` | 密碼字串寫死在 JS 裡 |
+| 改 GIF 頻率/素材 | `overrides/main.html` | `FLY_MAX`／`FLY_GIFS` |
+| 加新頁面 | `docs/*.md` + `mkdocs.yml` nav | |
+| 改網站名稱 | `mkdocs.yml` | `site_name` |
+| 改頂部顏色 | `docs/stylesheets/extra.css` | `[data-md-color-primary]` 那段，不是改 `mkdocs.yml` 的 `palette`（那個已經被蓋掉沒作用） |
+| 某網址要一次改全部引用處 | `mkdocs.yml` 的 `extra.links` | 不要去每份文件找 |
+| 加/改常用連結預設值 | `mkdocs.yml` extra.links + `overrides/main.html` 的 `DEFAULT_FAVORITES` | 兩處都要改，見「情景 4」 |
+| 改表格換行邏輯 | `overrides/main.html` 的 `autoWrapCells` | 小心「同欄共用寬度」那個陷阱，見上方說明 |
+| 改某分類主題色 | `docs/index.md` 逐個 inline style + `overrides/main.html` 的 `CATEGORY_COLORS` | 沒有集中管理，兩處都要手動改 |
+| 改 5 個獨立 HTML 頁面的收藏功能 | 這 5 個 `.html` 檔案各自的 `<script>` 區塊 | 跟 main.html 邏輯是分開複製的六份，沒有共用 |
+| 改 `競品優化_使用指南/管理者指南.html` | 直接改 `.html`，不要改 `.md` | 兩邊已經不同步，`.md` 改了不會自動反映到 `.html` |
+| 改動 `overrides/main.html` 或 `mkdocs.yml` plugins 後要驗證本地效果 | 先確認本地伺服器有重啟或重建，不然會看到舊版還以為沒生效 | |
 
 ---
 
@@ -321,3 +255,4 @@ localStorage 沒有正確存取（跨域或隱私模式）
 - **GitHub Repo**：https://github.com/yayihuang-bit/sop-docs
 - **MkDocs 文檔**：https://www.mkdocs.org/
 - **Material 主題**：https://squidfunk.github.io/mkdocs-material/
+- **mkdocs-macros-plugin**：https://mkdocs-macros-plugin.readthedocs.io/

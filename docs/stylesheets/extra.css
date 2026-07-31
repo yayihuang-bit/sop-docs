@@ -42,6 +42,16 @@
   font-size: inherit !important;
 }
 
+/* 表格內文字預設不換行；真的太長需要換行的儲存格，個別加 class="wrap" */
+.md-typeset table td,
+.md-typeset table th {
+  white-space: nowrap;
+}
+.md-typeset table td.wrap,
+.md-typeset table th.wrap {
+  white-space: normal;
+}
+
 /* 數字清單改為藍底白字圓框 */
 .md-typeset ol {
   list-style: none;

@@ -9,14 +9,14 @@
 
 <table style="width:100%; table-layout:fixed;">
 <thead><tr>
-<th style="width:30%">時間</th>
-<th style="width:70%">動作</th>
+<th style="width:40%">時間</th>
+<th style="width:60%">動作</th>
 </tr></thead>
 <tbody>
-<tr><td>上線前 2 週（6/25 12:00）</td><td>設定敬請期待（見「區塊一」）</td></tr>
-<tr><td>敬請期待生效 5 分鐘後（6/25 12:05～12:10）</td><td>第一次機台保留生效，確認顯示「已成功執行」（務必在上線前生效完畢）</td></tr>
-<tr><td>上線日（7/9）</td><td>遊戲上線設定（見「區塊二」）</td></tr>
-<tr><td>上線後第 7 天 12:00（7/16）</td><td>第二次機台保留：開放一般廳～傳奇廳</td></tr>
+<tr><td class="wrap">上線前 2 週（6/25 12:00）</td><td class="wrap">設定敬請期待（見「區塊一」）</td></tr>
+<tr><td class="wrap">敬請期待生效 5 分鐘後（6/25 12:05～12:10）</td><td class="wrap">第一次機台保留生效，確認顯示「已成功執行」（務必在上線前生效完畢）</td></tr>
+<tr><td>上線日（7/9）</td><td class="wrap">遊戲上線設定（見「區塊二」）</td></tr>
+<tr><td class="wrap">上線後第 7 天 12:00（7/16）</td><td class="wrap">第二次機台保留：開放一般廳～傳奇廳</td></tr>
 </tbody>
 </table>
 
@@ -75,18 +75,18 @@ graph TD
 
 <table style="width:100%; table-layout:fixed;">
 <thead><tr>
-<th style="width:28%">項目</th>
-<th style="width:72%">說明</th>
+<th style="width:18%">項目</th>
+<th style="width:82%">說明</th>
 </tr></thead>
 <tbody>
 <tr><td>遊戲狀態</td><td>改為「開啟」</td></tr>
-<tr><td>限制地區</td><td>再次確認</td></tr>
-<tr><td>遊戲標籤</td><td>新上架（彩金類遊戲 → 無標籤）</td></tr>
+<tr><td>限制地區</td><td class="wrap">看<a href="https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn" target="_blank">官網 INFO</a>，通常是外接或者 IP 授權的遊戲都有地區限制</td></tr>
+<tr><td>遊戲標籤</td><td class="wrap">新上架（彩金類遊戲 → 無標籤）</td></tr>
 <tr><td>彩金</td><td>🟡 文件之後補</td></tr>
-<tr><td>彩金 bank 動態</td><td>現在預設都會動（不需要動的狀態 🟡 待確認）</td></tr>
-<tr><td>GameIcon</td><td>開啟（只有敬請期待階段不開）</td></tr>
-<tr><td>爆發度、直橫設定</td><td>查 <a href="https://yile.atlassian.net/wiki/spaces/808CG/pages/563970238/01.+Slot+Game+List" target="_blank">Slot Game List</a></td></tr>
-<tr><td>遊戲進入門檻</td><td>VIP 層級看官網 VIP 表格（有時不準確，要留意）；活躍度看 Help</td></tr>
+<tr><td style="white-space:nowrap;">彩金 bank 動態</td><td class="wrap">現在預設都會動（不需要動的狀態 🟡 待確認）</td></tr>
+<tr><td>GameIcon</td><td class="wrap">開啟（只有敬請期待階段不開）</td></tr>
+<tr><td>爆發度、直橫設定</td><td class="wrap">查 <a href="https://yile.atlassian.net/wiki/spaces/808CG/pages/563970238/01.+Slot+Game+List" target="_blank">Slot Game List</a></td></tr>
+<tr><td>遊戲進入門檻</td><td class="wrap">VIP 層級看官網 VIP 表格（有時不準確，要留意）；活躍度看 Help</td></tr>
 <tr><td>大廳-首頁版面設定</td><td>新遊戲放到最左邊</td></tr>
 </tbody>
 </table>
@@ -116,11 +116,11 @@ graph TD
 |------|------|------|
 | 廳館遊戲調整 | 內容與執行時間點 | - |
 | 彩金設定 | 文件待補 | 數學 |
-| 彩金 bank 動態 | 「不需要動」的狀態怎麼設 | - |
+| <span class="wrap">彩金 bank 動態</span> | <span class="wrap">「不需要動」的狀態怎麼設</span> | - |
 | 圖示種類（彩金） | 每款遊戲要確認 | 數學 |
 | 圖示種類（動態） | 待確認 | - |
 | 遊戲活動 Icon | 高設定外掛圖 | - |
-| 預約「關閉」機台保留 | 運用狀態 | - |
+| <span class="wrap">預約「關閉」機台保留</span> | 運用狀態 | - |
 | 金幣管玩家等級 | 使用狀態 | - |
 
 ---
