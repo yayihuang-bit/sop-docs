@@ -1,7 +1,7 @@
 <p style="font-size:2em; font-weight:bold; margin:20px 0 8px 0; display:flex; align-items:center; gap:8px;"><img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> 遊戲上線設定 流程 & 檢查清單 <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"></p>
 
 > 版本：v1.1　撰寫日期：2026-07-06　BY yayihuang-bit
-> ⚠️ 版本更新區需手動填寫（撰寫日期、BY 會於推送後自動更新）
+> ⚠️ 版本、撰寫日期、BY 都需要手動填寫更新
 
 ## 🕐 時間軸總覽
 
