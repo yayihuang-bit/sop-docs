@@ -65,6 +65,7 @@ extra:
     ops_automation_sheet: "https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=0#gid=0"
     ops_group_slack: "https://yiletechnology.slack.com/archives/C0AH47UFFJQ"
     game_website_info_folder: "https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn"
+    ops_maintenance_slack: "https://yiletechnology.slack.com/archives/C096G8K6LJC"
 
 markdown_extensions:
   - pymdownx.emoji:
