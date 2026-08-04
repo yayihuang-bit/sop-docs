@@ -11,9 +11,10 @@
 - **各分類有自己的主題色**：遊戲類教學＝紫、營運活動教學＝棕、競品指南＝綠，卡片邊框、按鈕、標題文字都統一套色
 - **集中連結管理**：用 `mkdocs-macros-plugin`，同一個網址如果會出現在兩個以上地方，寫在 `mkdocs.yml` 的 `extra.links` 一次，全站用 `{{ links.xxx }}` 引用，改一次全部同步
 - **每篇文件自動生成「連結彙整」**：掃描內文所有連結，依分類（試算表／簡報／雲端資料夾／Slack／其他）整理成表格，不用手動維護
+- **每篇文件自動生成「📑 目錄」**：頁面有 2 個以上 H2 標題就自動產生跳轉清單，插在連結彙整下方（沒有連結彙整就接在版本資訊下方），索引頁（卡片式）不生成
 - **表格儲存格智慧換行**：一行放得下就不換行，真的太長才換行，靠 JS 量測實際寬度判斷，不是猜字數
 - **「我的常用連結」個人化收藏**：每個訪客自己的瀏覽器記錄自己的常用連結（localStorage，不同人不同份），可以在任何頁面的連結彙整裡點 ☆ 收藏，首頁會依來源分類分組顯示
-- **版本資訊自動更新**：每份文件開頭的「撰寫日期」「BY」欄位，push 時 GitHub Actions 自動填，但「版本號」（v1.0 這種）要手動改
+- **版本資訊全部手動更新**：每份文件開頭的「版本」「撰寫日期」「BY」都要手動填寫。**曾經有一支 GitHub Actions（`update-md-metadata.yml`）自動更新「撰寫日期」「BY」，但因為持續執行失敗已於 2026-07-31 移除**，現在三個欄位都得自己改
 
 ---
 
@@ -36,10 +37,9 @@ sop-docs/
 │   │   └── extra.css             # 全站自訂樣式（見下方詳解）
 │   └── *.html                    # 5 個獨立 HTML 檔案，見「獨立 HTML 頁面」章節
 ├── overrides/
-│   └── main.html                 # Material 主題 override：密碼、GIF、常用連結、連結彙整、表格換行邏輯全在這
+│   └── main.html                 # Material 主題 override：密碼、GIF、常用連結、連結彙整、自動目錄、表格換行邏輯全在這
 ├── .github/workflows/
-│   ├── deploy.yml                # push 到 main 就自動 build + 部署
-│   └── update-md-metadata.yml    # push 時自動更新 .md 檔案的「撰寫日期」「BY」
+│   └── deploy.yml                # push 到 main 就自動 build + 部署（唯一一支，`update-md-metadata.yml` 已於 2026-07-31 移除）
 └── 競品優化/                     # 舊的維護資料夾，含 _embed.py／_embed_admin.py（已棄用，見下方說明）
 ```
 
@@ -95,9 +95,12 @@ Material 主題的 override 檔案，`{% block scripts %}` 裡塞了好幾個獨
 | 自動排序卡片 | 只在有 `display:grid` 卡片的索引頁生效，依 `localStorage.sop_clicks`（每個連結的累積點擊次數）把卡片區塊排到前面。**「我的常用連結」區塊有特別排除，永遠固定在第一個，不參與排序**（用 `node.textContent.indexOf('我的常用連結')` 判斷） |
 | 我的常用連結（收藏系統） | 見下方「常用連結系統」專節 |
 | 自動連結彙整 | 見下方「連結彙整」專節 |
+| 自動目錄 | 只在**非索引頁**且有 2 個以上 H2 標題時生效，掃描 `.md-content__inner` 的直屬 `h2`（排除 `#link-summary`），用瀏覽器渲染出的 `h2.id`（python-markdown toc 擴充套件自動產生，中文標題通常是 `_1`／`_2`⋯）組成跳轉清單，插在「連結彙整」表格後面（沒有就插在版本資訊 blockquote 後面）。**必須排在「自動連結彙整」的 `DOMContentLoaded` 監聽器之後註冊**，才能抓到連結彙整自己的 `<h2 id="link-summary">` 已經插入 DOM |
 | 表格儲存格智慧換行 | 見下方「表格換行」專節 |
 
 **⚠️ 修改這個檔案後的重要規則**：本地 `mkdocs serve` 只監看 `docs/` 資料夾，**不監看 `overrides/`**。改完 `main.html` 要嘛重啟伺服器，要嘛用「碰一下 `docs/index.md` 的修改時間」的方式強制觸發重建（`Get-Item ... .LastWriteTime = Get-Date`），不然預覽會是舊版但你不會發現。
+
+**跨頁錨點連結的慣例**：中文標題被 python-markdown 的 toc 擴充套件自動產生的 `id` 通常沒有意義（`_1`、`_2`⋯，只有標題含英文單字時才會取那個字當 id，例如「Help」）。**同頁**的自動目錄可以直接讀當下渲染出的 `h2.id`，不受影響；但如果是**從別的頁面**連過來指定某個段落（例如 `文案調整.md` 連到 `遊戲調整流程.md` 的某一節），不能依賴這個自動 id（內容順序一改就跑掉），要在該 `## 標題` 前手動加一行 `<a id="有意義的英文代號"></a>`，再用 `[文字](/sop-docs/頁面/#有意義的英文代號)` 引用。
 
 #### 常用連結系統（收藏功能）
 
@@ -165,18 +168,18 @@ Material 主題的 override 檔案，`{% block scripts %}` 裡塞了好幾個獨
 
 ## 🚀 部署流程
 
-### GitHub Actions（兩支）
+### GitHub Actions（一支）
 
 **`deploy.yml`**：push 到 `main` 就觸發，`pip install mkdocs-material mkdocs-macros-plugin` → `mkdocs gh-deploy --force`。1-2 分鐘後 https://yayihuang-bit.github.io/sop-docs/ 更新。
 
-**`update-md-metadata.yml`**：push 到 `main` 且有動到 `docs/**.md` 才觸發。掃描這次改動的 `.md` 檔案，自動把「撰寫日期：」改成當天日期、「BY 」改成推送者的 GitHub 帳號。**只認這兩個關鍵字**，「版本：v1.0」的版本號不會被自動改，要手動維護。commit message 帶 `[skip metadata]` 會跳過這支（bot 自己 commit 時會加，避免無限循環）。
+**曾經還有一支 `update-md-metadata.yml`**，會在 push 後自動把文件的「撰寫日期」「BY」改成當天日期／推送者帳號，但持續執行失敗（`No jobs were run`），使用者確認後於 2026-07-31 直接移除，改回全手動維護。之後不會再有類似的自動化，除非重新建立。
 
 ---
 
 ## ✏️ 常見更新場景
 
 ### 情景 1：新增或修改文件內容
-編輯 `docs/*.md` → push。「撰寫日期」「BY」自動更新，「版本號」要自己改。
+編輯 `docs/*.md` → push。「版本」「撰寫日期」「BY」**都要自己改**（沒有自動化）。
 
 ### 情景 2：加新頁面
 1. `docs/` 新增 `.md`
@@ -223,7 +226,7 @@ Plugin 設定變更要整個重啟 `mkdocs serve` 進程，不是碰檔案時間
 
 ### 推送後網站沒有更新
 1. 看 GitHub repo 的 Actions 分頁有沒有紅叉
-2. `update-md-metadata.yml` 那支 bot commit 也會觸發一次 `deploy.yml`，等它跑完
+2. 等 `deploy.yml` 跑完（通常 1-2 分鐘）
 3. 清瀏覽器快取
 
 ---
@@ -242,7 +245,8 @@ Plugin 設定變更要整個重啟 `mkdocs serve` 進程，不是碰檔案時間
 | 某網址要一次改全部引用處 | `mkdocs.yml` 的 `extra.links` | 不要去每份文件找 |
 | 加/改常用連結預設值 | `mkdocs.yml` extra.links + `overrides/main.html` 的 `DEFAULT_FAVORITES` | 兩處都要改，見「情景 4」 |
 | 改表格換行邏輯 | `overrides/main.html` 的 `autoWrapCells` | 小心「同欄共用寬度」那個陷阱，見上方說明 |
-| 改某分類主題色 | `docs/index.md` 逐個 inline style + `overrides/main.html` 的 `CATEGORY_COLORS` | 沒有集中管理，兩處都要手動改 |
+| 改自動目錄邏輯 | `overrides/main.html` 裡「自動目錄」那個 IIFE | 讀的是渲染出來的 `h2.id`，不是手動加的 `<a id>` 錨點；排除 `#link-summary` 避免把「連結彙整」自己也列進去 |
+| 改某分類主題色 / 新增一個大分類 | `docs/index.md` 逐個 inline style + `overrides/main.html` 的 `CATEGORY_COLORS`／`CATEGORY_ORDER`／`getPageCategory()` | 沒有集中管理，這幾處都要手動改，見「情景 6」 |
 | 改 5 個獨立 HTML 頁面的收藏功能 | 這 5 個 `.html` 檔案各自的 `<script>` 區塊 | 跟 main.html 邏輯是分開複製的六份，沒有共用 |
 | 改 `競品優化_使用指南/管理者指南.html` | 直接改 `.html`，不要改 `.md` | 兩邊已經不同步，`.md` 改了不會自動反映到 `.html` |
 | 改動 `overrides/main.html` 或 `mkdocs.yml` plugins 後要驗證本地效果 | 先確認本地伺服器有重啟或重建，不然會看到舊版還以為沒生效 | |

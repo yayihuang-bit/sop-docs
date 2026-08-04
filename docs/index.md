@@ -39,7 +39,7 @@
 </div>
 
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#7c6a9c;margin:0 0 12px 0;">✏️ 文案調整流程</h3>
+<h3 style="color:#7c6a9c;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
 <a href="/sop-docs/文案調整/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
@@ -53,7 +53,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案調整流程</h3>
+<h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
 <a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
@@ -112,6 +112,20 @@
 <h3 style="color:#6f8f76;margin:0 0 12px 0;">🔐 競品活動分析系統 — 管理者指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">系統維護與權限說明</p>
 <a href="/sop-docs/競品優化_管理者指南.html" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+</div>
+
+---
+
+<h2 style="color:#5b7c99;">📘 資料庫文件格式教學</h2>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
+
+<div style="border:2px solid #5b7c99;border-radius:12px;padding:24px;background:#eef2f6;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#5b7c99;margin:0 0 12px 0;">📘 文件格式教學</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">寫文件的規則、連結怎麼登記、自動功能有哪些</p>
+<a href="/sop-docs/文件格式教學_索引/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 </div>

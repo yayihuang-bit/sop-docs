@@ -216,11 +216,12 @@
   {{ super() }}
   <script>
     // ════ 我的常用連結（每人存自己瀏覽器，不同人不同份，依來源分類）════
-    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', '其他'];
+    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', '資料庫文件格式教學', '其他'];
     var CATEGORY_COLORS = {
       '遊戲類教學': { fg: '#7c6a9c', bg: '#f2f0f5' },
       '營運活動教學': { fg: '#a8734f', bg: '#f7f0e8' },
       '競品指南': { fg: '#6f8f76', bg: '#eff4f0' },
+      '資料庫文件格式教學': { fg: '#5b7c99', bg: '#eef2f6' },
       '其他': { fg: '#888', bg: '#f2f2f2' }
     };
     // 依網址路徑判斷這頁屬於首頁哪個大分類（跟 mkdocs.yml 的 nav 分類對應）
@@ -229,6 +230,7 @@
       if(/\/遊戲/.test(path)) return '遊戲類教學';
       if(/\/(營運|換皮|抽獎|直播|其他抽獎)/.test(path)) return '營運活動教學';
       if(/\/競品/.test(path)) return '競品指南';
+      if(/\/文件格式/.test(path)) return '資料庫文件格式教學';
       return '其他';
     }
 
@@ -573,6 +575,53 @@
         }
       }
 
+      document.addEventListener('DOMContentLoaded', build);
+    })();
+
+    // ════ 自動目錄（文章頁自動生成，依 h2 標題產生跳轉清單）════
+    (function(){
+      function build(){
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+        // 索引頁（grid 卡片）不生成
+        if(inner.querySelector('div[style*="display:grid"]')) return;
+
+        var headings = Array.from(inner.querySelectorAll(':scope > h2')).filter(function(h){
+          return h.id && h.id !== 'link-summary';
+        });
+        if(headings.length < 2) return;
+
+        var colors = CATEGORY_COLORS[getPageCategory()] || CATEGORY_COLORS['其他'];
+
+        var box = document.createElement('div');
+        box.style.cssText = 'border:1px solid ' + colors.fg + '33; border-radius:8px; padding:16px 20px; background:' + colors.bg + '; margin:16px 0;';
+
+        var label = document.createElement('strong');
+        label.style.cssText = 'color:' + colors.fg + ';';
+        label.textContent = '📑 目錄';
+        box.appendChild(label);
+
+        var ul = document.createElement('ul');
+        ul.style.cssText = 'margin:8px 0 0 0;';
+        headings.forEach(function(h){
+          var li = document.createElement('li');
+          var a = document.createElement('a');
+          a.href = '#' + h.id;
+          a.textContent = h.textContent;
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+        box.appendChild(ul);
+
+        // 插在「連結彙整」表格後面（若無則插在版本資訊 blockquote 後面，都沒有則插最前面）
+        var linkSummaryHeading = inner.querySelector('#link-summary');
+        var anchor = linkSummaryHeading ? linkSummaryHeading.nextElementSibling : inner.querySelector(':scope > blockquote');
+        if(anchor){
+          anchor.parentNode.insertBefore(box, anchor.nextSibling);
+        } else {
+          inner.insertBefore(box, inner.firstChild);
+        }
+      }
       document.addEventListener('DOMContentLoaded', build);
     })();
 
