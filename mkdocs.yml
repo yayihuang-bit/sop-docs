@@ -25,6 +25,7 @@ nav:
   - 營運活動教學:
     - 首頁: 營運_索引.md
     - 文案新增/調整流程: 文案調整.md
+    - 後臺設定營運活動公告: 營運活動基本設定.md
     - 換皮資訊: 換皮資訊_索引.md
     - 抽獎:
       - 首頁: 抽獎_索引.md
@@ -67,6 +68,7 @@ extra:
     ops_group_slack: "https://yiletechnology.slack.com/archives/C0AH47UFFJQ"
     game_website_info_folder: "https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn"
     ops_maintenance_slack: "https://yiletechnology.slack.com/archives/C096G8K6LJC"
+    vpn_tutorial_folder: "https://drive.google.com/drive/folders/12kSNMBHpvaeUGErRM99tWFED5KPWBIQ4"
 
 markdown_extensions:
   - pymdownx.emoji:
