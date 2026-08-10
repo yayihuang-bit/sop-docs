@@ -1,6 +1,6 @@
 ## ⭐ 我的常用連結 <span id="fav-info-btn" style="cursor:pointer; font-size:16px; color:#888; border:1px solid #ccc; border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;" title="點擊查看說明">ⓘ</span>
 
-<div id="fav-info-box" style="display:none; background:#f2f0f5; border-left:4px solid #7c6a9c; border-radius:0 6px 6px 0; padding:10px 14px; margin:10px 0; font-size:14px; color:#555;">
+<div id="fav-info-box" style="display:none; background:#f2f0f5; border-left:4px solid #7c6a9c; border-radius:0 6px 6px 0; padding:10px 14px; margin:10px 0; font-size:16px; color:#555;">
 這份清單存在<strong>你自己的瀏覽器</strong>裡，每個人看到的都不一樣。第一次進站會先看到預設的幾個常用連結。<br><br>
 <strong>怎麼加自己的常用連結：</strong>每篇文件最上面都有一個「連結彙整」表格，裡面每個連結後面都有一顆 <strong>☆</strong>，點一下變成 <strong>★</strong> 就是加進常用清單，再點一次變回 ☆ 就是移除。<br><br>
 換電腦、換瀏覽器，或清除瀏覽器資料，這份清單會重置回預設值——因為沒有連到任何帳號或資料庫，純粹存在這台裝置上。

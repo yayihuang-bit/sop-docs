@@ -90,6 +90,19 @@
   font-size: inherit !important;
 }
 
+/* 搜尋結果的文字預覽字級跟內文一樣大，不用 Material 預設的縮小字 */
+.md-search-result__article {
+  font-size: 16px !important;
+}
+
+/* 搜尋結果裡符合的子標題（h1~h4）也要跟著放大，不然會被 Material 自己的字級蓋掉 */
+.md-search-result__article h1,
+.md-search-result__article h2,
+.md-search-result__article h3,
+.md-search-result__article h4 {
+  font-size: 18px !important;
+}
+
 /* 內容圖片自動加黑色邊框（裝飾用 GIF 不受影響） */
 .md-typeset img[src$=".png"],
 .md-typeset img[src$=".jpg"],
