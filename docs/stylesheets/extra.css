@@ -83,6 +83,13 @@
   display: block;
 }
 
+/* 程式碼區塊（```）字級跟內文一樣大，不用 Material 預設的縮小字 */
+.md-typeset pre,
+.md-typeset pre > code,
+.md-typeset code {
+  font-size: inherit !important;
+}
+
 /* 內容圖片自動加黑色邊框（裝飾用 GIF 不受影響） */
 .md-typeset img[src$=".png"],
 .md-typeset img[src$=".jpg"],
