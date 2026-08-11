@@ -53,6 +53,12 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">📋 營運企劃執行工作大綱</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">日常例行工作 & 抽獎推廣期間工作項目總覽</p>
+<a href="/sop-docs/營運企劃執行工作大綱/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
 <a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
@@ -92,6 +98,12 @@
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🚀 營運活動自動發布教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">讓系統自動設定活動文章</p>
 <a href="/sop-docs/營運_自動發布指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">📎 其他參考資源</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">不常用、但偶爾要找的相關資料</p>
+<a href="/sop-docs/營運_索引/#other-resources" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 </div>
