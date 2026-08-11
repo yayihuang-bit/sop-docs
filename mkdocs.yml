@@ -26,6 +26,7 @@ nav:
     - 首頁: 營運_索引.md
     - 營運企劃執行工作大綱: 營運企劃執行工作大綱.md
     - 文案新增/調整流程: 文案調整.md
+    - 營運文案寫法: 營運文案寫法.md
     - 後臺設定營運活動公告: 營運活動基本設定.md
     - 換皮資訊: 換皮資訊_索引.md
     - 抽獎:
@@ -75,6 +76,7 @@ extra:
     qa_backstage: "https://qa2-backstage.yile808.com/login"
     qa_app_install_folder: "https://drive.google.com/drive/folders/1coyqZwWz6_Bcdq-RZ7dI5mHsygt3TS_i"
     ticket_threshold_data: "https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=918717128#gid=918717128&range=A1"
+    dual_platform_copy_sheet: "https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1369417998#gid=1369417998"
 
 markdown_extensions:
   - pymdownx.emoji:
