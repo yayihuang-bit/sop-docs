@@ -315,13 +315,27 @@
       'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
       'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
       'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
-      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif'
+      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif',
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGR4ejhlMGxxNm1zNnF6NDdqYXhzd2h2cTgzc2xhb3Q0aGxsa3loZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lKD6bKCZS2uYWAojCb/giphy.gif',
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExczFpaGpkdDZqbnljMWhjbGN2bHEwYmNxZDR6YjBkZjg2ZGthcGJmciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Qj99zMfyga0erZlczD/giphy.gif'
     ];
     var FLY_MAX = 1;
     var _flyCount = 0;
     var _flyScheduleTimeout = null;
 
     FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
+    // ════ 標題兩側的 gif 圖示，每次載入隨機換一個（跟飛行 gif 共用同一個素材池）════
+    (function(){
+      var TITLE_GIF = 'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif';
+      function randomizeTitleGifs(){
+        var imgs = document.querySelectorAll('img[src="' + TITLE_GIF + '"]');
+        if(!imgs.length) return;
+        var pick = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+        imgs.forEach(function(img){ img.src = pick; });
+      }
+      document.addEventListener('DOMContentLoaded', randomizeTitleGifs);
+    })();
 
     function initFlyGif() {
 
