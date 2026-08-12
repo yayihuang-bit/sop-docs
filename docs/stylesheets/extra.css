@@ -53,7 +53,8 @@
 }
 
 /* 數字清單改為藍底白字圓框 */
-.md-typeset ol {
+.md-typeset ol,
+.md-typeset ol ol {
   list-style: none;
   counter-reset: step;
   padding-left: 0;

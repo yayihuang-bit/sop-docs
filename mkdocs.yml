@@ -77,6 +77,9 @@ extra:
     qa_app_install_folder: "https://drive.google.com/drive/folders/1coyqZwWz6_Bcdq-RZ7dI5mHsygt3TS_i"
     ticket_threshold_data: "https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=918717128#gid=918717128&range=A1"
     dual_platform_copy_sheet: "https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1369417998#gid=1369417998"
+    campaign_copy_examples_sheet: "https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=351049571#gid=351049571"
+    ops_progress_slack: "https://yiletechnology.slack.com/archives/C096KHQBENS"
+    scratch_card_season_sheet: "https://docs.google.com/spreadsheets/d/1f9CmjuAiK6JWvP-DfTQWVpkwvN9cUoYoVl-zhmVkDDM/edit?gid=306800715#gid=306800715"
 
 markdown_extensions:
   - pymdownx.emoji:
