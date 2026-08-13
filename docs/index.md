@@ -29,25 +29,25 @@
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#7c6a9c;margin:0 0 12px 0;">🚀 遊戲上線 SOP</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">遊戲從未上架到正式上線的完整流程與檢查清單</p>
-<a href="/sop-docs/遊戲上線SOP/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/遊戲上線SOP/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#7c6a9c;margin:0 0 12px 0;">⚙️ 遊戲調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">調整進入門檻、遊戲關閉、臨時維護、商品下架預告</p>
-<a href="/sop-docs/遊戲調整流程/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/遊戲調整流程/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#7c6a9c;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
-<a href="/sop-docs/文案調整/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/文案調整/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#7c6a9c;margin:0 0 12px 0;">📎 其他參考資源</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">不常用、但偶爾要找的相關資料</p>
-<a href="/sop-docs/遊戲上線工作_索引/#other-resources" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/遊戲上線工作_索引/#other-resources" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 </div>
@@ -61,61 +61,61 @@
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📋 營運企劃執行工作大綱</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">日常例行工作 & 抽獎推廣期間工作項目總覽</p>
-<a href="/sop-docs/營運企劃執行工作大綱/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運企劃執行工作大綱/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
-<a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📝 營運文案寫法</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">雙平台文案寫法 & 營運活動文案寫法</p>
-<a href="/sop-docs/營運文案寫法/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運文案寫法/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🧩 後臺設定營運活動公告</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">從零建立一個營運活動最基礎的設定</p>
-<a href="/sop-docs/營運活動基本設定/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運活動基本設定/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🖼️ 換皮資訊</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">換皮製作流程 & 彙整包檔案位置</p>
-<a href="/sop-docs/換皮資訊_索引/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/換皮資訊_索引/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🎰 抽獎</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">直播流程、抽獎券推廣流程 & 其他抽獎流程</p>
-<a href="/sop-docs/抽獎_索引/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/抽獎_索引/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📄 活動文件生成教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">製作範本、生成活動文案</p>
-<a href="/sop-docs/營運_文件生成指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運_文件生成指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📢 推播教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">自動發送推播、追蹤成效</p>
-<a href="/sop-docs/營運_推播教學.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運_推播教學.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🚀 營運活動自動發布教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">讓系統自動設定活動文章</p>
-<a href="/sop-docs/營運_自動發布指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運_自動發布指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📎 其他參考資源</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">不常用、但偶爾要找的相關資料</p>
-<a href="/sop-docs/營運_索引/#other-resources" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/營運_索引/#other-resources" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 </div>
@@ -129,19 +129,19 @@
 <div style="border:2px solid #6f8f76;border-radius:12px;padding:24px;background:#eff4f0;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#6f8f76;margin:0 0 12px 0;">📝 營運簡報製作指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">競品觀察、分工、製作規則</p>
-<a href="/sop-docs/競品指南/" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/競品指南/" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #6f8f76;border-radius:12px;padding:24px;background:#eff4f0;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#6f8f76;margin:0 0 12px 0;">📊 競品活動分析系統 — 使用指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">競品分析系統的操作說明</p>
-<a href="/sop-docs/競品優化_使用指南.html" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/競品優化_使用指南.html" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #6f8f76;border-radius:12px;padding:24px;background:#eff4f0;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#6f8f76;margin:0 0 12px 0;">🔐 競品活動分析系統 — 管理者指南</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">系統維護與權限說明</p>
-<a href="/sop-docs/競品優化_管理者指南.html" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/競品優化_管理者指南.html" style="display:inline-block;background:#6f8f76;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 </div>
@@ -155,13 +155,13 @@
 <div style="border:2px solid #5b7c99;border-radius:12px;padding:24px;background:#eef2f6;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#5b7c99;margin:0 0 12px 0;">📘 文件格式教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">寫文件的規則、連結怎麼登記、自動功能有哪些</p>
-<a href="/sop-docs/文件格式教學_索引/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/文件格式教學_索引/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #5b7c99;border-radius:12px;padding:24px;background:#eef2f6;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#5b7c99;margin:0 0 12px 0;">🐛 BUG回報方式</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">🟡 待補充</p>
-<a href="/sop-docs/BUG回報方式/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+<a href="/sop-docs/BUG回報方式/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 </div>
