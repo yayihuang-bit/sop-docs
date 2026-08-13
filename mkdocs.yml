@@ -35,7 +35,9 @@ nav:
       - 抽獎券推廣流程: 抽獎流程.md
       - 其他抽獎流程: 其他抽獎流程.md
   - 競品指南: 競品指南_索引.md
-  - 資料庫文件格式教學: 文件格式教學_索引.md
+  - 其他文件教學:
+    - 首頁: 文件格式教學_索引.md
+    - BUG回報方式: BUG回報方式.md
 
 extra_css:
   - stylesheets/extra.css
@@ -80,6 +82,9 @@ extra:
     campaign_copy_examples_sheet: "https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=351049571#gid=351049571"
     ops_progress_slack: "https://yiletechnology.slack.com/archives/C096KHQBENS"
     scratch_card_season_sheet: "https://docs.google.com/spreadsheets/d/1f9CmjuAiK6JWvP-DfTQWVpkwvN9cUoYoVl-zhmVkDDM/edit?gid=306800715#gid=306800715"
+    doc_archive_folder: "https://drive.google.com/drive/folders/1qdBRQJ0M3rnOTVYoIuK2wYttMiM5jLF1"
+    campaign_value_doc: "https://yile.atlassian.net/wiki/spaces/808CG/pages/563216424/Casino+Game+-"
+    slot_game_list_doc: "https://yile.atlassian.net/wiki/spaces/808CG/pages/563970238/01.+Slot+Game+List"
 
 markdown_extensions:
   - pymdownx.emoji:

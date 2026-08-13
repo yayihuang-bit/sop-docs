@@ -44,6 +44,12 @@
 <a href="/sop-docs/文案調整/" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
+<div style="border:2px solid #7c6a9c;border-radius:12px;padding:24px;background:#f2f0f5;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#7c6a9c;margin:0 0 12px 0;">📎 其他參考資源</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">不常用、但偶爾要找的相關資料</p>
+<a href="/sop-docs/遊戲上線工作_索引/#other-resources" style="display:inline-block;background:#7c6a9c;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
 </div>
 
 ---
@@ -142,7 +148,7 @@
 
 ---
 
-<h2 style="color:#5b7c99;">📘 資料庫文件格式教學</h2>
+<h2 style="color:#5b7c99;">📘 其他文件教學</h2>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
@@ -150,6 +156,12 @@
 <h3 style="color:#5b7c99;margin:0 0 12px 0;">📘 文件格式教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">寫文件的規則、連結怎麼登記、自動功能有哪些</p>
 <a href="/sop-docs/文件格式教學_索引/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
+</div>
+
+<div style="border:2px solid #5b7c99;border-radius:12px;padding:24px;background:#eef2f6;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#5b7c99;margin:0 0 12px 0;">🐛 BUG回報方式</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">🟡 待補充</p>
+<a href="/sop-docs/BUG回報方式/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:16px;">查看</a>
 </div>
 
 </div>

@@ -85,7 +85,7 @@ graph TD
 <tr><td>彩金</td><td>🟡 文件之後補</td></tr>
 <tr><td style="white-space:nowrap;">彩金 bank 動態</td><td class="wrap">現在預設都會動（不需要動的狀態 🟡 待確認）</td></tr>
 <tr><td>GameIcon</td><td class="wrap">開啟（只有敬請期待階段不開）</td></tr>
-<tr><td>爆發度、直橫設定</td><td class="wrap">查 <a href="https://yile.atlassian.net/wiki/spaces/808CG/pages/563970238/01.+Slot+Game+List" target="_blank">Slot Game List</a></td></tr>
+<tr><td>爆發度、直橫設定</td><td class="wrap">查 <a href="{{ links.slot_game_list_doc }}" target="_blank">Slot Game List</a></td></tr>
 <tr><td>遊戲進入門檻</td><td class="wrap">VIP 層級看官網 VIP 表格（有時不準確，要留意）；活躍度看 Help</td></tr>
 <tr><td>大廳-首頁版面設定</td><td>新遊戲放到最左邊</td></tr>
 </tbody>
