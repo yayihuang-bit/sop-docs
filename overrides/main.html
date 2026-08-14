@@ -231,7 +231,7 @@
       if(/\/遊戲/.test(path)) return '遊戲類教學';
       if(/\/(營運|換皮|抽獎|直播|其他抽獎)/.test(path)) return '營運活動教學';
       if(/\/競品/.test(path)) return '競品指南';
-      if(/\/(文件格式|Git)/.test(path)) return 'Git使用教學';
+      if(/\/(文件格式|git)/i.test(path)) return 'Git使用教學';
       if(/\/BUG/.test(path)) return '其他文件教學';
       return '其他';
     }

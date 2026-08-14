@@ -14,4 +14,10 @@
 <a href="/sop-docs/Git版本推送與衝突處理/" style="display:inline-block;background:#2f8f83;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
+<div style="border:2px solid #2f8f83;border-radius:12px;padding:24px;background:#e6f3f1;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#2f8f83;margin:0 0 12px 0;">🔧 如何使用 GIT</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">🟡 待補充</p>
+<a href="/sop-docs/如何使用GIT/" style="display:inline-block;background:#2f8f83;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
 </div>
