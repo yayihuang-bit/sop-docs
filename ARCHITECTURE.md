@@ -157,6 +157,8 @@ Material 主題的 override 檔案，`{% block scripts %}` 裡塞了好幾個獨
 - Git使用教學：`#2f8f83`（底色 `#e6f3f1`）
 - 其他文件教學：`#5b7c99`（底色 `#eef2f6`）
 
+**卡片按鈕對齊陷阱**：首頁跟各分類索引頁的卡片（`display:grid` 裡一個個 `border:2px solid...` 的 div）用 CSS Grid 預設 `align-items:stretch` 會讓同一列的卡片自動等高，但如果卡片內只是單純 `h3` + `p` + `a`（查看按鈕）依序往下排，說明文字**字數不同、換行數不同**時按鈕會停在不同高度，同一列的按鈕看起來歪掉。解法是卡片 div 加 `display:flex;flex-direction:column;`，按鈕的 `<a>` 加 `margin-top:auto;`（不是固定的 `margin-top:16px`，那樣遇到兩行說明文字還是會被推低），auto margin 才會把按鈕確實貼到卡片底部，不管說明文字長短都對齊。新增卡片時要照這個寫法，不要複製舊卡片時漏掉這兩個屬性。
+
 ---
 
 ### 4. 獨立 HTML 頁面
