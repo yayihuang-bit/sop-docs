@@ -16,7 +16,7 @@
 - **「我的常用連結」個人化收藏**：每個訪客自己的瀏覽器記錄自己的常用連結（localStorage，不同人不同份），可以在任何頁面的連結彙整裡點 ☆ 收藏，首頁會依來源分類分組顯示
 - **版本資訊全部手動更新**：每份文件開頭的「版本」「撰寫日期」「BY」都要手動填寫。**曾經有一支 GitHub Actions（`update-md-metadata.yml`）自動更新「撰寫日期」「BY」，但因為持續執行失敗已於 2026-07-31 移除**，現在三個欄位都得自己改
 - **⚠️ 寫連結文字／標題時，中文跟英文（或數字）中間要留空格**：搜尋引擎（lunr.js）是照文字有沒有空白/標點分隔來斷詞，中英文黏在一起沒空格會被當成一整塊索引，之後只能搜「完整那一整串」才找得到，搜局部關鍵字（例如只打「survey」或中間的兩個字）會完全找不到。寫連結文字、標題時養成習慣中英文之間留空格（例如「活動 獎勵 機率 公布 survey」而不是「活動獎勵機率公布survey」），這是**寫內容的人（AI）要自動注意的事**，不是使用者需要記得的規則
-- **重點提醒可以用粗體＋黃底標記**：寫法是 `<mark>⚠️ **要強調的文字**</mark>`，跟一般沒有粗體黃底、只是文字前加 ⚠️ 的提醒不同。用在真的容易出錯、忘記會出問題的重點，不要整份文件到處都用，不然會失去強調效果
+- **重點提醒可以用粗體＋黃底標記**：寫法是 `<mark>**要強調的文字**</mark>`，⚠️ 符號由 `extra.css` 的 `.md-typeset mark::before { content: "⚠️ "; }` 自動加在最前面，**不用在內文裡手動打 ⚠️**（手動打會變成重複兩個警告符號）。跟一般沒有粗體黃底、只是文字前加 ⚠️ 的提醒不同。用在真的容易出錯、忘記會出問題的重點，不要整份文件到處都用，不然會失去強調效果
 - **標題兩側的 gif 每次隨機換一個**：跟右側飛來飛去的 gif 共用同一個素材池（`FLY_GIFS` 陣列），不用去改每份文件，`overrides/main.html` 有一段 JS 統一處理
 - **有一份 `CLAUDE.md`（repo 根目錄）**：AI 每次工作會自動載入，內容是「先讀 `ARCHITECTURE.md`」的指示 + 這個專案的協作方式，`ARCHITECTURE.md` 才是規則本體，`CLAUDE.md` 只是入口，不要把細節寫進 `CLAUDE.md`
 - **不常用但偶爾要找的連結，可以用「其他參考資源」這種輕量清單**，不用整個做成卡片：直接在索引頁的卡片區塊下面加一個 `##` 小節、條列連結就好（範例見 `docs/營運_索引.md` 的「📎 其他參考資源」），比另開一個新的教學頁面划算
@@ -145,6 +145,7 @@ Material 主題的 override 檔案，`{% block scripts %}` 裡塞了好幾個獨
 - `[data-md-color-primary] { --md-primary-fg-color: ... }`：蓋掉 Material 預設的 indigo，改成頂部導覽列的石頭色漸層（`.md-header`／`.md-tabs` 用 `linear-gradient`）。**注意**：Material 把顏色設定寫在 `<body data-md-color-primary="indigo">` 屬性上，單純改 `:root` 的 CSS 變數蓋不掉，要用 `[data-md-color-primary]` 選擇器 + `!important`
 - 標題（h1/h2/h3）全部 `font-weight:700`，h2 之間 margin 拉大到 40px（緊接版本資訊 blockquote 後的第一個 h2 例外，保持較近）
 - 黃底引用區塊（`>` blockquote）開頭自動加 🦉 emoji（`::before` content）
+- 粗體黃底重點提醒（`<mark>` 標籤）開頭自動加 ⚠️ emoji（`.md-typeset mark::before { content: "⚠️ "; }`），內文只要寫 `<mark>**文字**</mark>` 就好，**不要**在裡面再手動打一次 ⚠️（2026-08-14 已把當時全站已存在的 25 處 `<mark>⚠️ ...` 手動符號統一清掉改用這個自動規則）
 - 表格 `width:100% !important; table-layout:fixed;`，字級跟內文一樣大（不用 Material 預設的縮小字）
 - 數字清單（`<ol>`）改成藍底白字圓框，不用瀏覽器預設的 `1. 2. 3.`。**陷阱**：Material 主題對「巢狀 `<ol>`」（列表裡面又有一層列表）預設套用 `list-style-type: lower-alpha`（顯示成 a. b. c.），選擇器優先權比單純的 `.md-typeset ol` 高，會蓋掉我們的藍底圓框樣式。解法是選擇器要多寫一個 `.md-typeset ol ol`，兩個都設 `list-style:none`，巢狀清單才會跟第一層一樣套用圓框樣式
 - 圖片（png/jpg/jpeg，排除裝飾用 GIF）自動加 1px 黑框
@@ -272,7 +273,7 @@ Plugin 設定變更要整個重啟 `mkdocs serve` 進程，不是碰檔案時間
 | 改某分類主題色 / 新增一個大分類 | `docs/index.md` 逐個 inline style + `overrides/main.html` 的 `CATEGORY_COLORS`／`CATEGORY_ORDER`／`getPageCategory()` | 沒有集中管理，這幾處都要手動改，見「情景 6」 |
 | 改 5 個獨立 HTML 頁面的收藏功能 | 這 5 個 `.html` 檔案各自的 `<script>` 區塊 | 跟 main.html 邏輯是分開複製的六份，沒有共用 |
 | 放可下載的檔案（.pptx／.docx 等） | `docs/files/` | 見「情景 7」，不要放在 `docs/` 根目錄 |
-| 標記重點提醒（粗體＋黃底） | 直接在 `.md` 裡寫 `<mark>⚠️ **文字**</mark>` | 不用改任何設定檔，純內文語法 |
+| 標記重點提醒（粗體＋黃底） | 直接在 `.md` 裡寫 `<mark>**文字**</mark>` | ⚠️ 符號由 CSS 自動加，不要手動打，否則會重複兩個 |
 | 改 `競品優化_使用指南/管理者指南.html` | 直接改 `.html`，不要改 `.md` | 兩邊已經不同步，`.md` 改了不會自動反映到 `.html` |
 | 改動 `overrides/main.html` 或 `mkdocs.yml` plugins 後要驗證本地效果 | 先確認本地伺服器有重啟或重建，不然會看到舊版還以為沒生效 | |
 

@@ -36,6 +36,11 @@
   vertical-align: -0.2em;
 }
 
+/* 粗體黃底重點提醒自動加 ⚠️，寫 <mark>**文字**</mark> 就好，不用手動打警告符號 */
+.md-typeset mark::before {
+  content: "⚠️ ";
+}
+
 .md-typeset table {
   width: 100% !important;
   table-layout: fixed;
