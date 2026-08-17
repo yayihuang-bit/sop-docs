@@ -184,4 +184,10 @@
 <a href="/sop-docs/BUG回報方式/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
+<div style="border:2px solid #5b7c99;border-radius:12px;padding:24px;background:#eef2f6;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#5b7c99;margin:0 0 12px 0;">🌱 友善遊戲</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">申請台灣政府友善遊戲標章需要準備的文件清單</p>
+<a href="/sop-docs/友善遊戲/" style="display:inline-block;background:#5b7c99;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
 </div>

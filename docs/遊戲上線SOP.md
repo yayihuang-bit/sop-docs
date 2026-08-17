@@ -73,6 +73,8 @@ graph TD
 
 ## 🟩 區塊二：遊戲上線設定（上線日）
 
+![遊戲設定面板示意圖](images/遊戲上線/遊戲開放 (1).jpg)
+
 <table style="width:100%; table-layout:fixed;">
 <thead><tr>
 <th style="width:18%">項目</th>
@@ -87,9 +89,16 @@ graph TD
 <tr><td>GameIcon</td><td class="wrap">開啟（只有敬請期待階段不開）</td></tr>
 <tr><td>爆發度、直橫設定</td><td class="wrap">查 <a href="{{ links.slot_game_list_doc }}" target="_blank">Slot Game List</a></td></tr>
 <tr><td>遊戲進入門檻</td><td class="wrap">VIP 層級看官網 VIP 表格（有時不準確，要留意）；活躍度看 Help</td></tr>
-<tr><td>大廳-首頁版面設定</td><td>新遊戲放到最左邊</td></tr>
 </tbody>
 </table>
+
+### 大廳-首頁版面設定
+
+新遊戲放到最左邊。
+
+🟡 此區看 mini 怎麼調整，待補
+
+![大廳-首頁版面設定示意圖](images/遊戲上線/遊戲開放 (2).jpg)
 
 ### 上線後追蹤
 

@@ -228,11 +228,11 @@
     // 依網址路徑判斷這頁屬於首頁哪個大分類（跟 mkdocs.yml 的 nav 分類對應）
     function getPageCategory(){
       var path = decodeURIComponent(location.pathname);
+      if(/\/(BUG|友善遊戲)/.test(path)) return '其他文件教學';
       if(/\/遊戲/.test(path)) return '遊戲類教學';
       if(/\/(營運|換皮|抽獎|直播|其他抽獎|代言人)/.test(path)) return '營運活動教學';
       if(/\/競品/.test(path)) return '競品指南';
       if(/\/(文件格式|git)/i.test(path)) return 'Git使用教學';
-      if(/\/BUG/.test(path)) return '其他文件教學';
       return '其他';
     }
 
