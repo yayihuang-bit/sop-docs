@@ -188,7 +188,7 @@
 
 ---
 
-<h2 style="color:#5b7c99;">📘 其他文件教學</h2>
+<h2 style="color:#5b7c99;">📘 其他文件</h2>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 

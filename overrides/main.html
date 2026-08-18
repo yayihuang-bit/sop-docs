@@ -216,20 +216,20 @@
   {{ super() }}
   <script>
     // ════ 我的常用連結（每人存自己瀏覽器，不同人不同份，依來源分類）════
-    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', 'Git使用教學', '包鑽商城', '其他文件教學', '其他'];
+    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', 'Git使用教學', '包鑽商城', '其他文件', '其他'];
     var CATEGORY_COLORS = {
       '遊戲類教學': { fg: '#7c6a9c', bg: '#f2f0f5' },
       '營運活動教學': { fg: '#a8734f', bg: '#f7f0e8' },
       '競品指南': { fg: '#6f8f76', bg: '#eff4f0' },
       'Git使用教學': { fg: '#2f8f83', bg: '#e6f3f1' },
       '包鑽商城': { fg: '#9c5a8f', bg: '#f5eef3' },
-      '其他文件教學': { fg: '#5b7c99', bg: '#eef2f6' },
+      '其他文件': { fg: '#5b7c99', bg: '#eef2f6' },
       '其他': { fg: '#888', bg: '#f2f2f2' }
     };
     // 依網址路徑判斷這頁屬於首頁哪個大分類（跟 mkdocs.yml 的 nav 分類對應）
     function getPageCategory(){
       var path = decodeURIComponent(location.pathname);
-      if(/\/(BUG|友善遊戲|其他文件教學)/.test(path)) return '其他文件教學';
+      if(/\/(BUG|友善遊戲|其他文件教學)/.test(path)) return '其他文件';
       if(/\/包鑽商城/.test(path)) return '包鑽商城';
       if(/\/遊戲/.test(path)) return '遊戲類教學';
       if(/\/(營運|換皮|抽獎|直播|其他抽獎|代言人|甘特)/.test(path)) return '營運活動教學';
