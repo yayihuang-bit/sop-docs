@@ -174,6 +174,20 @@
 
 ---
 
+<h2 style="color:#9c5a8f;">💎 包鑽商城</h2>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
+
+<div style="border:2px solid #9c5a8f;border-radius:12px;padding:24px;background:#f5eef3;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#9c5a8f;margin:0 0 12px 0;">💎 包鑽商城</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">🟡 待補充</p>
+<a href="/sop-docs/包鑽商城/" style="display:inline-block;background:#9c5a8f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
+</div>
+
+---
+
 <h2 style="color:#5b7c99;">📘 其他文件教學</h2>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
