@@ -56,6 +56,8 @@
 
 <h2 style="color:#a8734f;">🦆 營運活動教學</h2>
 
+<h3 style="color:#a8734f;">流程總覽</h3>
+
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
@@ -65,22 +67,16 @@
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
-<a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+<h3 style="color:#a8734f;margin:0 0 12px 0;">📅 營運活動執行流程</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">一般營運活動從排程規劃到上線的時間軸</p>
+<a href="/sop-docs/營運活動執行流程/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
-<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">📝 營運文案寫法</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">雙平台文案寫法 & 營運活動文案寫法</p>
-<a href="/sop-docs/營運文案寫法/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
-<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">🧩 後臺設定營運活動公告</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">從零建立一個營運活動最基礎的設定</p>
-<a href="/sop-docs/營運活動基本設定/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
-</div>
+<h3 style="color:#a8734f;">推廣活動素材</h3>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">🖼️ 換皮資訊</h3>
@@ -94,6 +90,42 @@
 <a href="/sop-docs/抽獎_索引/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
+</div>
+
+<h3 style="color:#a8734f;">文案</h3>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">✏️ 文案新增/調整流程</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">當遊戲/活動 info/官網表格區做更新</p>
+<a href="/sop-docs/文案調整/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">📝 營運文案寫法</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">雙平台文案寫法 & 營運活動文案寫法</p>
+<a href="/sop-docs/營運文案寫法/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
+</div>
+
+<h3 style="color:#a8734f;">系統工具／後台</h3>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">🧩 後臺設定營運活動公告</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">從零建立一個營運活動最基礎的設定</p>
+<a href="/sop-docs/營運活動基本設定/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
+<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
+<h3 style="color:#a8734f;margin:0 0 12px 0;">🚀 營運活動自動發布教學</h3>
+<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">讓系統自動設定活動文章</p>
+<a href="/sop-docs/營運_自動發布指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
+</div>
+
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📄 活動文件生成教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">製作範本、生成活動文案</p>
@@ -104,12 +136,6 @@
 <h3 style="color:#a8734f;margin:0 0 12px 0;">📢 推播教學</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">自動發送推播、追蹤成效</p>
 <a href="/sop-docs/營運_推播教學.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
-</div>
-
-<div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">🚀 營運活動自動發布教學</h3>
-<p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">讓系統自動設定活動文章</p>
-<a href="/sop-docs/營運_自動發布指南.html" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
