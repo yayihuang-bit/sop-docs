@@ -594,6 +594,7 @@
   <pre><code>cd src
 node google-login.js</code></pre>
   <p>在彈出的瀏覽器完成 Google 登入後，再重新開啟控制台。</p>
+  <div class="info-box">💡 如果重新登入後問題還是沒解決，把 <code>系統資料/google_auth</code> 這個資料夾（存登入狀態的地方）整個刪掉，再重跑一次 <code>node google-login.js</code> 重新登入一次，通常就會恢復正常。（⚠️ 目前不確定是哪個情況會觸發這個問題，只記得刪掉這個資料夾能解決）</div>
 
   <h3>Q：試算表狀態沒有更新？</h3>
   <p>確認 ⚙️ 設定中的 Google Email 是否填寫正確。</p>

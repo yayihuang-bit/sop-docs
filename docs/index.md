@@ -115,7 +115,7 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:30px 0;">
 
 <div style="border:2px solid #a8734f;border-radius:12px;padding:24px;background:#f7f0e8;text-align:center;display:flex;flex-direction:column;">
-<h3 style="color:#a8734f;margin:0 0 12px 0;">🧩 後臺設定營運活動公告</h3>
+<h3 style="color:#a8734f;margin:0 0 12px 0;">🧩 後臺設定營運活動公告基本須知</h3>
 <p style="color:#555;font-size:15px;margin:0 0 auto 0;flex-grow:1;">從零建立一個營運活動最基礎的設定</p>
 <a href="/sop-docs/營運活動基本設定/" style="display:inline-block;background:#a8734f;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;margin-top:auto;">查看</a>
 </div>
