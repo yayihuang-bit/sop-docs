@@ -1,0 +1,118 @@
+/* 頂部導覽列改為石頭色系 */
+[data-md-color-primary] {
+  --md-primary-fg-color: #0c0a09 !important;
+  --md-primary-fg-color--light: #292524 !important;
+  --md-primary-fg-color--dark: #000000 !important;
+}
+
+.md-header,
+.md-tabs {
+  background: linear-gradient(90deg, #0c0a09 0%, #57534e 100%) !important;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 700 !important;
+}
+
+.md-typeset h2 {
+  margin-top: 40px !important;
+}
+
+/* 緊接在頁首版本資訊（blockquote）後的第一個 h2 保持較近 */
+.md-typeset blockquote + h2 {
+  margin-top: 16px !important;
+}
+
+.md-typeset blockquote {
+  margin-bottom: 12px !important;
+}
+
+/* 黃底引用區塊自動加 💡 */
+.md-typeset blockquote > :first-child::before {
+  content: "🦉 ";
+  font-size: 2em;
+  vertical-align: -0.2em;
+}
+
+/* 粗體黃底重點提醒自動加 ⚠️，寫 <mark>**文字**</mark> 就好，不用手動打警告符號 */
+.md-typeset mark::before {
+  content: "⚠️ ";
+}
+
+.md-typeset table {
+  width: 100% !important;
+  table-layout: fixed;
+  font-size: inherit !important;
+}
+
+/* 表格內文字預設不換行；真的太長需要換行的儲存格，個別加 class="wrap" */
+.md-typeset table td,
+.md-typeset table th {
+  white-space: nowrap;
+}
+.md-typeset table td.wrap,
+.md-typeset table th.wrap {
+  white-space: normal;
+}
+
+/* 數字清單改為藍底白字圓框 */
+.md-typeset ol,
+.md-typeset ol ol {
+  list-style: none;
+  counter-reset: step;
+  padding-left: 0;
+}
+.md-typeset ol > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 34px;
+  margin-bottom: 8px;
+}
+.md-typeset ol > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: calc((1.6em - 23px) / 2 * (16 / 13));
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 23px;
+  text-align: center;
+  letter-spacing: 0;
+  text-indent: 0;
+  display: block;
+}
+
+/* 程式碼區塊（```）字級跟內文一樣大，不用 Material 預設的縮小字 */
+.md-typeset pre,
+.md-typeset pre > code,
+.md-typeset code {
+  font-size: inherit !important;
+}
+
+/* 搜尋結果的文字預覽字級跟內文一樣大，不用 Material 預設的縮小字 */
+.md-search-result__article {
+  font-size: 16px !important;
+}
+
+/* 搜尋結果裡符合的子標題（h1~h4）也要跟著放大，不然會被 Material 自己的字級蓋掉 */
+.md-search-result__article h1,
+.md-search-result__article h2,
+.md-search-result__article h3,
+.md-search-result__article h4 {
+  font-size: 18px !important;
+}
+
+/* 內容圖片自動加黑色邊框（裝飾用 GIF 不受影響） */
+.md-typeset img[src$=".png"],
+.md-typeset img[src$=".jpg"],
+.md-typeset img[src$=".jpeg"] {
+  border: 1px solid #000;
+  border-radius: 4px;
+}

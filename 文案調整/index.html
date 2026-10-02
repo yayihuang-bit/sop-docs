@@ -1,0 +1,2536 @@
+
+<!doctype html>
+<html lang="zh-TW" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://yayihuang-bit.github.io/sop-docs/%E6%96%87%E6%A1%88%E8%AA%BF%E6%95%B4/">
+      
+      
+        <link rel="prev" href="../%E7%94%98%E7%89%B9%E5%9C%96%E8%BD%89%E6%8F%9B%E5%B7%A5%E5%85%B7/">
+      
+      
+        <link rel="next" href="../%E7%87%9F%E9%81%8B%E6%96%87%E6%A1%88%E5%AF%AB%E6%B3%95/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>文案新增/調整流程 - SOP 文件</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  <style>
+    /* ════ 顏色變數 ════ */
+    :root {
+      --primary: #1a73e8;
+      --primary-light: #e8f0fe;
+      --warn-bg: #fff8e1;
+      --warn-border: #f9a825;
+      --tip-bg: #e8f5e9;
+      --tip-border: #43a047;
+      --code-bg: #f5f5f5;
+      --border: #e0e0e0;
+      --text: #202124;
+      --text-muted: #5f6368;
+    }
+
+    /* ════ 隱藏 MkDocs 自動產生的頁面 H1 標題 ════ */
+    .md-content__inner > h1 {
+      display: none !important;
+    }
+
+    /* ════ 縮小 h2 頂部空隙 ════ */
+    .md-typeset h2 {
+      margin-top: 12px !important;
+    }
+    .md-typeset blockquote {
+      margin-bottom: 12px !important;
+    }
+
+    /* ════ MkDocs 基礎樣式美化 ════ */
+    .md-typeset {
+      color: var(--text);
+    }
+
+    .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4, .md-typeset h5, .md-typeset h6 {
+      color: var(--text);
+    }
+
+    .md-typeset h2 {
+      border-bottom: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .md-typeset a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .md-typeset a:hover {
+      text-decoration: underline;
+    }
+
+    /* ════ 表格美化 ════ */
+    .md-typeset table {
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .md-typeset thead th {
+      background: var(--primary);
+      color: #fff;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+      border: none;
+    }
+
+    .md-typeset td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .md-typeset tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .md-typeset tbody tr:hover {
+      background-color: var(--primary-light);
+    }
+
+    /* ════ 程式碼塊美化 ════ */
+    .md-typeset code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--text);
+      font-family: "Consolas", "Monaco", monospace;
+    }
+
+    .md-typeset pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      margin: 14px 0;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .md-typeset pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* ════ 引用和特殊框 ════ */
+    .md-typeset blockquote {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+
+    /* ════ 提示框（綠色） ════ */
+    .md-typeset .admonition.tip,
+    .md-typeset .admonition.hint,
+    .md-typeset .admonition.note {
+      border-left: 4px solid var(--tip-border);
+      background: var(--tip-bg);
+    }
+
+    /* ════ 警告框（黃色） ════ */
+    .md-typeset .admonition.warning,
+    .md-typeset .admonition.caution,
+    .md-typeset .admonition.attention {
+      border-left: 4px solid var(--warn-border);
+      background: var(--warn-bg);
+    }
+
+    /* ════ 隱藏左側導航（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-sidebar--primary {
+        display: none !important;
+      }
+    }
+
+    /* ════ 隱藏漢堡選單按鈕（僅桌機） ════ */
+    @media (min-width: 1221px) {
+      .md-header__button[for="__drawer"] {
+        display: none !important;
+      }
+    }
+
+    .md-content {
+      margin-left: 0 !important;
+    }
+
+    .md-content__inner {
+      max-width: none !important;
+    }
+
+    .md-typeset {
+      max-width: none !important;
+    }
+
+    /* ════ 平板版（1024px - 1220px） ════ */
+    @media (max-width: 1220px) and (min-width: 768px) {
+      .md-sidebar--primary {
+        width: 70vw !important;
+        max-width: 280px !important;
+      }
+    }
+
+    /* ════ 手機版（小於 768px） ════ */
+    @media (max-width: 768px) {
+      .md-sidebar--primary {
+        width: 65vw !important;
+        max-width: 240px !important;
+      }
+    }
+
+    /* ════ 超小手機（480px 以下） ════ */
+    @media (max-width: 480px) {
+      .md-sidebar--primary {
+        width: 60vw !important;
+        max-width: 200px !important;
+      }
+    }
+
+    /* ════ 菜單打開時覆蓋效果 ════ */
+    @media (max-width: 1220px) {
+      #__drawer:checked ~ .md-overlay {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 8 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+      }
+
+      .md-sidebar--primary {
+        z-index: 9 !important;
+      }
+    }
+
+  </style>
+
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳轉到
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="頁首">
+    <a href=".." title="SOP 文件" class="md-header__button md-logo" aria-label="SOP 文件" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SOP 文件
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              文案新增/調整流程
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜尋" placeholder="搜尋" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="搜尋">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清除" aria-label="清除" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜尋引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="標籤" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首頁
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9A%E5%B7%A5%E4%BD%9C_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  遊戲類教學
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../%E7%87%9F%E9%81%8B_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  營運活動教學
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E7%AB%B6%E5%93%81%E6%8C%87%E5%8D%97_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  競品指南
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Git%E4%BD%BF%E7%94%A8%E6%95%99%E5%AD%B8_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  Git使用教學
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../%E5%8C%85%E9%91%BD%E5%95%86%E5%9F%8E/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  包鑽商城
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../%E5%85%B6%E4%BB%96%E6%96%87%E4%BB%B6%E6%95%99%E5%AD%B8_%E7%B4%A2%E5%BC%95/" class="md-tabs__link">
+          
+  
+  
+  其他文件
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="導覽列" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="SOP 文件" class="md-nav__button md-logo" aria-label="SOP 文件" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SOP 文件
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲類教學
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    遊戲類教學
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9A%E5%B7%A5%E4%BD%9C_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E4%B8%8A%E7%B7%9ASOP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲上線設定
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E9%81%8A%E6%88%B2%E8%AA%BF%E6%95%B4%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    遊戲調整流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    營運活動教學
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    營運活動教學
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B%E4%BC%81%E5%8A%83%E5%9F%B7%E8%A1%8C%E5%B7%A5%E4%BD%9C%E5%A4%A7%E7%B6%B1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    營運企劃執行工作大綱
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B%E6%B4%BB%E5%8B%95%E5%9F%B7%E8%A1%8C%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    營運活動執行流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%94%98%E7%89%B9%E5%9C%96%E8%BD%89%E6%8F%9B%E5%B7%A5%E5%85%B7/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    甘特圖轉換工具
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文案新增/調整流程
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文案新增/調整流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目錄">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目錄
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        說明
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        官網HELP製作流程
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="官網HELP製作流程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#info-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        新增全新INFO-舉例：新魚機要做官網INFO
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#info-info_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        修改現有INFO-舉例：舊牌桌要修改官網INFO
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apphelp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        遊戲本身（APP內）Help 調整
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        連帶影響項目調整
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="連帶影響項目調整">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        容易被波及的項目範例-活動類
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        容易被波及的項目範例-系統類
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        更新流程參考（以新增新魚機為例）：
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B%E6%96%87%E6%A1%88%E5%AF%AB%E6%B3%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    營運文案寫法
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%87%9F%E9%81%8B%E6%B4%BB%E5%8B%95%E5%9F%BA%E6%9C%AC%E8%A8%AD%E5%AE%9A/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    後臺設定營運活動公告基本須知
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    換皮資訊
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    換皮資訊
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8F%9B%E7%9A%AE%E8%B3%87%E8%A8%8A_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E4%BB%A3%E8%A8%80%E4%BA%BA%E6%9B%B4%E6%96%B0%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    代言人更新流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_9" id="__nav_3_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    抽獎
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    抽獎
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8A%BD%E7%8D%8E_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%9B%B4%E6%92%AD%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    直播流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%8A%BD%E7%8D%8E%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    抽獎券推廣流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E5%85%B6%E4%BB%96%E6%8A%BD%E7%8D%8E%E6%B5%81%E7%A8%8B/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    其他抽獎流程
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E7%AB%B6%E5%93%81%E6%8C%87%E5%8D%97_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    競品指南
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git使用教學
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Git使用教學
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Git%E4%BD%BF%E7%94%A8%E6%95%99%E5%AD%B8_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%E6%95%99%E5%AD%B8_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    文件格式教學
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Git%E7%89%88%E6%9C%AC%E6%8E%A8%E9%80%81%E8%88%87%E8%A1%9D%E7%AA%81%E8%99%95%E7%90%86/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    版本推送與衝突處理
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    如何使用GIT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E5%8C%85%E9%91%BD%E5%95%86%E5%9F%8E/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    包鑽商城
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    其他文件
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    其他文件
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E5%85%B6%E4%BB%96%E6%96%87%E4%BB%B6%E6%95%99%E5%AD%B8_%E7%B4%A2%E5%BC%95/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首頁
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUG%E5%9B%9E%E5%A0%B1%E6%96%B9%E5%BC%8F/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BUG回報方式
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../%E5%8F%8B%E5%96%84%E9%81%8A%E6%88%B2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    友善遊戲
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+                  
+
+
+
+  <h1>文案新增/調整流程</h1>
+
+<p><a href="/sop-docs/">← 返回首頁</a></p>
+<hr />
+<p style="font-size:2em; font-weight:bold; margin:20px 0 8px 0; display:flex; align-items:center; gap:8px;"><img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"> 文案新增/調整流程 <img src="https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif" width="50"></p>
+
+<blockquote>
+<p>版本：v1.0　撰寫日期：2026-07-31　BY yayihuang-bit
+⚠️ 版本、撰寫日期、BY 都需要手動填寫更新</p>
+</blockquote>
+<h2 id="_1">說明</h2>
+<p>遊戲／活動新增或調整時，官網 info 要做對應調整；除了本身 info 之外，也可能連帶影響其他活動或系統，需要一併檢查改動。整篇文件分兩階段：</p>
+<ol>
+<li><a href="#own-info-adjust">官網HELP製作流程</a>：新增全新INFO／修改現有INFO</li>
+<li><a href="#affected-adjust">連帶影響項目調整</a>：檢查是否波及其他活動或系統，一併更新</li>
+</ol>
+<p><a id="own-info-adjust"></a></p>
+<h2 id="help">官網HELP製作流程</h2>
+<p>於 LINE 群「包你發-遊戲Help討論群組」處理：</p>
+<p>⚠️ 目前主要負責窗口是<strong>小藍</strong>（行銷美術）</p>
+<ol>
+<li>於群組對話中提供 <a href="https://drive.google.com/drive/folders/13szAAYtRiiy77VlxkdRIfDBTMMnjxyKn">HELP 雲端資料夾</a>中的文案連結</li>
+<li>
+<p>完成後，行銷美術會於群組通知（例如：「官網 HELP 已完成，賠率表部分也已修正，再麻煩協助確認」）</p>
+<p>檔案釋出於 Fileserver：<code>I:\行銷部\02_行銷美術\包你發娛樂城\03_官網遊戲Help</code></p>
+</li>
+</ol>
+<p><a id="add-new-info"></a></p>
+<h3 id="info-info">新增全新INFO-舉例：新魚機要做官網INFO</h3>
+<p>請參照 LINE 記事本，建立成員清單，方便行銷美術們需要溝通時好找人</p>
+<p>記事本格式範例：</p>
+<div class="highlight"><pre><span></span><code>------遊戲名稱 Help製作---------
+數學： 阿忠
+美術： 凱惠
+QA ： Gary
+行銷美術：
+</code></pre></div>
+<p><a id="modify-info"></a></p>
+<h3 id="info-info_1">修改現有INFO-舉例：舊牌桌要修改官網INFO</h3>
+<p>不須建立記事本，並附上需求的說明及預計需更新的時間</p>
+<p>調整參考範例：</p>
+<blockquote>
+<p>@小藍 配合柏青斯洛遊戲門檻調整，官網遊戲說明、<a href="https://drive.google.com/drive/folders/1ROZ83xDibrOgM8Yd6aJC56bnEq3O4TEq">VIP 層級表格</a>已做調整，預計8/17(一)早上12點更新</p>
+</blockquote>
+<p><a id="ingame-info"></a></p>
+<h3 id="apphelp">遊戲本身（APP內）Help 調整</h3>
+<p><mark><strong>遊戲本身 Help 製作流程依照各產線安排為主</strong></mark></p>
+<p><a id="affected-adjust"></a></p>
+<h2 id="_2">連帶影響項目調整</h2>
+<p>⚠️ <strong>容易忘</strong>：除本身遊戲INFO外，活動被「其他更新」連帶影響（例如魚機更新，可能波及通行證、魚王積分榜、魚機積分任務、抽獎券）。負責這個更新的通常是<strong>不同的開發單位</strong>，加上這類項目沒有自動讀取數值的空間、也沒人專責檢查，最容易漏掉</p>
+<p><mark><strong>下方項目為目前已知範例，反映當下最新盤點結果；若後續沒有持續維護更新，內容僅供參考，仍須以實際狀況為準</strong></mark></p>
+<p><a id="affected-activity"></a></p>
+<h3 id="-">容易被波及的項目範例-活動類</h3>
+<ul>
+<li>
+<p><strong>通行證</strong>：任務條件計算</p>
+<p><img alt="通行證任務條件示意圖" src="../images/%E6%96%87%E6%A1%88%E8%AA%BF%E6%95%B4/%E9%80%9A%E8%A1%8C%E8%AD%89%E4%BB%BB%E5%8B%99%E6%A2%9D%E4%BB%B6.png" /></p>
+</li>
+<li>
+<p><strong>魚王積分榜</strong>：新增遊戲、新海皇的積分</p>
+</li>
+<li>
+<p><strong>魚機積分任務</strong>：新增遊戲、新海皇</p>
+</li>
+<li>
+<p><strong>抽獎券</strong>：有新遊戲時要更新</p>
+</li>
+</ul>
+<p><a id="affected-system"></a></p>
+<h3 id="-_1">容易被波及的項目範例-系統類</h3>
+<p>請參考<a href="/sop-docs/遊戲調整流程/#threshold-adjust">遊戲調整流程－調整進入門檻</a></p>
+<h3 id="_3">更新流程參考（以新增新魚機為例）：</h3>
+<ol>
+<li>
+<p>盤點項目影響活動範圍</p>
+</li>
+<li>
+<p><a href="https://docs.google.com/spreadsheets/d/11WV7ZNaF5fkPnuLllWUHvoDBpDIv6eB7ncCicSIJaIs/edit?gid=868125360#gid=868125360">包你發更新計畫表</a>確認上線時間，與 mini 同步更新內容</p>
+</li>
+<li>
+<p>更新<a href="https://drive.google.com/drive/folders/15Qzi5Hl75W9MeXPmoFbSLFHN9-VSSOeK">活動規格</a></p>
+</li>
+<li>
+<p>完成後在 Slack <a href="https://yiletechnology.slack.com/archives/C0AH47UFFJQ">包你發營運組</a>同步給開發單位</p>
+<p><img alt="Slack 同步範例" src="../images/%E6%96%87%E6%A1%88%E8%AA%BF%E6%95%B4/%E8%AA%BF%E6%95%B4%E5%90%8C%E6%AD%A5.png" /></p>
+</li>
+<li>
+<p>在<a href="https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1234248588#gid=1234248588">營運文件總覽</a>中，活動更新內容註記更新內容</p>
+<p><img alt="營運文件表更新內容示意圖" src="../images/%E6%96%87%E6%A1%88%E8%AA%BF%E6%95%B4/%E7%87%9F%E9%81%8B%E6%96%87%E4%BB%B6%E8%A1%A8%E6%9B%B4%E6%96%B0.png" /></p>
+</li>
+<li>
+<p>更新<a href="https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=1716214522#gid=1716214522">活動自動化範本</a></p>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到頂端
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tracking", "navigation.tabs", "navigation.top", "navigation.expand", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u8907\u88fd", "clipboard.copy": "\u8907\u88fd", "search.result.more.one": "\u6b64\u9801\u5c1a\u6709 1 \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.more.other": "\u6b64\u9801\u5c1a\u6709 # \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.none": "\u6c92\u6709\u7b26\u5408\u7684\u9805\u76ee", "search.result.one": "\u627e\u5230 1 \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.other": "\u627e\u5230 # \u500b\u7b26\u5408\u7684\u9805\u76ee", "search.result.placeholder": "\u6253\u5b57\u9032\u884c\u641c\u5c0b", "search.result.term.missing": "\u7f3a\u5c11\u5b57\u8a5e", "select.version": "\u9078\u64c7\u7248\u672c"}, "version": null}</script>
+    
+    
+  
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  <script>
+    // ════ 我的常用連結（每人存自己瀏覽器，不同人不同份，依來源分類）════
+    var CATEGORY_ORDER = ['遊戲類教學', '營運活動教學', '競品指南', 'Git使用教學', '包鑽商城', '其他文件', '其他'];
+    var CATEGORY_COLORS = {
+      '遊戲類教學': { fg: '#7c6a9c', bg: '#f2f0f5' },
+      '營運活動教學': { fg: '#a8734f', bg: '#f7f0e8' },
+      '競品指南': { fg: '#6f8f76', bg: '#eff4f0' },
+      'Git使用教學': { fg: '#2f8f83', bg: '#e6f3f1' },
+      '包鑽商城': { fg: '#9c5a8f', bg: '#f5eef3' },
+      '其他文件': { fg: '#5b7c99', bg: '#eef2f6' },
+      '其他': { fg: '#888', bg: '#f2f2f2' }
+    };
+    // 依網址路徑判斷這頁屬於首頁哪個大分類（跟 mkdocs.yml 的 nav 分類對應）
+    function getPageCategory(){
+      var path = decodeURIComponent(location.pathname);
+      if(/\/(BUG|友善遊戲|其他文件教學)/.test(path)) return '其他文件';
+      if(/\/包鑽商城/.test(path)) return '包鑽商城';
+      if(/\/遊戲/.test(path)) return '遊戲類教學';
+      if(/\/(營運|換皮|抽獎|直播|其他抽獎|代言人|甘特)/.test(path)) return '營運活動教學';
+      if(/\/競品/.test(path)) return '競品指南';
+      if(/\/(文件格式|git)/i.test(path)) return 'Git使用教學';
+      return '其他';
+    }
+
+    var DEFAULT_FAVORITES = [
+      { text: '包你發更新計畫表', href: 'https://docs.google.com/spreadsheets/d/11WV7ZNaF5fkPnuLllWUHvoDBpDIv6eB7ncCicSIJaIs/edit?gid=868125360#gid=868125360', category: '遊戲類教學' },
+      { text: '營運文件總覽', href: 'https://docs.google.com/spreadsheets/d/1qmRZ-OT-PW6IzQFoJatZKf8fMUwnnBX-gyYHZCxuL1E/edit?gid=1234248588#gid=1234248588', category: '營運活動教學' },
+      { text: '抽獎券規劃表', href: 'https://docs.google.com/spreadsheets/d/1QLXHs-ObTqAVVp1uwm841Lcsq3lhQAXJJslqW5wVq84/edit?gid=1161207418#gid=1161207418', category: '營運活動教學' },
+      { text: '營運自動化文件表', href: 'https://docs.google.com/spreadsheets/d/1uIYYoJn2iYkWIx9oZLdABD2x1kUtnI8dEem9Uv0QbGc/edit?gid=0#gid=0', category: '營運活動教學' }
+    ];
+    var FAVORITES_KEY = 'sop_favorites';
+    function loadFavorites(){
+      try {
+        var raw = localStorage.getItem(FAVORITES_KEY);
+        if(raw === null) return DEFAULT_FAVORITES.slice();
+        var list = JSON.parse(raw);
+        // 相容舊資料（分類功能上線前存的）：先試著用網址比對預設清單補回分類，比對不到才歸到「其他」
+        list.forEach(function(f){
+          if(f.category) return;
+          var match = DEFAULT_FAVORITES.find(function(d){ return d.href === f.href; });
+          f.category = match ? match.category : '其他';
+        });
+        return list;
+      } catch(e){ return DEFAULT_FAVORITES.slice(); }
+    }
+    function saveFavorites(list){
+      try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(list)); } catch(e){}
+    }
+    function isFavorited(href){
+      var list = loadFavorites();
+      for(var i=0;i<list.length;i++){ if(list[i].href === href) return true; }
+      return false;
+    }
+    function toggleFavorite(href, text, category){
+      var list = loadFavorites();
+      var idx = -1;
+      for(var i=0;i<list.length;i++){ if(list[i].href === href){ idx = i; break; } }
+      if(idx === -1) list.push({ href: href, text: text, category: category || getPageCategory() });
+      else list.splice(idx, 1);
+      saveFavorites(list);
+      return list;
+    }
+
+    function initPasswordProtection(){
+      if (localStorage.getItem('sop_authenticated') !== 'true') {
+        var overlay = document.createElement('div');
+        overlay.id = 'pwd-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:10001;display:flex;align-items:center;justify-content:center;';
+
+        var box = document.createElement('div');
+        box.style.cssText = 'background:white;padding:40px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.3);text-align:center;';
+
+        box.innerHTML = '<h2 style="margin:0 0 20px 0;color:#333;">需要密碼</h2><input id="pwd-input" type="password" placeholder="請輸入密碼" style="padding:10px;font-size:16px;width:200px;border:1px solid #ccc;border-radius:4px;"><button style="margin-left:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:16px;">確認</button>';
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        var pwdInput = document.getElementById('pwd-input');
+        pwdInput.focus();
+
+        function checkPwd(){
+          if(pwdInput.value === 'asd12345'){
+            localStorage.setItem('sop_authenticated', 'true');
+            overlay.remove();
+            initFlyGif();
+          } else {
+            alert('密碼錯誤');
+            pwdInput.value = '';
+            pwdInput.focus();
+          }
+        }
+
+        box.querySelector('button').onclick = checkPwd;
+        pwdInput.onkeypress = function(e){ if(e.key === 'Enter') checkPwd(); };
+      } else {
+        initFlyGif();
+      }
+    }
+
+    var FLY_GIFS = [
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3Btc3FseWdtNmhueTl0Ym5xcnN6dzI0NWxpaXJmbWk1YWt4NXc4dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/TucOQxQkfvRhY3TiwT/giphy.gif',
+      'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTk2OThsY2JpcTlkdDZvdHdnbzY0ODg4NmlwMzFjZW9ydXR6amxqdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cQmpHM5Rh64iGDQB75/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzB2aHl5M3ZpNDJrZGZyYWJndW44ajc3aHVqaTI5bnI2ODAwcmp1YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2l8BqseoXKPUQMjezi/giphy.gif',
+      'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTl6Y3FicmNqMDZ3Znp0Mm01MnJ3OXRlb3g5emh5MTN1ZTZkdzVqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UpxdwjZ5kXyJcTnbq0/giphy.gif',
+      'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzNubXN1YXgzeDE4d2tuZ3J0eXl5enkwZjNtNHg1cjVhdmtmZjJsdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/HLZuyghzXHvbAvUSwr/giphy.gif',
+      'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif',
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGR4ejhlMGxxNm1zNnF6NDdqYXhzd2h2cTgzc2xhb3Q0aGxsa3loZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lKD6bKCZS2uYWAojCb/giphy.gif',
+      'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExczFpaGpkdDZqbnljMWhjbGN2bHEwYmNxZDR6YjBkZjg2ZGthcGJmciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Qj99zMfyga0erZlczD/giphy.gif'
+    ];
+    var FLY_MAX = 1;
+    var _flyCount = 0;
+    var _flyScheduleTimeout = null;
+
+    FLY_GIFS.forEach(function(u){ new Image().src = u; });
+
+    // ════ 標題兩側的 gif 圖示，每次載入隨機換一個（跟飛行 gif 共用同一個素材池）════
+    (function(){
+      var TITLE_GIF = 'https://media3.giphy.com/media/KOrIxsEQaBJcHgiiqL/giphy.gif';
+      function randomizeTitleGifs(){
+        var imgs = document.querySelectorAll('img[src="' + TITLE_GIF + '"]');
+        if(!imgs.length) return;
+        var pick = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+        imgs.forEach(function(img){ img.src = pick; });
+      }
+      document.addEventListener('DOMContentLoaded', randomizeTitleGifs);
+    })();
+
+    function initFlyGif() {
+
+      function triggerFlyGif(){
+        if(_flyCount >= FLY_MAX) return;
+        _flyCount++;
+        var gif = FLY_GIFS[Math.floor(Math.random() * FLY_GIFS.length)];
+        var topPct = (5 + Math.random() * 85) + '%';
+        var dur = (2.5 + Math.random() * 5).toFixed(1) + 's';
+        var size = (100 + Math.random() * 180) + 'px';
+        var el = document.createElement('img');
+        el.src = gif;
+        var startTop = parseFloat(topPct);
+        el.style.cssText = 'position:fixed;right:-200px;top:'+topPct+';width:'+size+';height:auto;z-index:500;pointer-events:all;cursor:grab;border:none;outline:none;box-shadow:none;background:transparent;';
+        document.body.appendChild(el);
+        var _durMs = parseFloat(dur) * 1000;
+        var _startTime = Date.now();
+        var _waveAmp = 8 + Math.random() * 12;
+        var _waveFreq = 1.5 + Math.random() * 2;
+        var _flyRaf = null;
+        var _dragging = false;
+        function animateFly(){
+          if(_dragging){ _flyRaf = requestAnimationFrame(animateFly); return; }
+          var elapsed = Date.now() - _startTime;
+          var progress = elapsed / _durMs;
+          if(progress >= 1){
+            if(el.parentNode){el.parentNode.removeChild(el); _flyCount--;}
+            scheduleFlyGif();
+            return;
+          }
+          var x = (1 - progress) * (window.innerWidth + 200) - 200;
+          el.style.right = 'auto';
+          el.style.left = x + 'px';
+          var topVal = startTop + Math.sin(progress * Math.PI * 2 * _waveFreq) * _waveAmp;
+          el.style.top = topVal + '%';
+          _flyRaf = requestAnimationFrame(animateFly);
+        }
+        el.onmousedown = function(){ _dragging = true; };
+        el.onmouseup = function(){ _dragging = false; };
+        el.onmouseleave = function(){ _dragging = false; };
+        animateFly();
+      }
+
+      function scheduleFlyGif(){
+        if(document.hidden) return;
+        if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
+        _flyScheduleTimeout = setTimeout(function(){
+          if(!document.hidden){
+            triggerFlyGif();
+          }
+        }, (30 + Math.random() * 60) * 1000);
+      }
+
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden){
+          if(_flyScheduleTimeout) clearTimeout(_flyScheduleTimeout);
+        } else {
+          scheduleFlyGif();
+        }
+      });
+
+      if(!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) && window.innerWidth >= 1024){
+        scheduleFlyGif();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPasswordProtection);
+    } else {
+      initPasswordProtection();
+    }
+
+    // 修正回到頂部按鈕：只滑到頂部，不打開目錄
+    document.addEventListener('DOMContentLoaded', function(){
+      var backToTopBtn = document.querySelector('.md-top');
+      if(backToTopBtn){
+        backToTopBtn.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return false;
+        });
+      }
+    });
+
+    // ════ 自動排序卡片（根據點擊紀錄）════
+    (function(){
+      var KEY = 'sop_clicks';
+      function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+      function inc(href){ var c=load(); c[href]=(c[href]||0)+1; localStorage.setItem(KEY,JSON.stringify(c)); }
+
+      function sortPage(){
+        var counts = load();
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+
+        // 只有索引頁（有 grid 卡片）才執行排序
+        if(!inner.querySelector('div[style*="display:grid"]')) return;
+
+        // 收集各分類區塊（h2 + 後續元素，到下一個 h2 或 hr 為止）
+        var allNodes = Array.from(inner.children);
+        var sections = [];
+        var i = 0;
+        while(i < allNodes.length){
+          var node = allNodes[i];
+          if(node.tagName === 'H2'){
+            // 「我的常用連結」固定釘在最前面，不參與點擊排序
+            var isPinned = node.textContent.indexOf('我的常用連結') !== -1;
+            var sec = { nodes:[node], total:0 };
+            i++;
+            while(i < allNodes.length && allNodes[i].tagName !== 'H2' && allNodes[i].tagName !== 'HR'){
+              var child = allNodes[i];
+              sec.nodes.push(child);
+              child.querySelectorAll('a[href]').forEach(function(a){
+                sec.total += (counts[a.getAttribute('href')]||0);
+              });
+              i++;
+            }
+            if(i < allNodes.length && allNodes[i].tagName === 'HR') i++; // 跳過 hr
+            if(!isPinned) sections.push(sec);
+          } else { i++; }
+        }
+
+        // 依點擊數排序分類區塊
+        if(sections.length >= 2){
+          sections.sort(function(a,b){ return b.total - a.total; });
+          sections.forEach(function(sec, idx){
+            sec.nodes.forEach(function(n){ inner.appendChild(n); });
+            if(idx < sections.length-1){
+              var hr = document.createElement('hr');
+              inner.appendChild(hr);
+            }
+          });
+        }
+
+        // 依點擊數排序每個 grid 內的卡片
+        inner.querySelectorAll('div[style*="display:grid"]').forEach(function(grid){
+          var cards = Array.from(grid.children);
+          if(cards.length < 2) return;
+          cards.sort(function(a,b){
+            var aEl = a.querySelector('a[href]');
+            var bEl = b.querySelector('a[href]');
+            var aKey = aEl ? aEl.getAttribute('href') : '';
+            var bKey = bEl ? bEl.getAttribute('href') : '';
+            return (counts[bKey]||0) - (counts[aKey]||0);
+          });
+          cards.forEach(function(c){ grid.appendChild(c); });
+        });
+      }
+
+      function addTracking(){
+        document.querySelectorAll('.md-content__inner a[href]').forEach(function(a){
+          a.addEventListener('click', function(){ inc(this.getAttribute('href')); });
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){ sortPage(); addTracking(); });
+    })();
+
+    // ════ 自動連結彙整（文章頁自動生成）════
+    (function(){
+      // 連結文字太籠統的不列入（會看不懂是什麼）
+      var GENERIC = ['參考', '這裡', '查看', '點此', '連結', '簡報'];
+      var GROUP_ORDER = ['站內文件', '試算表', '簡報', '雲端資料夾', 'Slack 群組', '其他'];
+
+      function build(){
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+        // 索引頁（grid 卡片）不生成
+        if(inner.querySelector('div[style*="display:grid"]')) return;
+
+        var groups = {};
+        GROUP_ORDER.forEach(function(g){ groups[g] = []; });
+        var seen = {};
+        var count = 0;
+
+        inner.querySelectorAll('a[href]').forEach(function(a){
+          var raw = a.getAttribute('href') || '';
+          if(raw.charAt(0) === '#' || raw.indexOf('mailto:') === 0) return;
+          var text = (a.textContent || '').trim();
+          if(!text || text.charAt(0) === '←') return;
+          if(GENERIC.indexOf(text) !== -1) return;
+          if(seen[a.href]) return;
+          seen[a.href] = true;
+
+          var g;
+          if(a.host === location.host) g = '站內文件';
+          else if(a.href.indexOf('docs.google.com/spreadsheets') !== -1) g = '試算表';
+          else if(a.href.indexOf('docs.google.com/presentation') !== -1) g = '簡報';
+          else if(a.href.indexOf('drive.google.com') !== -1) g = '雲端資料夾';
+          else if(a.href.indexOf('slack.com') !== -1) g = 'Slack 群組';
+          else g = '其他';
+          groups[g].push({ text: text, href: a.href, external: a.host !== location.host });
+          count++;
+        });
+
+        if(count === 0) return;
+
+        var h2 = document.createElement('h2');
+        h2.id = 'link-summary';
+        h2.textContent = '連結彙整';
+        var note = document.createElement('span');
+        note.style.cssText = 'font-size:16px; font-weight:400; color:#888; margin-left:10px;';
+        note.textContent = '（自動彙整內文連結，「參考」「這裡」等籠統命名不列入）';
+        h2.appendChild(note);
+
+        var table = document.createElement('table');
+        table.style.cssText = 'width:100%; table-layout:fixed;';
+        var thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th style="width:18%">分類</th><th style="width:82%">連結</th></tr>';
+        table.appendChild(thead);
+        var tbody = document.createElement('tbody');
+        GROUP_ORDER.forEach(function(g){
+          if(!groups[g].length) return;
+          var tr = document.createElement('tr');
+          var td1 = document.createElement('td');
+          td1.textContent = g;
+          var td2 = document.createElement('td');
+          groups[g].forEach(function(item, idx){
+            if(idx > 0) td2.appendChild(document.createTextNode('、'));
+            var link = document.createElement('a');
+            link.href = item.href;
+            link.textContent = item.text;
+            if(item.external) link.target = '_blank';
+            td2.appendChild(link);
+
+            var star = document.createElement('span');
+            star.textContent = isFavorited(item.href) ? '★' : '☆';
+            star.title = '加入／移除我的常用連結';
+            star.style.cssText = 'cursor:pointer; margin-left:2px; margin-right:6px; user-select:none; color:#a8734f;';
+            star.addEventListener('click', function(){
+              toggleFavorite(item.href, item.text);
+              star.textContent = isFavorited(item.href) ? '★' : '☆';
+            });
+            td2.appendChild(star);
+          });
+          tr.appendChild(td1);
+          tr.appendChild(td2);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        // 插在版本資訊（第一個 blockquote）後面，找不到就插在最前面
+        var bq = inner.querySelector(':scope > blockquote');
+        if(bq){
+          bq.parentNode.insertBefore(table, bq.nextSibling);
+          bq.parentNode.insertBefore(h2, table);
+        } else {
+          inner.insertBefore(table, inner.firstChild);
+          inner.insertBefore(h2, table);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', build);
+    })();
+
+    // ════ 自動目錄（文章頁自動生成，依 h2 標題產生跳轉清單）════
+    (function(){
+      function build(){
+        var inner = document.querySelector('.md-content__inner');
+        if(!inner) return;
+        // 索引頁（grid 卡片）不生成
+        if(inner.querySelector('div[style*="display:grid"]')) return;
+
+        var headings = Array.from(inner.querySelectorAll(':scope > h2')).filter(function(h){
+          return h.id && h.id !== 'link-summary';
+        });
+        if(headings.length < 2) return;
+
+        var colors = CATEGORY_COLORS[getPageCategory()] || CATEGORY_COLORS['其他'];
+
+        var box = document.createElement('div');
+        box.style.cssText = 'border:1px solid ' + colors.fg + '33; border-radius:8px; padding:16px 20px; background:' + colors.bg + '; margin:16px 0;';
+
+        var label = document.createElement('strong');
+        label.style.cssText = 'color:' + colors.fg + ';';
+        label.textContent = '📑 目錄';
+        box.appendChild(label);
+
+        var ul = document.createElement('ul');
+        ul.style.cssText = 'margin:8px 0 0 0;';
+        headings.forEach(function(h){
+          var li = document.createElement('li');
+          var a = document.createElement('a');
+          a.href = '#' + h.id;
+          a.textContent = h.textContent;
+          li.appendChild(a);
+          ul.appendChild(li);
+        });
+        box.appendChild(ul);
+
+        // 插在「連結彙整」表格後面（若無則插在版本資訊 blockquote 後面，都沒有則插最前面）
+        var linkSummaryHeading = inner.querySelector('#link-summary');
+        var anchor = linkSummaryHeading ? linkSummaryHeading.nextElementSibling : inner.querySelector(':scope > blockquote');
+        if(anchor){
+          anchor.parentNode.insertBefore(box, anchor.nextSibling);
+        } else {
+          inner.insertBefore(box, inner.firstChild);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', build);
+    })();
+
+    // ════ 首頁「我的常用連結」渲染 ════
+    (function(){
+      function renderFavorites(){
+        var container = document.getElementById('my-favorites-list');
+        if(!container) return;
+
+        var list = loadFavorites();
+        container.innerHTML = '';
+
+        if(!list.length){
+          var empty = document.createElement('p');
+          empty.style.cssText = 'color:#888; font-size:14px;';
+          empty.textContent = '目前沒有常用連結，逛其他頁面時可以點連結旁的 ☆ 加入。';
+          container.appendChild(empty);
+          return;
+        }
+
+        // 依來源分類分組
+        var groups = {};
+        CATEGORY_ORDER.forEach(function(c){ groups[c] = []; });
+        list.forEach(function(item){
+          var c = item.category && groups[item.category] ? item.category : '其他';
+          groups[c].push(item);
+        });
+
+        CATEGORY_ORDER.forEach(function(cat){
+          if(!groups[cat].length) return;
+          var colors = CATEGORY_COLORS[cat];
+
+          var h3 = document.createElement('h3');
+          h3.textContent = cat;
+          h3.style.cssText = 'color:' + colors.fg + '; margin:16px 0 8px 0; font-size:16px;';
+          container.appendChild(h3);
+
+          var wrap = document.createElement('div');
+          wrap.style.cssText = 'display:flex; flex-wrap:wrap; gap:10px; margin-bottom:8px;';
+
+          groups[cat].forEach(function(item){
+            var chip = document.createElement('span');
+            chip.style.cssText = 'display:inline-flex; align-items:center; gap:8px; border:1px solid ' + colors.fg + '; border-radius:20px; padding:6px 10px 6px 16px; background:' + colors.bg + ';';
+
+            var a = document.createElement('a');
+            a.href = item.href;
+            a.textContent = item.text;
+            try {
+              var isExternal = new URL(item.href, location.href).host !== location.host;
+              if(isExternal) a.target = '_blank';
+            } catch(e){}
+            a.style.cssText = 'color:' + colors.fg + '; font-weight:600; text-decoration:none;';
+
+            var remove = document.createElement('span');
+            remove.textContent = '✕';
+            remove.title = '移除這個常用連結';
+            remove.style.cssText = 'cursor:pointer; color:#999; font-size:12px; padding:2px;';
+            remove.addEventListener('click', function(){
+              toggleFavorite(item.href, item.text, item.category);
+              renderFavorites();
+            });
+
+            chip.appendChild(a);
+            chip.appendChild(remove);
+            wrap.appendChild(chip);
+          });
+
+          container.appendChild(wrap);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', renderFavorites);
+    })();
+
+    // ════ 表格儲存格：一行放得下就不換行，放不下才換行（依欄位實際可用寬度判斷）════
+    // 註：table-layout:fixed 底下，「同一欄」所有儲存格共用同一個欄寬——只要欄內
+    // 有一格文字很長把欄撐寬，同欄其他短格的 scrollWidth 量到的也是那個被撐寬後的
+    // 欄寬，不是它自己文字真正的寬度，導致直接量儲存格會誤判。
+    // 解法：用一個隱藏的量尺 <span>（不受表格版面影響）分別量每一格文字「自己」
+    // 不換行時的真實寬度，再跟這一欄依 % 換算出的實際可用寬度比較。
+    (function(){
+      function autoWrapCells(){
+        var probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute; visibility:hidden; white-space:nowrap; top:-9999px; left:-9999px;';
+        document.body.appendChild(probe);
+
+        document.querySelectorAll('.md-typeset table').forEach(function(table){
+          var wrap = table.closest('.md-typeset__scrollwrap');
+          var containerWidth = wrap ? wrap.clientWidth : table.parentElement.clientWidth;
+          if(!containerWidth) return;
+
+          var headerCells = table.querySelectorAll('thead th');
+          var fractions = [];
+          headerCells.forEach(function(th){
+            var w = th.style.width;
+            fractions.push(w && w.indexOf('%') !== -1 ? parseFloat(w) / 100 : null);
+          });
+
+          var rows = table.querySelectorAll('tbody tr');
+          rows.forEach(function(row){
+            var tds = row.children;
+            for(var i = 0; i < tds.length; i++){
+              var td = tds[i];
+              var frac = fractions[i] || (1 / tds.length);
+              var targetPx = containerWidth * frac;
+
+              var cs = getComputedStyle(td);
+              probe.style.fontSize = cs.fontSize;
+              probe.style.fontFamily = cs.fontFamily;
+              probe.style.fontWeight = cs.fontWeight;
+              probe.style.letterSpacing = cs.letterSpacing;
+              probe.innerHTML = td.innerHTML;
+
+              var naturalWidth = probe.scrollWidth + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+              td.style.whiteSpace = (naturalWidth > targetPx + 2) ? 'normal' : 'nowrap';
+            }
+          });
+        });
+
+        document.body.removeChild(probe);
+      }
+
+      var resizeTimer = null;
+      function scheduleAutoWrap(){
+        if(resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(autoWrapCells, 150);
+      }
+
+      document.addEventListener('DOMContentLoaded', autoWrapCells);
+      window.addEventListener('resize', scheduleAutoWrap);
+    })();
+  </script>
+  </script>
+
+  </body>
+</html>
