@@ -96,6 +96,7 @@ extra:
     doc_archive_folder: "https://drive.google.com/drive/folders/1qdBRQJ0M3rnOTVYoIuK2wYttMiM5jLF1"
     campaign_value_doc: "https://yile.atlassian.net/wiki/spaces/808CG/pages/563216424/Casino+Game+-"
     slot_game_list_doc: "https://yile.atlassian.net/wiki/spaces/808CG/pages/563970238/01.+Slot+Game+List"
+    promo_package_folder: "https://drive.google.com/drive/folders/1y-hlMR2RHzJ2fVP1IuvHewIBnn-I0irl"
 
 markdown_extensions:
   - pymdownx.emoji:
